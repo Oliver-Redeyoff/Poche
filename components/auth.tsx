@@ -18,35 +18,60 @@ AppState.addEventListener('change', (state) => {
 
 export default function Auth() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [otpToken, setOtpToken] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
 
-  async function signInWithEmail() {
+  async function signInWithOtp() {
+    if (!email) {
+      Alert.alert('Please enter your email address')
+      return
+    }
+
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
+    // Note: To send OTP codes instead of magic links, configure the email template
+    // in Supabase Dashboard: Authentication > Email Templates > Magic Link
+    // Replace the template to show {{ .Token }} instead of a link
+    const { error } = await supabase.auth.signInWithOtp({
       email: email,
-      password: password,
+      options: {
+        shouldCreateUser: true,
+        // Don't set emailRedirectTo to ensure OTP is sent instead of magic link
+      },
     })
 
-    if (error) Alert.alert(error.message)
+    if (error) {
+      Alert.alert(error.message)
+    } else {
+      setOtpSent(true)
+      Alert.alert('Check your email for the OTP code!')
+    }
     setLoading(false)
   }
 
-  async function signUpWithEmail() {
+  async function verifyOtp() {
+    if (!email || !otpToken) {
+      Alert.alert('Please enter both email and OTP token')
+      return
+    }
+
     setLoading(true)
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.verifyOtp({
       email: email,
-      password: password,
+      token: otpToken,
+      type: 'email',
     })
 
-    if (error) Alert.alert(error.message)
-    if (!session) Alert.alert('Please check your inbox for email verification!')
+    if (error) {
+      Alert.alert(error.message)
+    } else {
+      setOtpSent(false)
+      setOtpToken('')
+      Alert.alert('Successfully signed in!')
+    }
     setLoading(false)
   }
 
@@ -63,29 +88,50 @@ export default function Auth() {
           placeholderTextColor={borderColor}
           autoCapitalize="none"
           keyboardType="email-address"
+          editable={!otpSent}
           style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
         />
       </View>
-      <View style={styles.verticallySpaced}>
-        <ThemedText type="defaultSemiBold" style={styles.label}>
-          Password
-        </ThemedText>
-        <TextInput
-          onChangeText={(text) => setPassword(text)}
-          value={password}
-          secureTextEntry={true}
-          placeholder="Password"
-          placeholderTextColor={borderColor}
-          autoCapitalize="none"
-          style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
-        />
-      </View>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Button title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
-      </View>
+
+      {!otpSent ? (
+        <View style={[styles.verticallySpaced, styles.mt20]}>
+          <Button
+            title="Sign in with Email OTP"
+            disabled={loading}
+            onPress={() => signInWithOtp()}
+          />
+        </View>
+      ) : (
+        <>
+          <View style={styles.verticallySpaced}>
+            <ThemedText type="defaultSemiBold" style={styles.label}>
+              OTP Token
+            </ThemedText>
+            <TextInput
+              onChangeText={(text) => setOtpToken(text)}
+              value={otpToken}
+              placeholder="Enter OTP from email"
+              placeholderTextColor={borderColor}
+              autoCapitalize="none"
+              keyboardType="number-pad"
+              style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+            />
+          </View>
+          <View style={[styles.verticallySpaced, styles.mt20]}>
+            <Button title="Verify OTP" disabled={loading} onPress={() => verifyOtp()} />
+          </View>
+          <View style={styles.verticallySpaced}>
+            <Button
+              title="Cancel"
+              disabled={loading}
+              onPress={() => {
+                setOtpSent(false)
+                setOtpToken('')
+              }}
+            />
+          </View>
+        </>
+      )}
     </View>
   )
 }
