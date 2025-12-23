@@ -7,13 +7,19 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <!-- Login Section -->
-  <div id="loginSection" class="section">
-    <div class="header">
-      <h1>Poche</h1>
+  <div class="header">
+    <img src="assets/icon.png" alt="poche" class="logo">
+
+    <div class="header-right">
+      <h1>poche</h1>
       <p class="subtitle">Read it Later</p>
     </div>
-    
+  </div>
+
+  <div id="statusMessage" class="status">_</div>
+
+  <!-- Login Section -->
+  <div id="loginSection" class="section">
     <form id="loginForm" class="form">
       <div class="form-group">
         <label for="email">Email</label>
@@ -48,31 +54,24 @@
         </button>
       </div>
     </form>
-    
-    <div id="statusMessage" class="status" style="display: none;"></div>
   </div>
   
   <!-- Main Section (after login) -->
   <div id="mainSection" class="section" style="display: none;">
-    <div class="header">
-      <h1>Poche</h1>
-      <p class="subtitle">Save this article</p>
-    </div>
-    
-    <div class="user-info">
-      <p>Logged in as: <strong id="userEmail"></strong></p>
-      <button id="logoutButton" class="btn btn-link">Logout</button>
-    </div>
-    
-    <div class="article-info">
+    <!-- <div class="article-info">
       <p>Click the button below to save the current page as an article.</p>
-    </div>
+    </div> -->
     
     <button id="saveButton" class="btn btn-primary btn-large">
       Save Article
     </button>
-    
-    <div id="statusMessage" class="status" style="display: none;"></div>
+
+    <div class="flex-filler"></div>
+
+    <div class="user-info">
+      <p>Logged in as: <strong id="userEmail"></strong></p>
+      <button id="logoutButton" class="btn btn-secondary">Logout</button>
+    </div>
   </div>
   
   <script type="module" src="popup.js"></script>
