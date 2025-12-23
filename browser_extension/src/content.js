@@ -69,11 +69,12 @@ function parseCurrentPage() {
   if (!article) {
     throw new Error('Could not parse article content')
   }
+
+  console.log(article)
   
   return {
-    title: article.title || document.title,
-    content: article.textContent || article.content,
-    htmlContent: article.content,
+    title: article.title,
+    content: article.content,
     excerpt: article.excerpt || '',
     byline: article.byline || '',
     siteName: article.siteName || new URL(window.location.href).hostname,

@@ -249,8 +249,6 @@ async function saveCurrentArticle() {
         user_id: session.user.id,
         title: article.title || null,
         content: article.content || null,
-        // created_time is optional - database will set it automatically if not provided
-        // Note: url, excerpt, site_name, html_content fields don't exist in the schema
       })
       .select()
       .single()
