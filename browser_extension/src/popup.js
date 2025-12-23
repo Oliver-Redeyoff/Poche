@@ -259,12 +259,6 @@ async function saveCurrentArticle() {
     }
     
     showStatus('Article saved successfully!', 'success')
-    
-    // Clear form after short delay
-    setTimeout(() => {
-      window.close()
-    }, 1500)
-    
   } catch (error) {
     console.error('Error saving article:', error)
     
@@ -289,7 +283,7 @@ async function saveCurrentArticle() {
 }
 
 function showLoginSection() {
-  loginSection.style.display = 'block'
+  loginSection.style.display = 'flex'
   mainSection.style.display = 'none'
   emailInput.value = ''
   passwordInput.value = ''
@@ -297,7 +291,7 @@ function showLoginSection() {
 
 function showMainSection(email) {
   loginSection.style.display = 'none'
-  mainSection.style.display = 'block'
+  mainSection.style.display = 'flex'
   if (userEmail) {
     userEmail.textContent = email
   }
@@ -308,12 +302,12 @@ function showStatus(message, type = 'info') {
   
   statusMessage.textContent = message
   statusMessage.className = `status ${type}`
-  statusMessage.style.display = 'block'
+  statusMessage.style.opacity = "1"
   
   // Auto-hide after 5 seconds for success/info
   if (type === 'success' || type === 'info') {
     setTimeout(() => {
-      statusMessage.style.display = 'none'
+      statusMessage.style.opacity = "0"
     }, 5000)
   }
 }
