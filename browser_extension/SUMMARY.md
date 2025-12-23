@@ -1,113 +1,170 @@
 # Poche Browser Extension - Summary
 
-## What Was Built
+## Overview
 
-A complete cross-browser extension for saving articles to read later using Poche.
+The Poche browser extension allows users to save articles from any webpage to their Poche account. It works across Chrome, Firefox, and Safari browsers.
 
-## Features Implemented
+## Features
 
-✅ **Authentication**
-- Email/password login and signup
-- Session management using browser storage
-- Automatic session persistence
-- Logout functionality
+- **Authentication**: Email/password login and signup within the extension popup
+- **Article Parsing**: Uses Mozilla Readability to extract clean article content from web pages
+- **Article Saving**: Saves parsed articles to Supabase articles table
+- **Cross-Browser Support**: Works with Chrome (Manifest V3), Firefox, and Safari
 
-✅ **Article Parsing**
-- Integration with Mozilla Readability
-- Extracts clean article content from web pages
-- Captures title, content, HTML, excerpt, byline, and metadata
-- Works on any webpage
+## Architecture
 
-✅ **Article Saving**
-- Saves parsed articles to Supabase articles table
-- Links articles to user account via user_id
-- Includes all article metadata
-- Error handling and user feedback
+### Technology Stack
 
-✅ **Cross-Browser Support**
-- Chrome/Edge (Manifest V3)
-- Firefox (with compatibility layer)
-- Safari (with additional setup)
+- **Build Tool**: Webpack
+- **Language**: JavaScript (ES6+)
+- **Bundler**: Webpack with Babel for transpilation
+- **Article Parsing**: Mozilla Readability (bundled with extension)
+- **Backend**: Supabase (authentication and database)
+- **Storage**: Chrome/Firefox storage API for session persistence
 
-✅ **User Interface**
-- Clean, modern popup design
-- Login/signup forms
-- Article saving interface
-- Status messages and feedback
-- Dark mode support
-
-## File Structure
+### File Structure
 
 ```
 browser_extension/
 ├── src/
 │   ├── popup.js          # Main popup logic and UI handlers
 │   ├── popup.html        # Popup HTML structure
-│   ├── popup.css         # Popup styles
+│   ├── popup.css         # Popup styles with dark mode support
 │   ├── content.js        # Content script for parsing articles
 │   ├── background.js     # Background service worker
 │   └── lib/
-│       └── supabase.js   # Supabase client configuration
+│       └── supabase.js   # Supabase client with browser storage adapter
+├── icons/                # Extension icons (16x16, 48x48, 128x128)
+├── dist/                 # Built extension files (generated)
 ├── manifest.json         # Extension manifest (Manifest V3)
 ├── package.json          # Dependencies and build scripts
-├── webpack.config.js     # Webpack build configuration
-├── README.md             # Main documentation
-├── INSTALL.md            # Installation guide
-├── ICONS.md              # Icon requirements
+├── webpack.config.js     # Webpack configuration
 └── SUMMARY.md            # This file
 ```
 
-## Key Technologies
+## Key Components
 
-- **Supabase**: Authentication and database
-- **Mozilla Readability**: Article parsing
-- **Webpack**: Build tooling
-- **Manifest V3**: Modern extension standard
+### popup.js
+Main extension logic:
+- Authentication (login/signup)
+- Content script injection and communication
+- Article parsing coordination
+- Supabase article saving
+- Error handling and user feedback
 
-## Next Steps
+### content.js
+Content script that runs on web pages:
+- Listens for parse requests from popup
+- Uses Mozilla Readability to extract article content
+- Returns parsed article data (title, content, etc.)
+- Handles cross-browser API differences
 
-1. **Create Icons**: Add icon files (16x16, 48x48, 128x128) to `icons/` folder
-2. **Build Extension**: Run `npm install` then `npm run build`
-3. **Test**: Load extension in your browser and test the flow
-4. **Database**: Ensure your Supabase articles table matches the expected schema
-5. **RLS Policies**: Verify RLS policies allow users to insert their own articles
+### supabase.js
+Supabase client configuration:
+- Custom storage adapter using browser storage API
+- Works with both Chrome and Firefox APIs
+- Session persistence across extension restarts
 
-## Database Requirements
+## How It Works
 
-The extension expects an `articles` table with:
-- `id` (UUID)
-- `user_id` (UUID, foreign key to auth.users)
-- `title` (TEXT)
-- `content` (TEXT)
-- `html_content` (TEXT)
-- `url` (TEXT)
-- `excerpt` (TEXT)
-- `site_name` (TEXT)
-- `created_at` (TIMESTAMP)
+1. **User clicks extension icon** → Opens popup
+2. **If not logged in** → Shows login/signup form
+3. **User authenticates** → Session stored in browser storage
+4. **User navigates to article** → Clicks "Save Article" button
+5. **Content script injected** → Parses page using Readability
+6. **Article data extracted** → Title, content, metadata
+7. **Article saved to Supabase** → Linked to user via user_id
+8. **Success feedback** → User sees confirmation message
 
-## Authentication Flow
+## Database Integration
 
-1. User clicks extension icon
-2. If not logged in, shows login/signup form
-3. User authenticates with Supabase
-4. Session stored in browser storage
-5. Main interface shows "Save Article" button
-6. User navigates to article and clicks "Save Article"
-7. Content script parses article using Readability
-8. Article data sent to popup
-9. Article saved to Supabase with user_id
-10. Success message shown to user
+### Articles Table Schema
+The extension saves articles with the following fields:
+- `user_id` (string, required) - Links article to user
+- `title` (string, nullable) - Article title
+- `content` (string, nullable) - Parsed text content
+- `created_time` (string, auto-generated) - Timestamp
 
-## Browser Compatibility Notes
+### Authentication
+- Uses Supabase Auth for email/password authentication
+- Session stored in browser storage (chrome.storage.local)
+- Automatic token refresh
+- Session persists across browser restarts
 
-- **Chrome/Edge**: Full support, uses Manifest V3
-- **Firefox**: Compatible, may need Manifest V2 for older versions
-- **Safari**: Requires additional setup and code signing for distribution
+## Build Process
 
-## Security
+### Development
+```bash
+npm install          # Install dependencies
+npm run dev          # Watch mode for development
+npm run build        # Production build
+```
 
-- Uses Supabase RLS policies for data security
-- Session stored securely in browser storage
-- No sensitive data in extension code
-- All API calls go through Supabase
+### Browser-Specific Builds
+```bash
+npm run build:chrome   # Build for Chrome
+npm run build:firefox   # Build for Firefox
+npm run build:safari    # Build for Safari
+```
 
+### Icon Generation
+```bash
+npm run icons        # Generate placeholder icons
+```
+
+## Installation
+
+### Chrome/Edge
+1. Open `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `dist` folder
+
+### Firefox
+1. Open `about:debugging`
+2. Click "This Firefox"
+3. Click "Load Temporary Add-on"
+4. Select `manifest.json` from `dist` folder
+
+### Safari
+1. Enable Develop menu in Safari preferences
+2. Open Safari > Develop > Extension Builder
+3. Import extension from `safari` folder
+
+## Permissions
+
+The extension requires:
+- `activeTab` - Access to current tab for article parsing
+- `storage` - Store authentication session
+- `scripting` - Inject content scripts
+- `host_permissions: <all_urls>` - Access to all websites for article saving
+
+## Content Security Policy
+
+- Content scripts run in page context
+- No external script loading (Readability is bundled)
+- All code is bundled and self-contained
+
+## Error Handling
+
+- Comprehensive error messages for users
+- Console logging for debugging
+- Retry logic for content script communication
+- Timeout handling for network operations
+
+## Known Limitations
+
+- Cannot save from browser internal pages (chrome://, about:, etc.)
+- Some pages may not parse correctly due to structure
+- Requires internet connection for Supabase operations
+- Safari requires additional setup and code signing for distribution
+
+## Future Enhancements
+
+Potential improvements:
+- Offline article saving with sync
+- Article preview before saving
+- Batch article saving
+- Custom article tags/categories
+- Reading time estimation
+- Article thumbnail extraction
