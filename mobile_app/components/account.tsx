@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert, Button, TextInput, ScrollView, FlatList } from 'react-native'
+import { StyleSheet, View, Alert, Button, TextInput, ScrollView, FlatList, Pressable } from 'react-native'
 import { Session } from '@supabase/supabase-js'
+import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
 import { useThemeColor } from '@/hooks/use-theme-color'
 
 interface Article {
-  id: string
-  title?: string
-  content?: string
+  id: number
+  title?: string | null
+  content?: string | null
   url?: string
+  created_time?: string
   created_at?: string
   [key: string]: any
 }
 
 export default function Account({ session }: { session: Session }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
   const [website, setWebsite] = useState('')
@@ -187,10 +190,17 @@ export default function Account({ session }: { session: Session }) {
         ) : (
           <FlatList
             data={articles}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             scrollEnabled={false}
             renderItem={({ item }) => (
-              <View style={[styles.articleCard, { borderColor, backgroundColor }]}>
+              <Pressable
+                onPress={() => router.push(`/article/${item.id}`)}
+                style={({ pressed }) => [
+                  styles.articleCard,
+                  { borderColor, backgroundColor },
+                  pressed && styles.articleCardPressed,
+                ]}
+              >
                 {item.title && (
                   <ThemedText type="defaultSemiBold" style={styles.articleTitle}>
                     {item.title}
@@ -203,15 +213,15 @@ export default function Account({ session }: { session: Session }) {
                 )}
                 {item.content && (
                   <ThemedText style={[styles.articleContent, { color: textColor }]} numberOfLines={3}>
-                    {item.content}
+                    {item.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
                   </ThemedText>
                 )}
-                {item.created_at && (
+                {(item.created_at || item.created_time) && (
                   <ThemedText style={[styles.articleDate, { color: borderColor }]}>
-                    {new Date(item.created_at).toLocaleDateString()}
+                    {new Date(item.created_at || item.created_time || '').toLocaleDateString()}
                   </ThemedText>
                 )}
-              </View>
+              </Pressable>
             )}
           />
         )}
@@ -261,6 +271,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+  articleCardPressed: {
+    opacity: 0.7,
   },
   articleTitle: {
     fontSize: 16,
