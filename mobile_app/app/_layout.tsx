@@ -1,14 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
-import { Stack } from 'expo-router'
+import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect } from 'react'
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs'
 import { View } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
 import Auth from '@/components/auth'
 import { useColorScheme } from '@/hooks/use-color-scheme'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -39,10 +39,27 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: true, headerTransparent: true, headerBackButtonDisplayMode: "minimal", title: 'posh' }} />
-        <Stack.Screen name="explore" options={{ headerShown: true, title: 'posh' }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        <Stack.Screen name="article/[id]" options={{ title: "", headerTransparent: true, headerBackButtonDisplayMode: "minimal", }} />
+        <Stack.Screen 
+          name="index" 
+          options={{ 
+            headerTransparent: true, 
+            headerBackButtonDisplayMode: "minimal", 
+            title: 'posh', 
+            headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color="white" /> 
+          }} 
+        />
+        <Stack.Screen 
+          name="settings" 
+          options={{ title: "posh", headerTransparent: true, headerBackButtonDisplayMode: "minimal" }} 
+        />
+        <Stack.Screen 
+          name="modal" 
+          options={{ presentation: "modal", title: "Modal" }} 
+        />
+        <Stack.Screen 
+          name="article/[id]" 
+          options={{ title: "", headerTransparent: true, headerBackButtonDisplayMode: "minimal" }} 
+          />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
