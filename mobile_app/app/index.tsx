@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "../lib/supabase"
 import { Session } from "@supabase/supabase-js"
-import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator } from 'react-native'
+import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '../components/themed-text'
@@ -24,9 +24,11 @@ export default function HomeScreen() {
   const headerHeight = useHeaderHeight()
   const [articles, setArticles] = useState<Article[]>([])
   const [articlesLoading, setArticlesLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
+  const tintColor = useThemeColor({}, 'tint')
 
   // Calculate padding to account for header and safe area
   const topPadding = headerHeight
@@ -74,6 +76,15 @@ export default function HomeScreen() {
       setArticlesLoading(false)
     }
   }
+
+  async function onRefresh() {
+    setRefreshing(true)
+    try {
+      await getArticles()
+    } finally {
+      setRefreshing(false)
+    }
+  }
   
   if (!session || !session.user) {
     return null // Auth is handled in _layout.tsx
@@ -84,6 +95,16 @@ export default function HomeScreen() {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: topPadding }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={tintColor}
+            colors={[tintColor]}
+            progressViewOffset={topPadding}
+            progressBackgroundColor={backgroundColor}
+          />
+        }
       >
         {articlesLoading ? (
           <View style={styles.centerContent}>
