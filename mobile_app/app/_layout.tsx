@@ -38,19 +38,17 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack screenOptions={{ headerTransparent: true, headerBackButtonDisplayMode: "minimal" }}>
         <Stack.Screen 
           name="index" 
-          options={{ 
-            headerTransparent: true, 
-            headerBackButtonDisplayMode: "minimal", 
+          options={{
             title: 'posh', 
             headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color="white" /> 
           }} 
         />
         <Stack.Screen 
           name="settings" 
-          options={{ title: "posh", headerTransparent: true, headerBackButtonDisplayMode: "minimal" }} 
+          options={{ title: "posh" }} 
         />
         <Stack.Screen 
           name="modal" 
@@ -58,7 +56,7 @@ export default function RootLayout() {
         />
         <Stack.Screen 
           name="article/[id]" 
-          options={{ title: "", headerTransparent: true, headerBackButtonDisplayMode: "minimal" }} 
+          options={{ title: "" }} 
           />
       </Stack>
       <StatusBar style="auto" />
