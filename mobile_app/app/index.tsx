@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "../lib/supabase"
 import { Session } from "@supabase/supabase-js"
 import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native'
+import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '../components/themed-text'
@@ -85,6 +86,30 @@ export default function HomeScreen() {
       setRefreshing(false)
     }
   }
+
+  // Extract first image URL from HTML content
+  function extractFirstImageUrl(htmlContent: string | null): string | null {
+    if (!htmlContent) return null
+    
+    // Match img tags with src attribute
+    const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
+    if (imgMatch && imgMatch[1]) {
+      let imageUrl = imgMatch[1]
+      
+      // Handle relative URLs (convert to absolute if needed)
+      if (imageUrl.startsWith('//')) {
+        imageUrl = 'https:' + imageUrl
+      } else if (imageUrl.startsWith('/')) {
+        // If it's a relative path, we might need the article URL to make it absolute
+        // For now, return as is - the Image component might handle it
+        return imageUrl
+      }
+      
+      return imageUrl
+    }
+    
+    return null
+  }
   
   if (!session || !session.user) {
     return null // Auth is handled in _layout.tsx
@@ -123,37 +148,49 @@ export default function HomeScreen() {
             data={articles}
             keyExtractor={(item) => item.id.toString()}
             scrollEnabled={false}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => router.push(`/article/${item.id}`)}
-                style={({ pressed }) => [
-                  styles.articleCard,
-                  { borderColor, backgroundColor },
-                  pressed && styles.articleCardPressed,
-                ]}
-              >
-                {item.title && (
-                  <ThemedText type="defaultSemiBold" style={styles.articleTitle}>
-                    {item.title}
-                  </ThemedText>
-                )}
-                {item.url && (
-                  <ThemedText style={[styles.articleUrl, { color: textColor }]}>
-                    {item.url}
-                  </ThemedText>
-                )}
-                {item.content && (
-                  <ThemedText style={[styles.articleContent, { color: textColor }]} numberOfLines={3}>
-                    {item.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
-                  </ThemedText>
-                )}
-                {(item.created_at || item.created_time) && (
-                  <ThemedText style={[styles.articleDate, { color: borderColor }]}>
-                    {new Date(item.created_at || item.created_time || '').toLocaleDateString()}
-                  </ThemedText>
-                )}
-              </Pressable>
-            )}
+            renderItem={({ item }) => {
+              const imageUrl = extractFirstImageUrl(item.content || null)
+              
+              return (
+                <Pressable
+                  onPress={() => router.push(`/article/${item.id}`)}
+                  style={({ pressed }) => [
+                    styles.articleCard,
+                    { borderColor, backgroundColor },
+                    pressed && styles.articleCardPressed,
+                  ]}
+                >
+                  <View style={styles.articleCardContent}>
+                    <View style={styles.articleCardText}>
+                      {item.title && (
+                        <ThemedText type="defaultSemiBold" style={styles.articleTitle}>
+                          {item.title}
+                        </ThemedText>
+                      )}
+                      {item.siteName && (
+                        <ThemedText style={[styles.articleUrl, { color: textColor }]}>
+                          {item.siteName}
+                        </ThemedText>
+                      )}
+                      {(item.created_at || item.created_time) && (
+                        <ThemedText style={[styles.articleDate, { color: borderColor }]}>
+                          {new Date(item.created_at || item.created_time || '').toLocaleDateString()}
+                        </ThemedText>
+                      )}
+                    </View>
+                    {imageUrl && (
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.articleImage}
+                        contentFit="cover"
+                        transition={200}
+                        placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+                      />
+                    )}
+                  </View>
+                </Pressable>
+              )
+            }}
           />
         )}
       </ScrollView>
@@ -201,14 +238,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   articleCard: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
     marginBottom: 12,
   },
   articleCardPressed: {
     opacity: 0.7,
+  },
+  articleCardContent: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  articleCardText: {
+    flex: 1,
+    minWidth: 0, // Allows text to shrink when image is present
+  },
+  articleImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 6,
+    backgroundColor: '#f0f0f0',
   },
   articleTitle: {
     fontSize: 16,
@@ -216,17 +270,11 @@ const styles = StyleSheet.create({
   },
   articleUrl: {
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 4,
     opacity: 0.7,
-  },
-  articleContent: {
-    fontSize: 14,
-    marginBottom: 8,
-    opacity: 0.8,
   },
   articleDate: {
     fontSize: 12,
-    marginTop: 4,
     opacity: 0.6,
   },
 })

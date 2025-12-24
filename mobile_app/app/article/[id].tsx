@@ -125,9 +125,11 @@ export default function ArticleScreen() {
       color: '#0a7ea4',
       textDecorationLine: "underline" as const,
     },
-    img: {
+    picture: {
       maxWidth: '100%',
       height: 'auto',
+      marginTop: 16,
+      marginBottom: 16,
     },
   }
 

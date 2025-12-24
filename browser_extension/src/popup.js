@@ -247,7 +247,12 @@ async function saveCurrentArticle() {
       .from('articles')
       .insert({
         user_id: session.user.id,
+        excerpt: article.excerpt || null,
+        length: article.length || null,
+        published_time: article.publishedTime || null,
+        siteName: article.siteName || null,
         title: article.title || null,
+        url: article.url || null,
         content: article.content || null,
       })
       .select()
