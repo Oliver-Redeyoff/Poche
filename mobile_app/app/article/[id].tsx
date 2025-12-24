@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, Dimensions } from 'react-native'
+import { useHeaderHeight } from '@react-navigation/elements'
 import { supabase } from '../../lib/supabase'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
@@ -21,11 +22,15 @@ interface Article {
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
+  const headerHeight = useHeaderHeight()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
   const borderColor = useThemeColor({}, 'icon')
+  
+  // Calculate padding to account for header and safe area
+  const topPadding = headerHeight + 20
 
   useEffect(() => {
     if (id) {
@@ -98,27 +103,27 @@ export default function ArticleScreen() {
     h1: {
       color: textColor,
       fontSize: 28,
-      fontWeight: 'bold',
+      fontWeight: "bold" as const,
       marginBottom: 16,
       marginTop: 16,
     },
     h2: {
       color: textColor,
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: "bold" as const,
       marginBottom: 12,
       marginTop: 12,
     },
     h3: {
       color: textColor,
       fontSize: 20,
-      fontWeight: 'bold',
+      fontWeight:  "bold" as const,
       marginBottom: 10,
       marginTop: 10,
     },
     a: {
       color: '#0a7ea4',
-      textDecorationLine: 'underline',
+      textDecorationLine: "underline" as const,
     },
     img: {
       maxWidth: '100%',
@@ -130,7 +135,7 @@ export default function ArticleScreen() {
     <ThemedView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: topPadding }]}
       >
         {article.title && (
           <ThemedText type="title" style={styles.title}>

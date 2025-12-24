@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
-import { supabase } from "../../lib/supabase"
-import Home from "../../components/home"
+import { supabase } from "../lib/supabase"
+import Settings from "../components/settings"
 import { Session } from "@supabase/supabase-js"
 
-export default function HomeScreen() {
+export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
@@ -19,5 +19,5 @@ export default function HomeScreen() {
     return null // Auth is handled in _layout.tsx
   }
   
-  return <Home session={session} />
+  return <Settings session={session} />
 }
