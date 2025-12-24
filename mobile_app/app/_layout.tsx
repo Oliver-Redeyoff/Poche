@@ -62,14 +62,19 @@ function RootStack() {
         options={{
           headerTitle: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Image source={require('@/assets/images/logo.png')} style={{ width: 24, height: 24 }} />
-              <ThemedText type="title">posh</ThemedText>
+              <ThemedText type="title">poche</ThemedText>
             </View>,
           headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color={colors.text} /> 
         }} 
       />
       <Stack.Screen 
         name="settings" 
-        options={{ title: "posh" }} 
+        options={{ 
+          headerTitle: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Image source={require('@/assets/images/logo.png')} style={{ width: 24, height: 24 }} />
+              <ThemedText type="title">poche</ThemedText>
+            </View>,
+         }} 
       />
       <Stack.Screen 
         name="modal" 

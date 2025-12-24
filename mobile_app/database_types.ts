@@ -18,25 +18,37 @@ export type Database = {
         Row: {
           content: string | null
           created_time: string
+          excerpt: string | null
           id: number
+          length: number | null
           published_time: string | null
+          siteName: string | null
           title: string | null
+          url: string | null
           user_id: string
         }
         Insert: {
           content?: string | null
           created_time?: string
+          excerpt?: string | null
           id?: number
+          length?: number | null
           published_time?: string | null
+          siteName?: string | null
           title?: string | null
+          url?: string | null
           user_id: string
         }
         Update: {
           content?: string | null
           created_time?: string
+          excerpt?: string | null
           id?: number
+          length?: number | null
           published_time?: string | null
+          siteName?: string | null
           title?: string | null
+          url?: string | null
           user_id?: string
         }
         Relationships: [
