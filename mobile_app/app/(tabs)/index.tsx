@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
-import Auth from '../../components/auth'
-import Account from '../../components/account'
-import { View } from 'react-native'
-import { Session } from '@supabase/supabase-js'
+import { useState, useEffect } from "react"
+import { supabase } from "../../lib/supabase"
+import Home from "../../components/home"
+import { Session } from "@supabase/supabase-js"
 
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -15,9 +14,10 @@ export default function HomeScreen() {
       setSession(session)
     })
   }, [])
-  return (
-    <View>
-      {session && session.user ? <Account key={session.user.id} session={session} /> : <Auth />}
-    </View>
-  )
+  
+  if (!session || !session.user) {
+    return null // Auth is handled in _layout.tsx
+  }
+  
+  return <Home session={session} />
 }
