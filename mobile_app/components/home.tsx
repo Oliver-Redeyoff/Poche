@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import { useRouter } from 'expo-router'
+import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from './themed-text'
 import { ThemedView } from './themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
@@ -19,11 +20,15 @@ interface Article {
 
 export default function Home({ session }: { session: Session }) {
   const router = useRouter()
+  const headerHeight = useHeaderHeight()
   const [articles, setArticles] = useState<Article[]>([])
   const [articlesLoading, setArticlesLoading] = useState(false)
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
+  
+  // Calculate padding to account for header and safe area
+  const topPadding = headerHeight
 
   useEffect(() => {
     if (session) {
@@ -62,7 +67,10 @@ export default function Home({ session }: { session: Session }) {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={{ paddingTop: topPadding }}
+      >
         <View style={styles.header}>
           <ThemedText type="title" style={styles.title}>
             My Articles
