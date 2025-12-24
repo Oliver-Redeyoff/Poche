@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useState, useEffect } from "react"
+import { supabase } from "../lib/supabase"
+import { Session } from "@supabase/supabase-js"
+import { useHeaderHeight } from '@react-navigation/elements'
 import { StyleSheet, View, Alert, Button, TextInput, ScrollView } from 'react-native'
-import { Session } from '@supabase/supabase-js'
-import { ThemedText } from './themed-text'
-import { ThemedView } from './themed-view'
+import { ThemedText } from '../components/themed-text'
+import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 
-export default function Settings({ session }: { session: Session }) {
+export default function SettingsScreen() {
+  const [session, setSession] = useState<Session | null>(null)
+  const headerHeight = useHeaderHeight()
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
   const [website, setWebsite] = useState('')
@@ -14,6 +17,18 @@ export default function Settings({ session }: { session: Session }) {
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
+
+  // Calculate padding to account for header and safe area
+  const topPadding = headerHeight
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+  }, [])
 
   useEffect(() => {
     if (session) {
@@ -85,9 +100,13 @@ export default function Settings({ session }: { session: Session }) {
       setLoading(false)
     }
   }
-
+  
+  if (!session || !session.user) {
+    return null // Auth is handled in _layout.tsx
+  }
+  
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={{...styles.container, paddingTop: topPadding}}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <ThemedText type="title" style={styles.title}>
@@ -187,4 +206,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 })
-
