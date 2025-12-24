@@ -3,12 +3,13 @@ import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect } from 'react'
-import { View } from 'react-native'
+import { View, Image } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
 import Auth from '@/components/auth'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { ThemedText } from '@/components/themed-text'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -59,8 +60,11 @@ function RootStack() {
       <Stack.Screen
         name="index" 
         options={{
-          title: 'posh', 
-          headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color="white" /> 
+          headerTitle: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Image source={require('@/assets/images/logo.png')} style={{ width: 24, height: 24 }} />
+              <ThemedText type="title">posh</ThemedText>
+            </View>,
+          headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color={colors.text} /> 
         }} 
       />
       <Stack.Screen 
