@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { DarkTheme, DefaultTheme, ThemeProvider, useTheme } from '@react-navigation/native'
 import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
@@ -38,28 +38,43 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerTransparent: true, headerBackButtonDisplayMode: "minimal" }}>
-        <Stack.Screen 
-          name="index" 
-          options={{
-            title: 'posh', 
-            headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color="white" /> 
-          }} 
-        />
-        <Stack.Screen 
-          name="settings" 
-          options={{ title: "posh" }} 
-        />
-        <Stack.Screen 
-          name="modal" 
-          options={{ presentation: "modal", title: "Modal" }} 
-        />
-        <Stack.Screen 
-          name="article/[id]" 
-          options={{ title: "" }} 
-          />
-      </Stack>
+      <RootStack />
       <StatusBar style="auto" />
     </ThemeProvider>
+  )
+}
+
+function RootStack() {
+  const { colors } = useTheme()
+  
+  return (
+    <Stack 
+      screenOptions={{ 
+        headerTransparent: true, 
+        headerBackButtonDisplayMode: "minimal",
+        contentStyle: { backgroundColor: colors.background },
+        animation: 'default',
+      }}
+    >
+      <Stack.Screen
+        name="index" 
+        options={{
+          title: 'posh', 
+          headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color="white" /> 
+        }} 
+      />
+      <Stack.Screen 
+        name="settings" 
+        options={{ title: "posh" }} 
+      />
+      <Stack.Screen 
+        name="modal" 
+        options={{ presentation: "modal", title: "Modal" }} 
+      />
+      <Stack.Screen 
+        name="article/[id]" 
+        options={{ title: "" }} 
+      />
+    </Stack>
   )
 }
