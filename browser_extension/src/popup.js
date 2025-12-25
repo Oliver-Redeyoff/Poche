@@ -65,7 +65,33 @@ async function checkAuthStatus() {
     const { data: { session } } = await supabase.auth.getSession()
     
     if (session && session.user) {
-      showMainSection(session.user.email)
+      // Try to refresh the session to ensure it's still valid
+      // This handles cases where browser was closed for a long time
+      try {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession(session)
+        
+        if (refreshError) {
+          // Refresh token expired - user needs to sign in again
+          if (refreshError.message?.includes('refresh_token_not_found') || 
+              refreshError.message?.includes('token_expired') ||
+              refreshError.message?.includes('Invalid Refresh Token')) {
+            console.log('Session expired - user needs to sign in again')
+            showLoginSection()
+            return
+          }
+        }
+        
+        // Session is valid
+        showMainSection(session.user.email)
+      } catch (error) {
+        // If refresh fails, check if we still have a valid session
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        if (currentSession && currentSession.user) {
+          showMainSection(currentSession.user.email)
+        } else {
+          showLoginSection()
+        }
+      }
     } else {
       showLoginSection()
     }
@@ -323,6 +349,63 @@ supabase.auth.onAuthStateChange((event, session) => {
     showMainSection(session.user.email)
   } else if (event === 'SIGNED_OUT') {
     showLoginSection()
+  } else if (event === 'TOKEN_REFRESHED' && session) {
+    // Session was refreshed, ensure UI is updated
+    if (session.user) {
+      showMainSection(session.user.email)
+    }
   }
 })
+
+// Refresh session when popup opens to keep it alive
+async function refreshSessionOnOpen() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      // Check if session is about to expire (within 5 minutes)
+      const expiresAt = session.expires_at
+      const now = Math.floor(Date.now() / 1000)
+      
+      if (expiresAt && (expiresAt - now) < 300) {
+        // Refresh the session to extend its lifetime
+        const { data, error } = await supabase.auth.refreshSession(session)
+        if (error) {
+          // If refresh fails, checkAuthStatus will handle it
+          console.error('Error refreshing session on popup open:', error)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing session on popup open:', error)
+  }
+}
+
+// Refresh session when popup opens (only if needed)
+refreshSessionOnOpen()
+
+// Also set up periodic refresh while popup is open (every 30 minutes)
+let refreshInterval = null
+
+function startPeriodicRefresh() {
+  // Clear any existing interval
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+  
+  // Refresh every 30 minutes
+  refreshInterval = setInterval(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await supabase.auth.refreshSession(session)
+        console.log('Session refreshed periodically')
+      }
+    } catch (error) {
+      console.error('Error in periodic refresh:', error)
+    }
+  }, 30 * 60 * 1000) // 30 minutes
+}
+
+// Start periodic refresh
+startPeriodicRefresh()
 
