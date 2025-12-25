@@ -336,11 +336,9 @@ function showStatus(message, type = 'info') {
   statusMessage.style.opacity = "1"
   
   // Auto-hide after 5 seconds for success/info
-  if (type === 'success' || type === 'info') {
-    setTimeout(() => {
-      statusMessage.style.opacity = "0"
-    }, 5000)
-  }
+  setTimeout(() => {
+    statusMessage.style.opacity = "0"
+  }, 2500)
 }
 
 // Listen for auth state changes
