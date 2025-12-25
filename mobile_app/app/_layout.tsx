@@ -47,7 +47,6 @@ function RootStack({session}: {session: Session | null}) {
         animation: 'default',
       }}
     >
-
       <Stack.Protected guard={!session}>
         <Stack.Screen 
         name="auth" 

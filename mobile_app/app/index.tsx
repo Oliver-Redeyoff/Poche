@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react"
 import { supabase } from "../lib/supabase"
 import { Session } from "@supabase/supabase-js"
-import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native'
+import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator, RefreshControl, Modal } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
+import Ionicons from '@expo/vector-icons/Ionicons'
 
 interface Article {
   id: number
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const [articles, setArticles] = useState<Article[]>([])
   const [articlesLoading, setArticlesLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [menuVisible, setMenuVisible] = useState<number | null>(null)
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
@@ -85,6 +87,42 @@ export default function HomeScreen() {
     } finally {
       setRefreshing(false)
     }
+  }
+
+  async function deleteArticle(articleId: number) {
+    Alert.alert(
+      'Delete Article',
+      'Are you sure you want to delete this article?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('articles')
+                .delete()
+                .eq('id', articleId)
+
+              if (error) {
+                throw error
+              }
+
+              // Remove article from local state
+              setArticles(articles.filter(article => article.id !== articleId))
+            } catch (error) {
+              if (error instanceof Error) {
+                Alert.alert('Error deleting article', error.message)
+              }
+            }
+          },
+        },
+      ]
+    )
   }
 
   // Extract first image URL from HTML content
@@ -150,45 +188,81 @@ export default function HomeScreen() {
             scrollEnabled={false}
             renderItem={({ item }) => {
               const imageUrl = extractFirstImageUrl(item.content || null)
+              const isMenuOpen = menuVisible === item.id
               
               return (
-                <Pressable
-                  onPress={() => router.push(`/article/${item.id}`)}
-                  style={({ pressed }) => [
-                    styles.articleCard,
-                    { borderColor, backgroundColor },
-                    pressed && styles.articleCardPressed,
-                  ]}
-                >
-                  <View style={styles.articleCardContent}>
-                    <View style={styles.articleCardText}>
-                      {item.title && (
-                        <ThemedText type="defaultSemiBold" style={styles.articleTitle}>
-                          {item.title}
-                        </ThemedText>
-                      )}
-                      {item.siteName && (
-                        <ThemedText style={[styles.articleUrl, { color: textColor }]}>
-                          {item.siteName}
-                        </ThemedText>
-                      )}
-                      {(item.created_at || item.created_time) && (
-                        <ThemedText style={[styles.articleDate, { color: borderColor }]}>
-                          {new Date(item.created_at || item.created_time || '').toLocaleDateString()}
-                        </ThemedText>
+                <View style={styles.articleCardWrapper}>
+                  <Pressable
+                    onPress={() => router.push(`/article/${item.id}`)}
+                    style={({ pressed }) => [
+                      styles.articleCard,
+                      { borderColor, backgroundColor },
+                      pressed && styles.articleCardPressed,
+                    ]}
+                  >
+                    <View style={styles.articleCardContent}>
+                      <View style={styles.articleCardText}>
+                        {item.title && (
+                          <ThemedText type="defaultSemiBold" style={styles.articleTitle}>
+                            {item.title}
+                          </ThemedText>
+                        )}
+                        {item.siteName && (
+                          <ThemedText style={[styles.articleUrl, { color: textColor }]}>
+                            {item.siteName}
+                          </ThemedText>
+                        )}
+                        {(item.created_at || item.created_time) && (
+                          <ThemedText style={[styles.articleDate, { color: borderColor }]}>
+                            {new Date(item.created_at || item.created_time || '').toLocaleDateString()}
+                          </ThemedText>
+                        )}
+                      </View>
+                      {imageUrl && (
+                        <Image
+                          source={{ uri: imageUrl }}
+                          style={styles.articleImage}
+                          contentFit="cover"
+                          transition={200}
+                          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+                        />
                       )}
                     </View>
-                    {imageUrl && (
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.articleImage}
-                        contentFit="cover"
-                        transition={200}
-                        placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-                      />
-                    )}
-                  </View>
-                </Pressable>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setMenuVisible(isMenuOpen ? null : item.id)}
+                    style={styles.menuButton}
+                  >
+                    <Ionicons name="ellipsis-vertical" size={20} color={textColor} />
+                  </Pressable>
+                  {isMenuOpen && (
+                    <Modal
+                      visible={isMenuOpen}
+                      transparent={true}
+                      animationType="fade"
+                      onRequestClose={() => setMenuVisible(null)}
+                    >
+                      <Pressable
+                        style={styles.menuOverlay}
+                        onPress={() => setMenuVisible(null)}
+                      >
+                        <View style={[styles.menuContainer, { backgroundColor, borderColor }]}>
+                          <Pressable
+                            style={styles.menuItem}
+                            onPress={() => {
+                              deleteArticle(item.id)
+                            }}
+                          >
+                            <Ionicons name="trash-outline" size={20} color="#ff3b30" style={styles.menuIcon} />
+                            <ThemedText style={[styles.menuItemText, { color: '#ff3b30' }]}>
+                              Delete
+                            </ThemedText>
+                          </Pressable>
+                        </View>
+                      </Pressable>
+                    </Modal>
+                  )}
+                </View>
               )
             }}
           />
@@ -237,6 +311,11 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     textAlign: 'center',
   },
+  articleCardWrapper: {
+    position: 'relative',
+    marginHorizontal: 12,
+    marginBottom: 12,
+  },
   articleCard: {
     display: 'flex',
     alignItems: 'center',
@@ -244,8 +323,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
-    marginHorizontal: 12,
-    marginBottom: 12,
   },
   articleCardPressed: {
     opacity: 0.7,
@@ -276,5 +353,44 @@ const styles = StyleSheet.create({
   articleDate: {
     fontSize: 12,
     opacity: 0.6,
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 8,
+    zIndex: 10,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuContainer: {
+    minWidth: 200,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+  },
+  menuIcon: {
+    marginRight: 12,
+  },
+  menuItemText: {
+    fontSize: 16,
   },
 })
