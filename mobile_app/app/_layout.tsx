@@ -6,7 +6,6 @@ import React, { useState, useEffect } from 'react'
 import { View, Image } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
-import Auth from '@/components/auth'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ThemedText } from '@/components/themed-text'
@@ -28,24 +27,15 @@ export default function RootLayout() {
     })
   }, [])
 
-  // Show auth screen when not logged in
-  if (!loading && !session) {
-    return (
-      <View style={{ flex: 1 }}>
-        <Auth />
-      </View>
-    )
-  }
-
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootStack />
+      <RootStack session={session} />
       <StatusBar style="auto" />
     </ThemeProvider>
   )
 }
 
-function RootStack() {
+function RootStack({session}: {session: Session | null}) {
   const { colors } = useTheme()
   
   return (
@@ -57,33 +47,53 @@ function RootStack() {
         animation: 'default',
       }}
     >
-      <Stack.Screen
-        name="index" 
+
+      <Stack.Protected guard={!session}>
+        <Stack.Screen 
+        name="auth" 
         options={{
-          headerTitle: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Image source={require('@/assets/images/logo.png')} style={{ width: 24, height: 24 }} />
-              <ThemedText type="title">poche</ThemedText>
-            </View>,
-          headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color={colors.text} /> 
-        }} 
-      />
-      <Stack.Screen 
-        name="settings" 
-        options={{ 
-          headerTitle: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Image source={require('@/assets/images/logo.png')} style={{ width: 24, height: 24 }} />
-              <ThemedText type="title">poche</ThemedText>
-            </View>,
-         }} 
-      />
-      <Stack.Screen 
-        name="modal" 
-        options={{ presentation: "modal", title: "Modal" }} 
-      />
-      <Stack.Screen 
-        name="article/[id]" 
-        options={{ title: "" }} 
-      />
+          headerTitle: () => <HeaderLogo />,
+        }}
+        />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen
+          name="index" 
+          options={{
+            headerTitle: () => <HeaderLogo />,
+            headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color={colors.text} /> 
+          }}
+        />
+        <Stack.Screen 
+          name="settings" 
+          options={{ 
+            headerTitle: () => <HeaderLogo />,
+          }} 
+        />
+        <Stack.Screen 
+          name="modal" 
+          options={{ presentation: "modal", title: "Modal" }} 
+        />
+        <Stack.Screen 
+          name="article/[id]" 
+          options={{ title: "" }} 
+        />
+      </Stack.Protected>
     </Stack>
+  )
+}
+
+function HeaderLogo() {
+  const colorScheme = useColorScheme()
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <Image 
+        source={ colorScheme === 'dark' ? require('@/assets/images/icon_white.png') : require('@/assets/images/icon_black.png')} 
+        style={{ width: 24, height: 24 }} 
+      />
+      <ThemedText type="title">poche</ThemedText>
+    </View>
   )
 }
