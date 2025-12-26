@@ -75,11 +75,12 @@ function parseCurrentPage() {
   return {
     title: article.title,
     content: article.content,
-    excerpt: article.excerpt || '',
-    byline: article.byline || '',
+    excerpt: article.excerpt,
+    publishedTime: article.publishedTime,
+    byline: article.byline,
     siteName: article.siteName || new URL(window.location.href).hostname,
     url: window.location.href,
-    length: article.length || 0,
+    length: article.length,
   }
 }
 

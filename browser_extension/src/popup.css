@@ -13,8 +13,8 @@ body {
   flex-direction: column;
   gap: 18px;
   width: 350px;
-  padding: 12px;
-  border: 1px solid rgb(var(--color-primary));
+  padding: 10px;
+  /* border: 1px solid rgb(var(--color-primary)); */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: rgb(var(--color-background));
   color: rgb(var(--color-text));
@@ -132,7 +132,8 @@ body {
       font-size: 14px;
       border: 1px solid #dddddd;
       border-radius: 6px;
-      color: var(--color-text);
+      color: rgb(var(--color-text));
+      background: rgb(var(--color-background));
       transition: border-color 0.2s;
 
       &:focus {
