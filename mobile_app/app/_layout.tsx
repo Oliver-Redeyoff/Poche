@@ -9,6 +9,9 @@ import { Session } from '@supabase/supabase-js'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ThemedText } from '@/components/themed-text'
+// Import background sync to ensure task is defined
+import '@/lib/background-sync'
+import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -20,11 +23,27 @@ export default function RootLayout() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
+      // Register background sync if user is logged in
+      if (session) {
+        registerBackgroundSync()
+      }
     })
-    supabase.auth.onAuthStateChange((_event, session) => {
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       setLoading(false)
+      
+      // Register or unregister background sync based on auth state
+      if (session) {
+        await registerBackgroundSync()
+      } else {
+        await unregisterBackgroundSync()
+      }
     })
+    
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   return (
