@@ -9,6 +9,7 @@ import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import Ionicons from '@expo/vector-icons/Ionicons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 interface Article {
   id: number
@@ -47,9 +48,49 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (session) {
+      // Load stored articles first, then fetch new ones
+      loadStoredArticles()
       getArticles()
+    } else {
+      // Clear articles when user logs out
+      setArticles([])
     }
   }, [session])
+
+  // Storage key for articles (per user)
+  function getArticlesStorageKey(): string {
+    if (!session?.user) return ''
+    return `@poche_articles_${session.user.id}`
+  }
+
+  // Load stored articles from AsyncStorage
+  async function loadStoredArticles() {
+    try {
+      if (!session?.user) return
+      
+      const storageKey = getArticlesStorageKey()
+      const storedData = await AsyncStorage.getItem(storageKey)
+      
+      if (storedData) {
+        const storedArticles: Article[] = JSON.parse(storedData)
+        setArticles(storedArticles)
+      }
+    } catch (error) {
+      console.error('Error loading stored articles:', error)
+    }
+  }
+
+  // Save articles to AsyncStorage
+  async function saveArticlesToStorage(articlesToSave: Article[]) {
+    try {
+      if (!session?.user) return
+      
+      const storageKey = getArticlesStorageKey()
+      await AsyncStorage.setItem(storageKey, JSON.stringify(articlesToSave))
+    } catch (error) {
+      console.error('Error saving articles to storage:', error)
+    }
+  }
 
   async function getArticles() {
     try {
@@ -58,18 +99,73 @@ export default function HomeScreen() {
         throw new Error('No user on the session!')
       }
       
-      const { data, error } = await supabase
+      // Get stored article IDs
+      const storageKey = getArticlesStorageKey()
+      const storedData = await AsyncStorage.getItem(storageKey)
+      const storedArticles: Article[] = storedData ? JSON.parse(storedData) : []
+      const storedArticleIds = storedArticles.map(article => article.id)
+      
+      // Build query - if we have stored articles, only fetch new ones
+      let query = supabase
         .from('articles')
         .select('*')
         .eq('user_id', session.user.id)
-        .order('created_time', { ascending: false })
+      
+      // If we have stored articles, only fetch articles not in storage
+      // Supabase PostgREST syntax for "not in"
+      if (storedArticleIds.length > 0) {
+        query = query.not('id', 'in', `(${storedArticleIds.join(',')})`)
+      }
+      
+      // Apply ordering after filters
+      query = query.order('created_time', { ascending: false })
+      
+      let { data, error } = await query
 
-      if (error) {
+      // If the "not in" query fails, fallback to fetching all and filtering client-side
+      if (error && storedArticleIds.length > 0) {
+        console.warn('Not-in query failed, falling back to fetch-all approach:', error)
+        // Fallback: fetch all articles and filter client-side
+        const { data: allData, error: allError } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_time', { ascending: false })
+        
+        if (allError) {
+          throw allError
+        }
+        
+        // Filter out stored articles client-side
+        data = allData?.filter(article => !storedArticleIds.includes(article.id)) || []
+        error = null
+      } else if (error) {
         throw error
       }
 
       if (data) {
-        setArticles(data)
+        // Merge new articles with stored articles
+        const newArticles = data || []
+        const mergedArticles = [...newArticles, ...storedArticles]
+          .sort((a, b) => {
+            // Sort by created_time descending (newest first)
+            const timeA = new Date(a.created_time || a.created_at || 0).getTime()
+            const timeB = new Date(b.created_time || b.created_at || 0).getTime()
+            return timeB - timeA
+          })
+        
+        // Remove duplicates (in case of any edge cases)
+        const uniqueArticles = mergedArticles.filter((article, index, self) =>
+          index === self.findIndex((a) => a.id === article.id)
+        )
+        
+        setArticles(uniqueArticles)
+        // Save merged articles back to storage
+        await saveArticlesToStorage(uniqueArticles)
+      } else if (storedArticles.length === 0) {
+        // No new articles and no stored articles - set empty array
+        setArticles([])
+        await saveArticlesToStorage([])
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -113,7 +209,10 @@ export default function HomeScreen() {
               }
 
               // Remove article from local state
-              setArticles(articles.filter(article => article.id !== articleId))
+              const updatedArticles = articles.filter(article => article.id !== articleId)
+              setArticles(updatedArticles)
+              // Update storage
+              await saveArticlesToStorage(updatedArticles)
             } catch (error) {
               if (error instanceof Error) {
                 Alert.alert('Error deleting article', error.message)
