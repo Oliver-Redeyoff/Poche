@@ -192,6 +192,7 @@ export default function HomeScreen() {
               
               return (
                 <View style={styles.articleCardWrapper}>
+                  {/* Top part of article card */}
                   <Pressable
                     onPress={() => router.push(`/article/${item.id}`)}
                     style={({ pressed }) => [
@@ -218,6 +219,7 @@ export default function HomeScreen() {
                           </ThemedText>
                         )}
                       </View>
+
                       {imageUrl && (
                         <Image
                           source={{ uri: imageUrl }}
@@ -227,8 +229,11 @@ export default function HomeScreen() {
                           placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                         />
                       )}
+
                     </View>
                   </Pressable>
+
+                  {/* Bottom part of article card */}
                   <Pressable
                     onPress={() => setMenuVisible(isMenuOpen ? null : item.id)}
                     style={styles.menuButton}
@@ -314,15 +319,16 @@ const styles = StyleSheet.create({
   articleCardWrapper: {
     position: 'relative',
     marginHorizontal: 12,
-    marginBottom: 12,
+    // marginBottom: 12,
   },
   articleCard: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    paddingTop: 18,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(120, 120, 120, 0.15)',
   },
   articleCardPressed: {
     opacity: 0.7,
@@ -337,7 +343,7 @@ const styles = StyleSheet.create({
   },
   articleImage: {
     width: 100,
-    height: 100,
+    height: 60,
     borderRadius: 6,
     backgroundColor: '#f0f0f0',
   },
