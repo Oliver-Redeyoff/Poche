@@ -17,6 +17,127 @@ const statusMessage = document.getElementById('statusMessage')
 const userEmail = document.getElementById('userEmail')
 const logoutButton = document.getElementById('logoutButton')
 
+// Storage key for saved articles (per user)
+function getSavedArticlesStorageKey(userId) {
+  return `poche_saved_articles_${userId}`
+}
+
+// Get saved articles from storage
+async function getSavedArticles(userId) {
+  try {
+    const storageKey = getSavedArticlesStorageKey(userId)
+    const result = await browserAPI.storage.local.get(storageKey)
+    return result[storageKey] || { urls: [], ids: [] }
+  } catch (error) {
+    console.error('Error getting saved articles:', error)
+    return { urls: [], ids: [] }
+  }
+}
+
+// Save article URL and ID to storage
+async function saveArticleToStorage(userId, articleId, url) {
+  try {
+    const storageKey = getSavedArticlesStorageKey(userId)
+    const saved = await getSavedArticles(userId)
+    
+    // Add URL and ID if not already present
+    if (url && !saved.urls.includes(url)) {
+      saved.urls.push(url)
+    }
+    if (articleId && !saved.ids.includes(articleId)) {
+      saved.ids.push(articleId)
+    }
+    
+    await browserAPI.storage.local.set({ [storageKey]: saved })
+  } catch (error) {
+    console.error('Error saving article to storage:', error)
+  }
+}
+
+// Sync saved articles from Supabase on login
+async function syncSavedArticlesFromSupabase(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('id, url')
+      .eq('user_id', userId)
+      .not('url', 'is', null)
+    
+    if (error) {
+      console.error('Error syncing articles from Supabase:', error)
+      return
+    }
+    
+    if (data && data.length > 0) {
+      const urls = data.map(article => article.url).filter(Boolean)
+      const ids = data.map(article => article.id).filter(Boolean)
+      
+      const storageKey = getSavedArticlesStorageKey(userId)
+      await browserAPI.storage.local.set({ [storageKey]: { urls, ids } })
+    }
+  } catch (error) {
+    console.error('Error syncing articles:', error)
+  }
+}
+
+// Check if current URL is already saved
+async function checkIfUrlIsSaved(userId, url) {
+  try {
+    const saved = await getSavedArticles(userId)
+    return saved.urls.includes(url)
+  } catch (error) {
+    console.error('Error checking if URL is saved:', error)
+    return false
+  }
+}
+
+// Update save button state based on current URL
+async function updateSaveButtonState() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session || !session.user || !saveButton) {
+      return
+    }
+    
+    // Get current tab URL
+    const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true })
+    const tab = tabs[0]
+    
+    if (!tab || !tab.url) {
+      saveButton.disabled = true
+      saveButton.textContent = 'Save Article'
+      return
+    }
+    
+    // Check if we can save from this page (not browser internal pages)
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || 
+        tab.url.startsWith('moz-extension://') || tab.url.startsWith('about:') ||
+        tab.url.startsWith('edge://') || tab.url.startsWith('opera://')) {
+      saveButton.disabled = true
+      saveButton.textContent = 'Cannot Save This Page'
+      return
+    }
+    
+    // Check if URL is already saved
+    const isSaved = await checkIfUrlIsSaved(session.user.id, tab.url)
+    
+    if (isSaved) {
+      saveButton.disabled = true
+      saveButton.textContent = 'Already Saved'
+    } else {
+      saveButton.disabled = false
+      saveButton.textContent = 'Save Article'
+    }
+  } catch (error) {
+    console.error('Error updating save button state:', error)
+    // On error, enable the button to allow manual save
+    if (saveButton) {
+      saveButton.disabled = false
+      saveButton.textContent = 'Save Article'
+    }
+  }
+}
+
 // Check authentication status on load
 checkAuthStatus()
 
@@ -83,11 +204,17 @@ async function checkAuthStatus() {
         
         // Session is valid
         showMainSection(session.user.email)
+        // Sync saved articles and update button state
+        syncSavedArticlesFromSupabase(session.user.id)
+        updateSaveButtonState()
       } catch (error) {
         // If refresh fails, check if we still have a valid session
         const { data: { session: currentSession } } = await supabase.auth.getSession()
         if (currentSession && currentSession.user) {
           showMainSection(currentSession.user.email)
+          // Sync saved articles and update button state
+          syncSavedArticlesFromSupabase(currentSession.user.id)
+          updateSaveButtonState()
         } else {
           showLoginSection()
         }
@@ -116,6 +243,9 @@ async function signIn(email, password) {
     if (data.session) {
       showMainSection(data.user.email)
       showStatus('Signed in successfully!', 'success')
+      // Sync saved articles and update button state
+      syncSavedArticlesFromSupabase(data.user.id)
+      updateSaveButtonState()
     }
   } catch (error) {
     showStatus(error.message || 'Sign in failed', 'error')
@@ -139,6 +269,9 @@ async function signUp(email, password) {
     if (data.session) {
       showMainSection(data.user.email)
       showStatus('Account created and signed in!', 'success')
+      // Sync saved articles and update button state
+      syncSavedArticlesFromSupabase(data.user.id)
+      updateSaveButtonState()
     } else {
       showStatus('Please check your email to verify your account', 'info')
     }
@@ -289,6 +422,14 @@ async function saveCurrentArticle() {
       throw new Error(`Failed to save to database: ${errorMsg}`)
     }
     
+    // Save article URL and ID to local storage
+    if (data && data.id && article.url) {
+      await saveArticleToStorage(session.user.id, data.id, article.url)
+    }
+    
+    // Update button state after saving
+    await updateSaveButtonState()
+    
     showStatus('Article saved successfully!', 'success')
   } catch (error) {
     console.error('Error saving article:', error)
@@ -308,9 +449,11 @@ async function saveCurrentArticle() {
     }
     
     showStatus(`Error saving article: ${errorMessage}`, 'error')
-  } finally {
-    saveButton.disabled = false
+    // On error, update button state to allow retry
+    await updateSaveButtonState()
   }
+  // Note: We don't re-enable the button in finally block
+  // because updateSaveButtonState() handles the correct state
 }
 
 function showLoginSection() {
@@ -326,6 +469,8 @@ function showMainSection(email) {
   if (userEmail) {
     userEmail.textContent = email
   }
+  // Update save button state when showing main section
+  updateSaveButtonState()
 }
 
 function showStatus(message, type = 'info') {
@@ -345,12 +490,16 @@ function showStatus(message, type = 'info') {
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN' && session) {
     showMainSection(session.user.email)
+    // Sync saved articles and update button state
+    syncSavedArticlesFromSupabase(session.user.id)
+    updateSaveButtonState()
   } else if (event === 'SIGNED_OUT') {
     showLoginSection()
   } else if (event === 'TOKEN_REFRESHED' && session) {
     // Session was refreshed, ensure UI is updated
     if (session.user) {
       showMainSection(session.user.email)
+      updateSaveButtonState()
     }
   }
 })
