@@ -28,6 +28,7 @@ export default function HomeScreen() {
   const [articles, setArticles] = useState<Article[]>([])
   const [articlesLoading, setArticlesLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [menuVisible, setMenuVisible] = useState<number | null>(null)
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
@@ -48,9 +49,11 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (session) {
-      // Load stored articles first, then fetch new ones
-      loadStoredArticles()
-      getArticles()
+      // Load stored articles immediately (synchronous-like, shows right away)
+      loadStoredArticles().then(() => {
+        // After stored articles are loaded, sync new ones in background
+        syncNewArticles()
+      })
     } else {
       // Clear articles when user logs out
       setArticles([])
@@ -92,6 +95,118 @@ export default function HomeScreen() {
     }
   }
 
+  // Sync new articles in the background (doesn't block UI)
+  async function syncNewArticles() {
+    try {
+      setSyncing(true)
+      if (!session?.user) {
+        return
+      }
+      
+      // Get stored article IDs
+      const storageKey = getArticlesStorageKey()
+      const storedData = await AsyncStorage.getItem(storageKey)
+      const storedArticles: Article[] = storedData ? JSON.parse(storedData) : []
+      const storedArticleIds = storedArticles.map(article => article.id)
+      
+      // Build query - if we have stored articles, only fetch new ones
+      let query = supabase
+        .from('articles')
+        .select('*')
+        .eq('user_id', session.user.id)
+      
+      // If we have stored articles, only fetch articles not in storage
+      // Supabase PostgREST syntax for "not in"
+      if (storedArticleIds.length > 0) {
+        query = query.not('id', 'in', `(${storedArticleIds.join(',')})`)
+      }
+      
+      // Apply ordering after filters
+      query = query.order('created_time', { ascending: false })
+      
+      let { data, error } = await query
+
+      // If the "not in" query fails, fallback to fetching all and filtering client-side
+      if (error && storedArticleIds.length > 0) {
+        console.warn('Not-in query failed, falling back to fetch-all approach:', error)
+        // Fallback: fetch all articles and filter client-side
+        const { data: allData, error: allError } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_time', { ascending: false })
+        
+        if (allError) {
+          throw allError
+        }
+        
+        // Filter out stored articles client-side
+        data = allData?.filter(article => !storedArticleIds.includes(article.id)) || []
+        error = null
+      } else if (error) {
+        throw error
+      }
+
+      if (data) {
+        // Merge new articles with stored articles
+        const newArticles = data || []
+        const mergedArticles = [...newArticles, ...storedArticles]
+          .sort((a, b) => {
+            // Sort by created_time descending (newest first)
+            const timeA = new Date(a.created_time || a.created_at || 0).getTime()
+            const timeB = new Date(b.created_time || b.created_at || 0).getTime()
+            return timeB - timeA
+          })
+        
+        // Remove duplicates (in case of any edge cases)
+        const uniqueArticles = mergedArticles.filter((article, index, self) =>
+          index === self.findIndex((a) => a.id === article.id)
+        )
+        
+        setArticles(uniqueArticles)
+        // Save merged articles back to storage
+        await saveArticlesToStorage(uniqueArticles)
+      } else if (storedArticles.length === 0) {
+        // No new articles and no stored articles - set empty array
+        setArticles([])
+        await saveArticlesToStorage([])
+      }
+    } catch (error) {
+      // Check if it's a network error
+      const isNetworkError = error instanceof Error && (
+        error.message.includes('Network') ||
+        error.message.includes('fetch') ||
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('network') ||
+        error.message.includes('ECONNREFUSED') ||
+        error.message.includes('timeout')
+      )
+      
+      // Get stored articles as fallback
+      const storageKey = getArticlesStorageKey()
+      const storedData = await AsyncStorage.getItem(storageKey)
+      const storedArticles: Article[] = storedData ? JSON.parse(storedData) : []
+      
+      if (isNetworkError && storedArticles.length > 0) {
+        // Network error but we have stored articles - use them
+        console.log('Network error, using stored articles')
+        setArticles(storedArticles)
+        // Don't show error alert if we have stored articles to show
+      } else if (storedArticles.length === 0) {
+        // No stored articles and network failed - show error
+        if (error instanceof Error) {
+          Alert.alert('Error fetching articles', 'Unable to load articles. Please check your internet connection.')
+        }
+      } else {
+        // Other error with stored articles - still show stored articles
+        setArticles(storedArticles)
+      }
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // Full refresh function (used for pull-to-refresh)
   async function getArticles() {
     try {
       setArticlesLoading(true)
@@ -168,8 +283,34 @@ export default function HomeScreen() {
         await saveArticlesToStorage([])
       }
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error fetching articles', error.message)
+      // Check if it's a network error
+      const isNetworkError = error instanceof Error && (
+        error.message.includes('Network') ||
+        error.message.includes('fetch') ||
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('network') ||
+        error.message.includes('ECONNREFUSED') ||
+        error.message.includes('timeout')
+      )
+      
+      // Get stored articles as fallback
+      const storageKey = getArticlesStorageKey()
+      const storedData = await AsyncStorage.getItem(storageKey)
+      const storedArticles: Article[] = storedData ? JSON.parse(storedData) : []
+      
+      if (isNetworkError && storedArticles.length > 0) {
+        // Network error but we have stored articles - use them
+        console.log('Network error, using stored articles')
+        setArticles(storedArticles)
+        // Don't show error alert if we have stored articles to show
+      } else if (storedArticles.length === 0) {
+        // No stored articles and network failed - show error
+        if (error instanceof Error) {
+          Alert.alert('Error fetching articles', 'Unable to load articles. Please check your internet connection.')
+        }
+      } else {
+        // Other error with stored articles - still show stored articles
+        setArticles(storedArticles)
       }
     } finally {
       setArticlesLoading(false)
@@ -180,6 +321,9 @@ export default function HomeScreen() {
     setRefreshing(true)
     try {
       await getArticles()
+    } catch (error) {
+      // Refresh errors are handled in getArticles()
+      // It will fall back to stored articles if network fails
     } finally {
       setRefreshing(false)
     }
@@ -268,7 +412,7 @@ export default function HomeScreen() {
           />
         }
       >
-        {articlesLoading ? (
+        {articlesLoading && articles.length === 0 ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" />
             <ThemedText style={styles.loadingText}>Loading articles...</ThemedText>

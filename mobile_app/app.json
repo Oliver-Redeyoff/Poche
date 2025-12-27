@@ -10,7 +10,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "backgroundModes": ["fetch", "processing"]
+      "backgroundModes": [
+        "fetch",
+        "processing",
+        "fetch",
+        "processing"
+      ],
+      "bundleIdentifier": "com.anonymous.Poche"
     },
     "android": {
       "adaptiveIcon": {
