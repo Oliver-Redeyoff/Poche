@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "../lib/supabase"
 import { Session } from "@supabase/supabase-js"
 import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator, RefreshControl, Modal } from 'react-native'
@@ -10,6 +10,7 @@ import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated'
 
 interface Article {
   id: number
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [menuVisible, setMenuVisible] = useState<number | null>(null)
+  const seenArticleIds = useRef<Set<number>>(new Set())
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
@@ -77,6 +79,8 @@ export default function HomeScreen() {
       if (storedData) {
         const storedArticles: Article[] = JSON.parse(storedData)
         setArticles(storedArticles)
+        // Don't mark as seen immediately - let animations trigger first
+        // They'll be marked as seen in the renderItem after animation
       }
     } catch (error) {
       console.error('Error loading stored articles:', error)
@@ -163,6 +167,8 @@ export default function HomeScreen() {
           index === self.findIndex((a) => a.id === article.id)
         )
         
+        // Track which articles are new (not seen before) for animation
+        // Don't mark as seen yet - let the animation trigger first
         setArticles(uniqueArticles)
         // Save merged articles back to storage
         await saveArticlesToStorage(uniqueArticles)
@@ -429,12 +435,23 @@ export default function HomeScreen() {
             data={articles}
             keyExtractor={(item) => item.id.toString()}
             scrollEnabled={false}
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const imageUrl = extractFirstImageUrl(item.content || null)
               const isMenuOpen = menuVisible === item.id
+              const isNewArticle = !seenArticleIds.current.has(item.id)
+              
+              // Mark as seen after render
+              if (isNewArticle) {
+                setTimeout(() => {
+                  seenArticleIds.current.add(item.id)
+                }, 0)
+              }
               
               return (
-                <View style={styles.articleCardWrapper}>
+                <Animated.View 
+                  style={styles.articleCardWrapper}
+                  entering={isNewArticle ? FadeInDown.duration(500).delay(Math.min(index * 30, 300)) : undefined}
+                >
                   {/* Top part of article card */}
                   <Pressable
                     onPress={() => router.push(`/article/${item.id}`)}
@@ -510,7 +527,7 @@ export default function HomeScreen() {
                       </Pressable>
                     </Modal>
                   )}
-                </View>
+                </Animated.View>
               )
             }}
           />
