@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import RenderHTML from 'react-native-render-html'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -38,6 +39,34 @@ export default function ArticleScreen() {
     }
   }, [id])
 
+  // Get storage key for articles (per user)
+  async function getArticlesStorageKey(): Promise<string> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return ''
+      return `@poche_articles_${session.user.id}`
+    } catch {
+      return ''
+    }
+  }
+
+  // Load article from local storage
+  async function loadArticleFromStorage(articleId: number): Promise<Article | null> {
+    try {
+      const storageKey = await getArticlesStorageKey()
+      if (!storageKey) return null
+      
+      const storedData = await AsyncStorage.getItem(storageKey)
+      if (!storedData) return null
+      
+      const storedArticles: Article[] = JSON.parse(storedData)
+      return storedArticles.find(article => article.id === articleId) || null
+    } catch (error) {
+      console.error('Error loading article from storage:', error)
+      return null
+    }
+  }
+
   async function getArticle() {
     try {
       setLoading(true)
@@ -47,24 +76,21 @@ export default function ArticleScreen() {
         throw new Error('Invalid article ID')
       }
 
-      const { data, error } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('id', articleId)
-        .single()
-
-      if (error) {
-        throw error
-      }
-
-      if (data) {
-        setArticle(data)
+      // Load article from local storage only
+      const storedArticle = await loadArticleFromStorage(articleId)
+      
+      if (storedArticle) {
+        setArticle(storedArticle)
+      } else {
+        // Article not found in local storage
+        Alert.alert('Article not found', 'This article is not available offline. Please sync your articles first.')
+        router.back()
       }
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error loading article', error.message)
+        router.back()
       }
-      router.back()
     } finally {
       setLoading(false)
     }
@@ -93,6 +119,7 @@ export default function ArticleScreen() {
       color: textColor,
       fontSize: 16,
       lineHeight: 24,
+      paddingBottom: 32,
     },
     p: {
       color: textColor,

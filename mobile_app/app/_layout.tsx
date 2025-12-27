@@ -3,7 +3,7 @@ import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect } from 'react'
-import { View, Image } from 'react-native'
+import { View, Image, Pressable } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
 import { useColorScheme } from '@/hooks/use-color-scheme'
@@ -80,7 +80,22 @@ function RootStack({session}: {session: Session | null}) {
           name="index" 
           options={{
             headerTitle: () => <HeaderLogo />,
-            headerRight: () => <Ionicons onPress={() => router.push('/settings')} name="settings-outline" size={24} color={colors.text} /> 
+            headerRight: () => (
+              <Pressable 
+                onPress={() => router.push('/settings')}
+                style={({ pressed }) => [
+                  {
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: 6,
+                  },
+                  pressed && { opacity: 0.6 }
+                ]}
+              >
+                <Ionicons name="settings-outline" size={24} color={colors.text} />
+              </Pressable>
+            ),
           }}
         />
         <Stack.Screen 
