@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import { tagToColor } from '../shared/util'
 
 // Declare browser for Firefox compatibility
 declare const browser: typeof chrome
@@ -57,8 +58,8 @@ interface MainSectionProps {
   onSaveArticle: () => Promise<void>
   saveButtonDisabled: boolean
   saveButtonText: string
-  tags: string
-  onTagsChange: (tags: string) => void
+  tags: string[]
+  onTagsChange: (tags: string[]) => void
 }
 
 // Storage key for saved articles (per user)
@@ -239,19 +240,7 @@ function MainSection({
 }: MainSectionProps): JSX.Element {
   return (
     <div className="section">
-      <div className="form-group">
-        <label htmlFor="tagsInput">Tags (comma-separated)</label>
-        <input
-          type="text"
-          id="tagsInput"
-          name="tags"
-          placeholder="e.g. tech, programming, web"
-          autoComplete="off"
-          value={tags}
-          onChange={(e) => onTagsChange(e.target.value)}
-        />
-        <p className="form-hint">Separate multiple tags with commas</p>
-      </div>
+      <TagsInput tags={tags} onTagsChange={onTagsChange} />
       
       <button
         className="btn btn-primary btn-large"
@@ -269,6 +258,53 @@ function MainSection({
   )
 }
 
+type TagsInputProps = {
+  tags: string[]
+  onTagsChange: (tags: string[]) => void
+}
+
+function TagsInput({ tags, onTagsChange }: TagsInputProps): JSX.Element {
+  return (
+    <div className="form-group">
+      <label htmlFor="tagsInput">Tags</label>
+      <div className="tags-input-container">
+        {tags.length > 0 && (
+          <div className="tag-list">
+            {tags.map((tag: string) => (
+              <div 
+                key={tag} 
+                className="tag" 
+                style={{ 
+                  backgroundColor: tagToColor(tag, 0.2), 
+                  color: tagToColor(tag, 1.0) 
+                }}
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <input
+            type="text"
+            id="tagsInput"
+            name="tags"
+            placeholder={tags.length > 0 ? "" : "e.g. tech, programming, web"}
+            autoComplete="off"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onTagsChange([...tags, (e.target as HTMLInputElement).value]);
+                (e.target as HTMLInputElement).value = '';
+              } else if (e.key === 'Backspace' && (e.target as HTMLInputElement).value === '') {
+                onTagsChange(tags.slice(0, -1));
+              }
+            }}
+          />
+      </div>
+    </div>
+  )
+}
+
 function App(): JSX.Element {
   const [session, setSession] = useState<Session | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>('')
@@ -276,7 +312,7 @@ function App(): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false)
   const [saveButtonText, setSaveButtonText] = useState<string>('Save Article')
-  const [tags, setTags] = useState<string>('')
+  const [tags, setTags] = useState<string[]>([])
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Update save button state based on current URL
@@ -560,16 +596,20 @@ function App(): JSX.Element {
       
       // Process tags: split by comma, trim whitespace, filter empty strings, join with commas
       let tagsString: string | null = null
-      if (tags && tags.trim()) {
-        const tagArray = tags
-          .split(',')
-          .map(tag => tag.trim())
-          .filter(tag => tag.length > 0)
-        
-        if (tagArray.length > 0) {
-          tagsString = tagArray.join(',')
-        }
+      if (tags.length > 0) {
+        tagsString = tags.join(',')
       }
+
+      // if (tags && tags.trim()) {
+      //   const tagArray = tags
+      //     .split(',')
+      //     .map(tag => tag.trim())
+      //     .filter(tag => tag.length > 0)
+        
+      //   if (tagArray.length > 0) {
+      //     tagsString = tagArray.join(',')
+      //   }
+      // }
       
       // Save to Supabase
       const { data, error: supabaseError } = await supabase
@@ -601,7 +641,7 @@ function App(): JSX.Element {
       await updateSaveButtonState()
       
       // Clear tags input after successful save
-      setTags('')
+      setTags([])
       
       showStatus('Article saved successfully!', 'success')
     } catch (error) {
@@ -628,7 +668,7 @@ function App(): JSX.Element {
   const handleLogout = async (): Promise<void> => {
     await supabase.auth.signOut()
     setSession(null)
-    setTags('')
+    setTags([])
     showStatus('Logged out successfully', 'success')
   }
 
@@ -646,7 +686,7 @@ function App(): JSX.Element {
         updateSaveButtonState()
       } else if (event === 'SIGNED_OUT') {
         setSession(null)
-        setTags('')
+        setTags([])
       } else if (event === 'TOKEN_REFRESHED' && newSession) {
         // Session was refreshed, ensure UI is updated
         if (newSession.user) {
