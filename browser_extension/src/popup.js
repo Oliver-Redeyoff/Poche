@@ -404,19 +404,17 @@ async function saveCurrentArticle() {
     
     // Save to Supabase
     // Match the actual database schema from database_types.ts:
-    // Schema columns: content, created_time, id, published_time, title, user_id
+    // Schema columns: content, created_time, id, title, user_id
     // - content: text content from article (required in Insert)
     // - created_time: optional in Insert, will use database default if not provided
     // - title: article title (optional)
     // - user_id: current user's ID (required)
-    // - published_time: optional, not setting it here
     const { data, error: supabaseError } = await supabase
       .from('articles')
       .insert({
         user_id: session.user.id,
         excerpt: article.excerpt || null,
         length: article.length || null,
-        published_time: article.publishedTime || null,
         siteName: article.siteName || null,
         title: article.title || null,
         url: article.url || null,

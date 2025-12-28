@@ -15,8 +15,7 @@ interface Article {
   id: number
   title?: string | null
   content?: string | null
-  created_time?: string
-  published_time?: string | null
+  created_time: string
   user_id: string
 }
 
@@ -172,23 +171,14 @@ export default function ArticleScreen() {
           </ThemedText>
         )}
         
-        {(article.created_time || article.published_time) && (
-          <ThemedText style={[styles.date, { color: borderColor }]}>
-            {article.published_time 
-              ? new Date(article.published_time).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })
-              : article.created_time
-              ? new Date(article.created_time).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })
-              : null}
-          </ThemedText>
-        )}
+        <ThemedText style={[styles.date, { color: borderColor }]}>
+          {new Date(article.created_time).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+          }
+        </ThemedText>
 
         <View style={styles.contentContainer}>
           <RenderHTML

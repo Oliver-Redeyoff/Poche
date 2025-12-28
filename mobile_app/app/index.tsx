@@ -14,8 +14,7 @@ interface Article {
   title?: string | null
   content?: string | null
   url?: string
-  created_time?: string
-  [key: string]: any
+  created_time: string
 }
 
 export default function HomeScreen() {

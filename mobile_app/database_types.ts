@@ -21,7 +21,6 @@ export type Database = {
           excerpt: string | null
           id: number
           length: number | null
-          published_time: string | null
           siteName: string | null
           title: string | null
           url: string | null
@@ -33,7 +32,6 @@ export type Database = {
           excerpt?: string | null
           id?: number
           length?: number | null
-          published_time?: string | null
           siteName?: string | null
           title?: string | null
           url?: string | null
@@ -45,7 +43,6 @@ export type Database = {
           excerpt?: string | null
           id?: number
           length?: number | null
-          published_time?: string | null
           siteName?: string | null
           title?: string | null
           url?: string | null
