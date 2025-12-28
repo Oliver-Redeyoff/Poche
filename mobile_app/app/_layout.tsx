@@ -7,23 +7,21 @@ import { View, Image, Pressable } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
 import { useColorScheme } from '@/hooks/use-color-scheme'
-import Ionicons from '@expo/vector-icons/Ionicons'
 import { ThemedText } from '@/components/themed-text'
 // Import background sync to ensure task is defined
 import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
+import { useThemeColor } from '@/hooks/use-theme-color'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
 
   const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      setLoading(false)
       // Register background sync if user is logged in
       if (session) {
         registerBackgroundSync()
@@ -32,7 +30,6 @@ export default function RootLayout() {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
-      setLoading(false)
       
       // Register or unregister background sync based on auth state
       if (session) {
@@ -56,14 +53,15 @@ export default function RootLayout() {
 }
 
 function RootStack({session}: {session: Session | null}) {
-  const { colors } = useTheme()
+  const backgroundColor = useThemeColor({}, 'background')
+  const textColor = useThemeColor({}, 'text')
   
   return (
     <Stack 
       screenOptions={{ 
         headerTransparent: true, 
         headerBackButtonDisplayMode: "minimal",
-        contentStyle: { backgroundColor: colors.background },
+        contentStyle: { backgroundColor: backgroundColor },
         animation: 'default',
       }}
     >
@@ -94,8 +92,7 @@ function RootStack({session}: {session: Session | null}) {
                   pressed && { opacity: 0.6 }
                 ]}
               >
-                <IconSymbol name="gear" size={26} color={colors.text} />
-                {/* <Ionicons name="settings-outline" size={24} color={colors.text} /> */}
+                <IconSymbol name="gear" size={26} color={textColor} />
               </Pressable>
             ),
           }}
