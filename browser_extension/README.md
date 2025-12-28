@@ -70,7 +70,7 @@ npm run dev
 - Safari may require additional configuration
 - Make sure your Supabase RLS policies allow users to insert their own articles
 - You'll need to create icon files (see ICONS.md)
-- The articles table should have columns: `user_id`, `title`, `content`, `html_content`, `url`, `excerpt`, `site_name`, `created_at`
+- The articles table should have columns: `user_id`, `title`, `content`, `html_content`, `url`, `excerpt`, `site_name`, `created_time`
 
 ## Database Schema
 
@@ -86,7 +86,6 @@ CREATE TABLE articles (
   url TEXT NOT NULL,
   excerpt TEXT,
   site_name TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

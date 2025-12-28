@@ -13,7 +13,6 @@ interface Article {
   url?: string
   siteName?: string | null
   created_time?: string
-  created_at?: string
   [key: string]: any
 }
 
@@ -89,9 +88,9 @@ export function ArticleCard({
                 {article.siteName}
               </ThemedText>
             )}
-            {(article.created_at || article.created_time) && (
+            {(article.created_time) && (
               <ThemedText style={[styles.articleDate, { color: borderColor }]}>
-                {new Date(article.created_at || article.created_time || '').toLocaleDateString()}
+                {new Date(article.created_time || '').toLocaleDateString()}
               </ThemedText>
             )}
           </View>
