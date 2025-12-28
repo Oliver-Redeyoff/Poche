@@ -22,6 +22,7 @@ export type Database = {
           id: number
           length: number | null
           siteName: string | null
+          tags: string | null
           title: string | null
           url: string | null
           user_id: string
@@ -33,6 +34,7 @@ export type Database = {
           id?: number
           length?: number | null
           siteName?: string | null
+          tags?: string | null
           title?: string | null
           url?: string | null
           user_id: string
@@ -44,6 +46,7 @@ export type Database = {
           id?: number
           length?: number | null
           siteName?: string | null
+          tags?: string | null
           title?: string | null
           url?: string | null
           user_id?: string
