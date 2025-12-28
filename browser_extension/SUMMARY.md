@@ -10,6 +10,9 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Article Parsing**: Uses Mozilla Readability to extract clean article content from web pages
 - **Article Saving**: Saves parsed articles to Supabase articles table
 - **Cross-Browser Support**: Works with Chrome (Manifest V3), Firefox, and Safari
+- **Saved Article Tracking**: Tracks which URLs have already been saved to prevent duplicate saves
+- **Smart Button State**: "Save Article" button automatically disables and shows "Already Saved" if the current URL is already saved
+- **Automatic Sync**: Syncs saved article list from Supabase on popup open to reflect deletions from mobile app
 
 ## Architecture
 
@@ -51,6 +54,9 @@ Main extension logic:
 - Article parsing coordination
 - Supabase article saving
 - Error handling and user feedback
+- **Saved article tracking**: Stores list of saved article URLs and IDs in browser storage
+- **Button state management**: Updates save button state based on whether current URL is already saved
+- **Article sync**: Syncs saved articles from Supabase on popup open to keep local storage in sync
 
 ### content.js
 Content script that runs on web pages:
@@ -70,11 +76,15 @@ Supabase client configuration:
 1. **User clicks extension icon** → Opens popup
 2. **If not logged in** → Shows login/signup form
 3. **User authenticates** → Session stored in browser storage
-4. **User navigates to article** → Clicks "Save Article" button
-5. **Content script injected** → Parses page using Readability
-6. **Article data extracted** → Title, content, metadata
-7. **Article saved to Supabase** → Linked to user via user_id
-8. **Success feedback** → User sees confirmation message
+4. **On popup open** → Syncs saved articles from Supabase to local storage
+5. **Button state checked** → If current URL is already saved, button is disabled
+6. **User navigates to article** → Clicks "Save Article" button (if not already saved)
+7. **Content script injected** → Parses page using Readability
+8. **Article data extracted** → Title, content, metadata
+9. **Article saved to Supabase** → Linked to user via user_id
+10. **Article tracked locally** → URL and ID added to local storage
+11. **Success feedback** → User sees confirmation message
+12. **Button updates** → Button state updated to show "Already Saved"
 
 ## Database Integration
 
@@ -90,6 +100,12 @@ The extension saves articles with the following fields:
 - Session stored in browser storage (chrome.storage.local)
 - Automatic token refresh
 - Session persists across browser restarts
+
+### Saved Article Tracking
+- Stores list of saved article URLs and IDs per user in browser storage
+- Key format: `poche_saved_articles_{userId}`
+- Synced from Supabase on popup open to reflect deletions
+- Used to disable save button for already-saved URLs
 
 ## Build Process
 
@@ -154,15 +170,23 @@ The extension requires:
 
 ## Known Limitations
 
-- Cannot save from browser internal pages (chrome://, about:, etc.)
+- Cannot save from browser internal pages (chrome://, about:, etc.) - button shows "Cannot Save This Page"
 - Some pages may not parse correctly due to structure
 - Requires internet connection for Supabase operations
 - Safari requires additional setup and code signing for distribution
+- Saved article list syncs on popup open, not in real-time
+
+## Recent Enhancements
+
+- ✅ Saved article URL tracking in browser storage
+- ✅ Smart save button state management
+- ✅ Automatic sync of saved articles from Supabase on popup open
+- ✅ Prevention of duplicate article saves
 
 ## Future Enhancements
 
 Potential improvements:
-- Offline article saving with sync
+- Real-time sync of saved articles (not just on popup open)
 - Article preview before saving
 - Batch article saving
 - Custom article tags/categories
