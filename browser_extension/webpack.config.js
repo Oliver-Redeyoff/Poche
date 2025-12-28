@@ -3,7 +3,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   entry: {
-    popup: './src/popup.jsx',
+    popup: './src/popup.tsx',
     background: './src/background.js',
     content: './src/content.js',
   },
@@ -15,7 +15,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(ts|tsx|js|jsx)$/,
         exclude: /node_modules\/(?!@mozilla\/readability)/,
         use: {
           loader: 'babel-loader',
@@ -23,6 +23,7 @@ module.exports = {
             presets: [
               ['@babel/preset-env', { modules: false }],
               ['@babel/preset-react', { runtime: 'automatic' }],
+              '@babel/preset-typescript',
             ],
           },
         },
@@ -41,7 +42,7 @@ module.exports = {
     }),
   ],
   resolve: {
-    extensions: ['.js', '.jsx'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     fallback: {
       "jsdom": false,
       "canvas": false,
