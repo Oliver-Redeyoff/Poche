@@ -10,7 +10,7 @@ import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated'
+import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated'
 
 interface Article {
   id: number
@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const [articlesLoading, setArticlesLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [menuVisible, setMenuVisible] = useState<number | null>(null)
+  const [deletingArticleId, setDeletingArticleId] = useState<number | null>(null)
   const seenArticleIds = useRef<Set<number>>(new Set())
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
@@ -349,6 +349,12 @@ export default function HomeScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Start deletion animation
+              setDeletingArticleId(articleId)
+              
+              // Wait for animation to complete (300ms)
+              await new Promise(resolve => setTimeout(resolve, 300))
+              
               const { error } = await supabase
                 .from('articles')
                 .delete()
@@ -358,12 +364,20 @@ export default function HomeScreen() {
                 throw error
               }
 
-              // Remove article from local state
+              // Remove article from local state after animation
               const updatedArticles = articles.filter(article => article.id !== articleId)
               setArticles(updatedArticles)
               // Update storage
               await saveArticlesToStorage(updatedArticles)
+              
+              // Remove from seen articles set
+              seenArticleIds.current.delete(articleId)
+              
+              // Clear deleting state
+              setDeletingArticleId(null)
             } catch (error) {
+              // Reset deleting state on error
+              setDeletingArticleId(null)
               if (error instanceof Error) {
                 Alert.alert('Error deleting article', error.message)
               }
@@ -437,8 +451,8 @@ export default function HomeScreen() {
             scrollEnabled={false}
             renderItem={({ item, index }) => {
               const imageUrl = extractFirstImageUrl(item.content || null)
-              const isMenuOpen = menuVisible === item.id
               const isNewArticle = !seenArticleIds.current.has(item.id)
+              const isDeleting = deletingArticleId === item.id
               
               // Mark as seen after render
               if (isNewArticle) {
@@ -451,6 +465,7 @@ export default function HomeScreen() {
                 <Animated.View 
                   style={styles.articleCardWrapper}
                   entering={isNewArticle ? FadeInDown.duration(500).delay(Math.min(index * 30, 300)) : undefined}
+                  exiting={isDeleting ? FadeOut.duration(300) : undefined}
                 >
                   {/* Top part of article card */}
                   <Pressable
@@ -495,38 +510,11 @@ export default function HomeScreen() {
 
                   {/* Bottom part of article card */}
                   <Pressable
-                    onPress={() => setMenuVisible(isMenuOpen ? null : item.id)}
+                    onPress={() => deleteArticle(item.id)}
                     style={styles.menuButton}
                   >
-                    <Ionicons name="ellipsis-vertical" size={20} color={textColor} />
+                    <Ionicons name="trash-outline" size={20} color="red" />
                   </Pressable>
-                  {isMenuOpen && (
-                    <Modal
-                      visible={isMenuOpen}
-                      transparent={true}
-                      animationType="fade"
-                      onRequestClose={() => setMenuVisible(null)}
-                    >
-                      <Pressable
-                        style={styles.menuOverlay}
-                        onPress={() => setMenuVisible(null)}
-                      >
-                        <View style={[styles.menuContainer, { backgroundColor, borderColor }]}>
-                          <Pressable
-                            style={styles.menuItem}
-                            onPress={() => {
-                              deleteArticle(item.id)
-                            }}
-                          >
-                            <Ionicons name="trash-outline" size={20} color="#ff3b30" style={styles.menuIcon} />
-                            <ThemedText style={[styles.menuItemText, { color: '#ff3b30' }]}>
-                              Delete
-                            </ThemedText>
-                          </Pressable>
-                        </View>
-                      </Pressable>
-                    </Modal>
-                  )}
                 </Animated.View>
               )
             }}
@@ -626,37 +614,5 @@ const styles = StyleSheet.create({
     right: 8,
     padding: 8,
     zIndex: 10,
-  },
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuContainer: {
-    minWidth: 200,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-  },
-  menuIcon: {
-    marginRight: 12,
-  },
-  menuItemText: {
-    fontSize: 16,
   },
 })
