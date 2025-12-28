@@ -68,13 +68,18 @@ async function syncSavedArticlesFromSupabase(userId) {
       return
     }
     
-    if (data && data.length > 0) {
-      const urls = data.map(article => article.url).filter(Boolean)
-      const ids = data.map(article => article.id).filter(Boolean)
-      
-      const storageKey = getSavedArticlesStorageKey(userId)
-      await browserAPI.storage.local.set({ [storageKey]: { urls, ids } })
-    }
+    // Always replace the stored list, even if empty (handles deletions)
+    const urls = data && data.length > 0 
+      ? data.map(article => article.url).filter(Boolean)
+      : []
+    const ids = data && data.length > 0
+      ? data.map(article => article.id).filter(Boolean)
+      : []
+    
+    const storageKey = getSavedArticlesStorageKey(userId)
+    await browserAPI.storage.local.set({ [storageKey]: { urls, ids } })
+    
+    console.log(`Synced ${urls.length} article(s) from Supabase`)
   } catch (error) {
     console.error('Error syncing articles:', error)
   }
@@ -98,6 +103,9 @@ async function updateSaveButtonState() {
     if (!session || !session.user || !saveButton) {
       return
     }
+    
+    // Sync articles from Supabase to ensure we have the latest list (including deletions)
+    await syncSavedArticlesFromSupabase(session.user.id)
     
     // Get current tab URL
     const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true })
