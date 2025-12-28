@@ -108,12 +108,6 @@ export default function SettingsScreen() {
   return (
     <ThemedView style={{...styles.container, paddingTop: topPadding}}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <ThemedText style={styles.title}>
-            Account Settings
-          </ThemedText>
-        </View>
-
         <View style={[styles.verticallySpaced, styles.mt20]}>
           <ThemedText style={styles.label}>
             Email

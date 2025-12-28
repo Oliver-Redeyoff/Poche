@@ -105,7 +105,7 @@ export default function Auth() {
 			<Button color="white" title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
 		</View>
 		<View style={[styles.button, styles.buttonSecondary]}>
-			<Button color="black" title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
+			<Button color="white" title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
 		</View>
 	  </View>
 	</View>
@@ -123,10 +123,11 @@ const styles = StyleSheet.create({
   },
   label: {
 	marginBottom: 8,
+	marginLeft: 4,
   },
   input: {
 	borderWidth: 1,
-	borderRadius: 8,
+	borderRadius: 12,
 	padding: 12,
 	fontSize: 16,
   },
@@ -134,16 +135,17 @@ const styles = StyleSheet.create({
 	display: 'flex',
 	flexDirection: 'row',
 	gap: 12,
-	marginTop: 20,
+	marginTop: 26,
   },
   button: {
 	flexGrow: 1,
-	borderRadius: 8,
+	borderRadius: 12,
+	fontWeight: '600',
   },
   buttonPrimary: {
 	backgroundColor: "#EF4056",
   },
   buttonSecondary: {
-	backgroundColor: "#FFFFFF",
+	backgroundColor: "#aaaaaa",
   },
 })
