@@ -16,6 +16,7 @@ const saveButton = document.getElementById('saveButton')
 const statusMessage = document.getElementById('statusMessage')
 const userEmail = document.getElementById('userEmail')
 const logoutButton = document.getElementById('logoutButton')
+const tagsInput = document.getElementById('tagsInput')
 
 // Storage key for saved articles (per user)
 function getSavedArticlesStorageKey(userId) {
@@ -402,6 +403,19 @@ async function saveCurrentArticle() {
     
     showStatus('Saving article...', 'info')
     
+    // Process tags: split by comma, trim whitespace, filter empty strings, join with commas
+    let tagsString = null
+    if (tagsInput && tagsInput.value) {
+      const tags = tagsInput.value
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+      
+      if (tags.length > 0) {
+        tagsString = tags.join(',')
+      }
+    }
+    
     // Save to Supabase
     // Match the actual database schema from database_types.ts:
     // Schema columns: content, created_time, id, title, user_id
@@ -419,6 +433,7 @@ async function saveCurrentArticle() {
         title: article.title || null,
         url: article.url || null,
         content: article.content || null,
+        tags: tagsString || null,
       })
       .select()
       .single()
@@ -435,6 +450,11 @@ async function saveCurrentArticle() {
     
     // Update button state after saving
     await updateSaveButtonState()
+    
+    // Clear tags input after successful save
+    if (tagsInput) {
+      tagsInput.value = ''
+    }
     
     showStatus('Article saved successfully!', 'success')
   } catch (error) {

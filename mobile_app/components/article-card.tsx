@@ -13,6 +13,7 @@ interface Article {
   siteName?: string | null
   created_time: string
   length?: number | null
+  tags?: string | null
 }
 
 interface ArticleCardProps {
@@ -115,7 +116,9 @@ export function ArticleCard({
         {/* Bottom part of article card */}
         <View style={styles.articleCardBottom}>
           <View style={styles.articleTagList}>
-              <ThemedText style={styles.articleTag}>Tag 1</ThemedText>
+            {article.tags?.split(',').map((tag) => (
+              <ThemedText key={tag} style={styles.articleTag}>{tag}</ThemedText>
+            ))}
           </View>
 
           {/* Icon list */}
