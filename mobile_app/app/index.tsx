@@ -348,6 +348,29 @@ export default function HomeScreen() {
     seenArticleIds.current.delete(articleId)
   }
 
+  async function updateArticleTags(articleId: number, tags: string) {
+    // Update in Supabase
+    const { error } = await supabase
+      .from('articles')
+      .update({ tags: tags || null })
+      .eq('id', articleId)
+
+    if (error) {
+      throw error
+    }
+
+    // Update in local state
+    const updatedArticles = articles.map(article => 
+      article.id === articleId 
+        ? { ...article, tags: tags || null }
+        : article
+    )
+    setArticles(updatedArticles)
+    
+    // Update storage
+    await saveArticlesToStorage(updatedArticles)
+  }
+
   // Extract first image URL from HTML content
   function extractFirstImageUrl(htmlContent: string | null): string | null {
     if (!htmlContent) return null
@@ -493,16 +516,19 @@ export default function HomeScreen() {
             </ThemedText>
           </View>
         ) : (
-          filteredArticles.map((article) => {
-            return (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                onDelete={deleteArticle}
-                extractFirstImageUrl={extractFirstImageUrl}
-              />
-            )
-          })
+          <View style={styles.articleList}>
+            {filteredArticles.map((article) => {
+              return (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  onDelete={deleteArticle}
+                  onUpdateTags={updateArticleTags}
+                  extractFirstImageUrl={extractFirstImageUrl}
+                />
+              )
+            })}
+          </View>
         )}
       </ScrollView>
     </ThemedView>
@@ -569,5 +595,12 @@ const styles = StyleSheet.create({
   tagChipText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  articleList: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 12,
   },
 })
