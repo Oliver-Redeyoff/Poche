@@ -52,6 +52,20 @@ try {
   }
 })()
 
+// Decode HTML entities to their actual characters
+// This handles entities like &rsquo;, &quot;, &amp;, &lt;, &gt;, &nbsp;, etc.
+function decodeHtmlEntities(text) {
+  if (!text || typeof text !== 'string') {
+    return text
+  }
+  
+  // Create a temporary DOM element to decode HTML entities
+  // This is the standard browser method for decoding HTML entities
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = text
+  return textarea.value
+}
+
 function parseCurrentPage() {
   // Clone the document to avoid modifying the original
   const documentClone = document.cloneNode(true)
@@ -73,11 +87,11 @@ function parseCurrentPage() {
   console.log(article)
   
   return {
-    title: article.title,
+    title: decodeHtmlEntities(article.title),
     content: article.content,
-    excerpt: article.excerpt,
+    excerpt: decodeHtmlEntities(article.excerpt),
     publishedTime: article.publishedTime,
-    byline: article.byline,
+    byline: decodeHtmlEntities(article.byline),
     siteName: article.siteName || new URL(window.location.href).hostname,
     url: window.location.href,
     length: article.length,

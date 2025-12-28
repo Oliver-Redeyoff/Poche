@@ -109,13 +109,13 @@ export default function SettingsScreen() {
     <ThemedView style={{...styles.container, paddingTop: topPadding}}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
+          <ThemedText style={styles.title}>
             Account Settings
           </ThemedText>
         </View>
 
         <View style={[styles.verticallySpaced, styles.mt20]}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>
+          <ThemedText style={styles.label}>
             Email
           </ThemedText>
           <TextInput
@@ -125,7 +125,7 @@ export default function SettingsScreen() {
           />
         </View>
         <View style={styles.verticallySpaced}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>
+          <ThemedText style={styles.label}>
             Username
           </ThemedText>
           <TextInput
@@ -138,7 +138,7 @@ export default function SettingsScreen() {
           />
         </View>
         <View style={styles.verticallySpaced}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>
+          <ThemedText style={styles.label}>
             Website
           </ThemedText>
           <TextInput

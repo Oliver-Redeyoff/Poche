@@ -12,6 +12,7 @@ import { ThemedText } from '@/components/themed-text'
 // Import background sync to ensure task is defined
 import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
+import { IconSymbol } from '@/components/ui/icon-symbol'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -88,12 +89,13 @@ function RootStack({session}: {session: Session | null}) {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    padding: 6,
+                    padding: 4,
                   },
                   pressed && { opacity: 0.6 }
                 ]}
               >
-                <Ionicons name="settings-outline" size={24} color={colors.text} />
+                <IconSymbol name="gear" size={26} color={colors.text} />
+                {/* <Ionicons name="settings-outline" size={24} color={colors.text} /> */}
               </Pressable>
             ),
           }}
@@ -103,10 +105,6 @@ function RootStack({session}: {session: Session | null}) {
           options={{ 
             headerTitle: () => <HeaderLogo />,
           }} 
-        />
-        <Stack.Screen 
-          name="modal" 
-          options={{ presentation: "modal", title: "Modal" }} 
         />
         <Stack.Screen 
           name="article/[id]" 
@@ -126,7 +124,7 @@ function HeaderLogo() {
         source={ colorScheme === 'dark' ? require('@/assets/images/icon_white.png') : require('@/assets/images/icon_black.png')} 
         style={{ width: 24, height: 24 }} 
       />
-      <ThemedText type="title">poche</ThemedText>
+      <ThemedText style={{ fontSize: 32, lineHeight: 32, fontWeight: 'bold' }}>poche</ThemedText>
     </View>
   )
 }

@@ -25,12 +25,10 @@ export default function ArticleScreen() {
   const headerHeight = useHeaderHeight()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
-  const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
-  const borderColor = useThemeColor({}, 'icon')
   
   // Calculate padding to account for header and safe area
-  const topPadding = headerHeight + 20
+  const topPadding = headerHeight
 
   useEffect(() => {
     if (id) {
@@ -97,7 +95,7 @@ export default function ArticleScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={[styles.container, styles.centerContent]}>
+      <ThemedView style={[styles.container]}>
         <ActivityIndicator size="large" />
         <ThemedText style={styles.loadingText}>Loading article...</ThemedText>
       </ThemedView>
@@ -106,7 +104,7 @@ export default function ArticleScreen() {
 
   if (!article) {
     return (
-      <ThemedView style={[styles.container, styles.centerContent]}>
+      <ThemedView style={[styles.container]}>
         <ThemedText>Article not found</ThemedText>
       </ThemedView>
     )
@@ -115,6 +113,7 @@ export default function ArticleScreen() {
   const htmlContent = article.content || '<p>No content available</p>'
   const tagsStyles = {
     body: {
+      width: SCREEN_WIDTH - 32,
       color: textColor,
       fontSize: 16,
       lineHeight: 24,
@@ -131,7 +130,6 @@ export default function ArticleScreen() {
       fontSize: 28,
       fontWeight: "bold" as const,
       marginBottom: 16,
-      marginTop: 16,
     },
     h2: {
       color: textColor,
@@ -152,7 +150,13 @@ export default function ArticleScreen() {
       textDecorationLine: "underline" as const,
     },
     picture: {
-      maxWidth: '100%',
+      maxWidth: SCREEN_WIDTH - 32,
+      height: 'auto',
+      marginTop: 16,
+      marginBottom: 16,
+    },
+    img: {
+      maxWidth: SCREEN_WIDTH - 32,
       height: 'auto',
       marginTop: 16,
       marginBottom: 16,
@@ -170,17 +174,7 @@ export default function ArticleScreen() {
             {article.title}
           </ThemedText>
         )}
-        
-        <ThemedText style={[styles.date, { color: borderColor }]}>
-          {new Date(article.created_time).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })
-          }
-        </ThemedText>
-
-        <View style={styles.contentContainer}>
+        <View>
           <RenderHTML
             contentWidth={SCREEN_WIDTH - 32}
             source={{ html: htmlContent }}
@@ -198,27 +192,19 @@ export default function ArticleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  centerContent: {
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 16,
-  },
   title: {
+    fontSize: 28,
+    fontWeight: 'bold',
     marginBottom: 12,
   },
-  date: {
-    fontSize: 14,
-    marginBottom: 24,
-    opacity: 0.7,
-  },
-  contentContainer: {
-    marginTop: 8,
+  scrollContent: {
+    paddingHorizontal: 16,
   },
   loadingText: {
     marginTop: 12,
