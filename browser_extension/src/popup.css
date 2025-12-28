@@ -73,6 +73,16 @@ body {
   }
 }
 
+.button-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+
+  .btn {
+    flex-grow: 1;
+  }
+}
+
 .header {
   display: flex;
   align-items: flex-start;
@@ -182,15 +192,6 @@ body {
     color: #888888;
     margin-top: 4px;
     margin-bottom: 0;
-  }
-
-  .button-group {
-    display: flex;
-    gap: 8px;
-
-    .btn {
-      flex-grow: 1;
-    }
   }
 }
 
