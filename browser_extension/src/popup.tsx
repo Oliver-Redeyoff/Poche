@@ -1,17 +1,70 @@
 import { useState, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase.js'
 
 // Cross-browser API compatibility
-const browserAPI = typeof chrome !== 'undefined' ? chrome : browser
+const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : (browser as typeof chrome)
+
+// Type definitions
+interface SavedArticles {
+  urls: string[]
+  ids: number[]
+}
+
+interface ParsedArticle {
+  title?: string | null
+  content?: string | null
+  excerpt?: string | null
+  length?: number | null
+  siteName?: string | null
+  url?: string | null
+  publishedTime?: string | null
+  byline?: string | null
+}
+
+interface PingResponse {
+  success?: boolean
+  ready?: boolean
+  readabilityLoaded?: boolean
+}
+
+interface ParseResponse {
+  success: boolean
+  article?: ParsedArticle
+  error?: string
+}
+
+type StatusType = 'info' | 'success' | 'error'
+
+interface StatusMessageProps {
+  message: string
+  type: StatusType
+}
+
+interface LoginSectionProps {
+  onSignIn: (email: string, password: string) => Promise<void>
+  onSignUp: (email: string, password: string) => Promise<void>
+  isLoading: boolean
+}
+
+interface MainSectionProps {
+  userEmail: string
+  onLogout: () => Promise<void>
+  onSaveArticle: () => Promise<void>
+  saveButtonDisabled: boolean
+  saveButtonText: string
+  tags: string
+  onTagsChange: (tags: string) => void
+}
 
 // Storage key for saved articles (per user)
-function getSavedArticlesStorageKey(userId) {
+function getSavedArticlesStorageKey(userId: string): string {
   return `poche_saved_articles_${userId}`
 }
 
 // Get saved articles from storage
-async function getSavedArticles(userId) {
+async function getSavedArticles(userId: string): Promise<SavedArticles> {
   try {
     const storageKey = getSavedArticlesStorageKey(userId)
     const result = await browserAPI.storage.local.get(storageKey)
@@ -23,7 +76,7 @@ async function getSavedArticles(userId) {
 }
 
 // Save article URL and ID to storage
-async function saveArticleToStorage(userId, articleId, url) {
+async function saveArticleToStorage(userId: string, articleId: number, url: string): Promise<void> {
   try {
     const storageKey = getSavedArticlesStorageKey(userId)
     const saved = await getSavedArticles(userId)
@@ -43,7 +96,7 @@ async function saveArticleToStorage(userId, articleId, url) {
 }
 
 // Sync saved articles from Supabase on login
-async function syncSavedArticlesFromSupabase(userId) {
+async function syncSavedArticlesFromSupabase(userId: string): Promise<void> {
   try {
     const { data, error } = await supabase
       .from('articles')
@@ -58,10 +111,10 @@ async function syncSavedArticlesFromSupabase(userId) {
     
     // Always replace the stored list, even if empty (handles deletions)
     const urls = data && data.length > 0 
-      ? data.map(article => article.url).filter(Boolean)
+      ? data.map(article => article.url).filter(Boolean) as string[]
       : []
     const ids = data && data.length > 0
-      ? data.map(article => article.id).filter(Boolean)
+      ? data.map(article => article.id).filter(Boolean) as number[]
       : []
     
     const storageKey = getSavedArticlesStorageKey(userId)
@@ -74,7 +127,7 @@ async function syncSavedArticlesFromSupabase(userId) {
 }
 
 // Check if current URL is already saved
-async function checkIfUrlIsSaved(userId, url) {
+async function checkIfUrlIsSaved(userId: string, url: string): Promise<boolean> {
   try {
     const saved = await getSavedArticles(userId)
     return saved.urls.includes(url)
@@ -84,7 +137,7 @@ async function checkIfUrlIsSaved(userId, url) {
   }
 }
 
-function Header() {
+function Header(): JSX.Element {
   return (
     <div className="header">
       <img src="assets/icon_black.png" alt="poche" className="logo logo-black" />
@@ -97,7 +150,7 @@ function Header() {
   )
 }
 
-function StatusMessage({ message, type }) {
+function StatusMessage({ message, type }: StatusMessageProps): JSX.Element | null {
   if (!message) return null
   
   return (
@@ -107,11 +160,11 @@ function StatusMessage({ message, type }) {
   )
 }
 
-function LoginSection({ onSignIn, onSignUp, isLoading }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+function LoginSection({ onSignIn, onSignUp, isLoading }: LoginSectionProps): JSX.Element {
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     if (!email || !password) {
       return
@@ -119,7 +172,7 @@ function LoginSection({ onSignIn, onSignUp, isLoading }) {
     await onSignIn(email, password)
   }
 
-  const handleSignUp = async (e) => {
+  const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
     e.preventDefault()
     if (!email || !password) {
       return
@@ -173,7 +226,15 @@ function LoginSection({ onSignIn, onSignUp, isLoading }) {
   )
 }
 
-function MainSection({ userEmail, onLogout, onSaveArticle, saveButtonDisabled, saveButtonText, tags, onTagsChange }) {
+function MainSection({ 
+  userEmail, 
+  onLogout, 
+  onSaveArticle, 
+  saveButtonDisabled, 
+  saveButtonText, 
+  tags, 
+  onTagsChange 
+}: MainSectionProps): JSX.Element {
   return (
     <div className="section">
       <div className="form-group">
@@ -206,18 +267,18 @@ function MainSection({ userEmail, onLogout, onSaveArticle, saveButtonDisabled, s
   )
 }
 
-function App() {
-  const [session, setSession] = useState(null)
-  const [statusMessage, setStatusMessage] = useState('')
-  const [statusType, setStatusType] = useState('info')
-  const [isLoading, setIsLoading] = useState(false)
-  const [saveButtonDisabled, setSaveButtonDisabled] = useState(false)
-  const [saveButtonText, setSaveButtonText] = useState('Save Article')
-  const [tags, setTags] = useState('')
-  const refreshIntervalRef = useRef(null)
+function App(): JSX.Element {
+  const [session, setSession] = useState<Session | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string>('')
+  const [statusType, setStatusType] = useState<StatusType>('info')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false)
+  const [saveButtonText, setSaveButtonText] = useState<string>('Save Article')
+  const [tags, setTags] = useState<string>('')
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Update save button state based on current URL
-  const updateSaveButtonState = async () => {
+  const updateSaveButtonState = async (): Promise<void> => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       if (!currentSession || !currentSession.user) {
@@ -264,7 +325,7 @@ function App() {
     }
   }
 
-  const showStatus = (message, type = 'info') => {
+  const showStatus = (message: string, type: StatusType = 'info'): void => {
     setStatusMessage(message)
     setStatusType(type)
     
@@ -276,14 +337,14 @@ function App() {
     }
   }
 
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = async (): Promise<void> => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       
       if (currentSession && currentSession.user) {
         // Try to refresh the session to ensure it's still valid
         try {
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession(currentSession)
+          const { error: refreshError } = await supabase.auth.refreshSession(currentSession)
           
           if (refreshError) {
             // Refresh token expired - user needs to sign in again
@@ -321,7 +382,7 @@ function App() {
     }
   }
 
-  const signIn = async (email, password) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     try {
       showStatus('Signing in...', 'info')
       setIsLoading(true)
@@ -341,13 +402,14 @@ function App() {
         await updateSaveButtonState()
       }
     } catch (error) {
-      showStatus(error.message || 'Sign in failed', 'error')
+      const errorMessage = error instanceof Error ? error.message : 'Sign in failed'
+      showStatus(errorMessage, 'error')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const signUp = async (email, password) => {
+  const signUp = async (email: string, password: string): Promise<void> => {
     try {
       showStatus('Creating account...', 'info')
       setIsLoading(true)
@@ -369,13 +431,14 @@ function App() {
         showStatus('Please check your email to verify your account', 'info')
       }
     } catch (error) {
-      showStatus(error.message || 'Sign up failed', 'error')
+      const errorMessage = error instanceof Error ? error.message : 'Sign up failed'
+      showStatus(errorMessage, 'error')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const saveCurrentArticle = async () => {
+  const saveCurrentArticle = async (): Promise<void> => {
     try {
       showStatus('Parsing article...', 'info')
       setSaveButtonDisabled(true)
@@ -395,13 +458,13 @@ function App() {
       }
       
       // First, try to ping the content script (it should be injected via manifest)
-      let pingResponse
+      let pingResponse: PingResponse | undefined
       let needsInjection = false
       
       try {
         pingResponse = await Promise.race([
-          browserAPI.tabs.sendMessage(tab.id, { action: 'ping' }),
-          new Promise((_, reject) => 
+          browserAPI.tabs.sendMessage(tab.id!, { action: 'ping' }) as Promise<PingResponse>,
+          new Promise<PingResponse>((_, reject) => 
             setTimeout(() => reject(new Error('Ping timeout')), 2000)
           )
         ])
@@ -422,12 +485,12 @@ function App() {
           if (browserAPI.scripting && browserAPI.scripting.executeScript) {
             // Chrome/Edge (Manifest V3)
             await browserAPI.scripting.executeScript({
-              target: { tabId: tab.id },
+              target: { tabId: tab.id! },
               files: ['content.js']
             })
-          } else if (browserAPI.tabs && browserAPI.tabs.executeScript) {
+          } else if (browserAPI.tabs && (browserAPI.tabs as any).executeScript) {
             // Firefox (Manifest V2 fallback)
-            await browserAPI.tabs.executeScript(tab.id, { file: 'content.js' })
+            await (browserAPI.tabs as any).executeScript(tab.id!, { file: 'content.js' })
           } else {
             throw new Error('Script injection API not available. Make sure the extension has scripting permission.')
           }
@@ -438,8 +501,8 @@ function App() {
           // Verify it's ready now
           try {
             pingResponse = await Promise.race([
-              browserAPI.tabs.sendMessage(tab.id, { action: 'ping' }),
-              new Promise((_, reject) => 
+              browserAPI.tabs.sendMessage(tab.id!, { action: 'ping' }) as Promise<PingResponse>,
+              new Promise<PingResponse>((_, reject) => 
                 setTimeout(() => reject(new Error('Ping timeout after injection')), 3000)
               )
             ])
@@ -452,24 +515,27 @@ function App() {
               throw new Error('Readability library failed to load in content script')
             }
           } catch (verifyError) {
-            throw new Error(`Content script injected but not ready: ${verifyError.message}`)
+            const errorMessage = verifyError instanceof Error ? verifyError.message : 'Unknown error'
+            throw new Error(`Content script injected but not ready: ${errorMessage}`)
           }
         } catch (injectError) {
-          throw new Error(`Cannot inject content script: ${injectError.message}`)
+          const errorMessage = injectError instanceof Error ? injectError.message : 'Unknown error'
+          throw new Error(`Cannot inject content script: ${errorMessage}`)
         }
       }
       
       // Now send the actual parse request
-      let response
+      let response: ParseResponse
       try {
         response = await Promise.race([
-          browserAPI.tabs.sendMessage(tab.id, { action: 'parseArticle' }),
-          new Promise((_, reject) => 
+          browserAPI.tabs.sendMessage(tab.id!, { action: 'parseArticle' }) as Promise<ParseResponse>,
+          new Promise<ParseResponse>((_, reject) => 
             setTimeout(() => reject(new Error('Parse timeout after 10 seconds')), 10000)
           )
         ])
       } catch (error) {
-        throw new Error(`Failed to parse article: ${error.message}`)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        throw new Error(`Failed to parse article: ${errorMessage}`)
       }
       
       if (!response.success) {
@@ -477,6 +543,9 @@ function App() {
       }
       
       const article = response.article
+      if (!article) {
+        throw new Error('No article data received')
+      }
       
       // Get current user session
       const { data: { session: currentSession } } = await supabase.auth.getSession()
@@ -488,7 +557,7 @@ function App() {
       showStatus('Saving article...', 'info')
       
       // Process tags: split by comma, trim whitespace, filter empty strings, join with commas
-      let tagsString = null
+      let tagsString: string | null = null
       if (tags && tags.trim()) {
         const tagArray = tags
           .split(',')
@@ -541,10 +610,8 @@ function App() {
       if (error) {
         if (typeof error === 'string') {
           errorMessage = error
-        } else if (error.message) {
+        } else if (error instanceof Error) {
           errorMessage = error.message
-        } else if (error.error) {
-          errorMessage = typeof error.error === 'string' ? error.error : error.error.message || 'Unknown error'
         } else {
           errorMessage = String(error)
         }
@@ -556,7 +623,7 @@ function App() {
     }
   }
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     await supabase.auth.signOut()
     setSession(null)
     setTags('')
@@ -594,7 +661,7 @@ function App() {
 
   // Refresh session when popup opens to keep it alive
   useEffect(() => {
-    const refreshSessionOnOpen = async () => {
+    const refreshSessionOnOpen = async (): Promise<void> => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession()
         if (currentSession) {
@@ -604,7 +671,7 @@ function App() {
           
           if (expiresAt && (expiresAt - now) < 300) {
             // Refresh the session to extend its lifetime
-            const { data, error } = await supabase.auth.refreshSession(currentSession)
+            const { error } = await supabase.auth.refreshSession(currentSession)
             if (error) {
               console.error('Error refreshing session on popup open:', error)
             }
@@ -650,7 +717,7 @@ function App() {
       <StatusMessage message={statusMessage} type={statusType} />
       {session?.user ? (
         <MainSection
-          userEmail={session.user.email}
+          userEmail={session.user.email || ''}
           onLogout={handleLogout}
           onSaveArticle={saveCurrentArticle}
           saveButtonDisabled={saveButtonDisabled}
@@ -671,6 +738,9 @@ function App() {
 
 // Initialize React app
 const container = document.getElementById('root')
+if (!container) {
+  throw new Error('Root element not found')
+}
 const root = createRoot(container)
 root.render(<App />)
 
