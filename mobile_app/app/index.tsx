@@ -8,16 +8,8 @@ import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ArticleCard } from '../components/article-card'
+import { Article } from '../../shared/types'
 
-interface Article {
-  id: number
-  title?: string | null
-  content?: string | null
-  url?: string
-  created_time: string
-  length?: number | null
-  siteName?: string | null
-}
 
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null)

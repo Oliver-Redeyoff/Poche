@@ -4,8 +4,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 module.exports = {
   entry: {
     popup: './src/popup.tsx',
-    background: './src/background.js',
-    content: './src/content.js',
+    background: './src/background.ts',
+    content: './src/content.ts',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

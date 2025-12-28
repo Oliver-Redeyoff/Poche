@@ -5,24 +5,28 @@ const supabasePublishableKey = "sb_publishable_i2csvda3pa7hm_1cJk6Vvw_s_LiATFY"
 
 // Custom storage adapter for browser extension
 // Works with both Chrome and Firefox
-const getStorage = () => {
+const getStorage = (): chrome.storage.StorageArea | {
+  get: (key: string) => Promise<{ [key: string]: string | null }>
+  set: (items: { [key: string]: string }) => Promise<void>
+  remove: (key: string) => Promise<void>
+} => {
   if (typeof chrome !== 'undefined' && chrome.storage) {
     return chrome.storage.local
-  } else if (typeof browser !== 'undefined' && browser.storage) {
-    return browser.storage.local
+  } else if (typeof browser !== 'undefined' && (browser as typeof chrome).storage) {
+    return (browser as typeof chrome).storage.local
   }
   // Fallback to localStorage for development
   return {
-    get: async (key) => {
+    get: async (key: string): Promise<{ [key: string]: string | null }> => {
       const value = localStorage.getItem(key)
       return { [key]: value }
     },
-    set: async (items) => {
+    set: async (items: { [key: string]: string }): Promise<void> => {
       Object.entries(items).forEach(([key, value]) => {
         localStorage.setItem(key, value)
       })
     },
-    remove: async (key) => {
+    remove: async (key: string): Promise<void> => {
       localStorage.removeItem(key)
     }
   }
@@ -31,14 +35,14 @@ const getStorage = () => {
 const storage = getStorage()
 
 const storageAdapter = {
-  getItem: async (key) => {
+  getItem: async (key: string): Promise<string | null> => {
     const result = await storage.get(key)
     return result[key] || null
   },
-  setItem: async (key, value) => {
+  setItem: async (key: string, value: string): Promise<void> => {
     await storage.set({ [key]: value })
   },
-  removeItem: async (key) => {
+  removeItem: async (key: string): Promise<void> => {
     await storage.remove(key)
   }
 }
@@ -53,3 +57,4 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
     flowType: 'pkce',
   },
 })
+

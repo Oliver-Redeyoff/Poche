@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase.js'
+import { supabase } from './lib/supabase'
+
+// Declare browser for Firefox compatibility
+declare const browser: typeof chrome
 
 // Cross-browser API compatibility
-const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : (browser as typeof chrome)
+const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : browser
 
 // Type definitions
 interface SavedArticles {
@@ -111,10 +114,10 @@ async function syncSavedArticlesFromSupabase(userId: string): Promise<void> {
     
     // Always replace the stored list, even if empty (handles deletions)
     const urls = data && data.length > 0 
-      ? data.map(article => article.url).filter(Boolean) as string[]
+      ? data.map((article: { url: string | null }) => article.url).filter(Boolean) as string[]
       : []
     const ids = data && data.length > 0
-      ? data.map(article => article.id).filter(Boolean) as number[]
+      ? data.map((article: { id: number }) => article.id).filter(Boolean) as number[]
       : []
     
     const storageKey = getSavedArticlesStorageKey(userId)
@@ -394,7 +397,7 @@ function App(): JSX.Element {
       
       if (error) throw error
       
-      if (data.session) {
+      if (data.session && data.user) {
         setSession(data.session)
         showStatus('Signed in successfully!', 'success')
         // Sync saved articles and update button state
@@ -421,7 +424,7 @@ function App(): JSX.Element {
       
       if (error) throw error
       
-      if (data.session) {
+      if (data.session && data.user) {
         setSession(data.session)
         showStatus('Account created and signed in!', 'success')
         // Sync saved articles and update button state
@@ -637,7 +640,7 @@ function App(): JSX.Element {
 
   // Listen for auth state changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, newSession: Session | null) => {
       if (event === 'SIGNED_IN' && newSession) {
         setSession(newSession)
         syncSavedArticlesFromSupabase(newSession.user.id)
