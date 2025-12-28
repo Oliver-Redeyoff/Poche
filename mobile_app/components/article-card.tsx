@@ -2,8 +2,6 @@ import { StyleSheet, View, Pressable, Alert } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
-import { useThemeColor } from '@/hooks/use-theme-color'
-import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { IconSymbol } from './ui/icon-symbol'
 
@@ -14,6 +12,7 @@ interface Article {
   url?: string
   siteName?: string | null
   created_time: string
+  length?: number | null
 }
 
 interface ArticleCardProps {
@@ -22,16 +21,31 @@ interface ArticleCardProps {
   extractFirstImageUrl: (htmlContent: string | null) => string | null
 }
 
+// Calculate reading time in minutes based on character count
+// Average reading speed is ~1000 characters per minute
+function calculateReadingTime(length: number | null | undefined): string {
+  if (!length || length === 0) {
+    return '1 min read'
+  }
+  
+  // Calculate minutes (round up to nearest minute)
+  const minutes = Math.ceil(length / 1000)
+  
+  if (minutes === 1) {
+    return '1 min read'
+  } else {
+    return `${minutes} min read`
+  }
+}
+
 export function ArticleCard({
   article,
   onDelete,
   extractFirstImageUrl,
 }: ArticleCardProps) {
   const router = useRouter()
-  const borderColor = useThemeColor({}, 'icon')
-  const backgroundColor = useThemeColor({}, 'background')
-  const textColor = useThemeColor({}, 'text')
   const imageUrl = extractFirstImageUrl(article.content || null)
+  const readingTime = calculateReadingTime(article.length)
 
   const handleDelete = () => {
     Alert.alert(
@@ -72,11 +86,10 @@ export function ArticleCard({
         onPress={() => router.push(`/article/${article.id}`)}
         style={({ pressed }) => [
           styles.articleCard,
-          { borderColor, backgroundColor },
           pressed && styles.articleCardPressed,
         ]}
       >
-        <View style={styles.articleCardContent}>
+        <View style={styles.articleCardTop}>
           <View style={styles.articleCardText}>
             {article.title && (
               <ThemedText style={styles.articleTitle}>
@@ -84,30 +97,36 @@ export function ArticleCard({
               </ThemedText>
             )}
             {article.siteName && (
-              <ThemedText style={[styles.articleUrl, { color: textColor }]}>
-                {article.siteName}  •  {new Date(article.created_time || '').toLocaleDateString()}
+              <ThemedText style={styles.articleUrlAndDate}>
+                {article.siteName} • {readingTime}
               </ThemedText>
             )}
           </View>
 
-          {imageUrl && (
-            <Image
-              source={{ uri: imageUrl }}
-              style={styles.articleImage}
-              contentFit="cover"
-              transition={200}
-              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-            />
-          )}
+          <Image
+            source={{ uri: imageUrl ?? "" }}
+            style={styles.articleImage}
+            contentFit="cover"
+            transition={200}
+            placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+          />
         </View>
-      </Pressable>
 
-      {/* Bottom part of article card */}
-      <Pressable
-        onPress={handleDelete}
-        style={styles.menuButton}
-      >
-        <IconSymbol name="trash" size={20} color="red" />
+        {/* Bottom part of article card */}
+        <View style={styles.articleCardBottom}>
+          <View style={styles.articleTagList}>
+              <ThemedText style={styles.articleTag}>Tag 1</ThemedText>
+          </View>
+
+          {/* Icon list */}
+          <View style={styles.articleIconList}>
+            <Pressable
+              onPress={handleDelete}
+            >
+              <IconSymbol name="trash" size={20} color="rgba(120, 120, 120, 0.75)" />
+            </Pressable>
+          </View>
+        </View>
       </Pressable>
     </Animated.View>
   )
@@ -117,26 +136,41 @@ const styles = StyleSheet.create({
   articleCardWrapper: {
     position: 'relative',
     marginHorizontal: 12,
+    borderBottomColor: 'rgba(120, 120, 120, 0.2)',
+    borderBottomWidth: 1,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   articleCard: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 18,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(120, 120, 120, 0.15)',
+    gap: 8,
   },
   articleCardPressed: {
     opacity: 0.7,
   },
-  articleCardContent: {
+  articleCardTop: {
     flexDirection: 'row',
     gap: 12,
   },
   articleCardText: {
     flex: 1,
-    minWidth: 0, // Allows text to shrink when image is present
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+    gap: 8,
+  },
+  articleTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  articleUrlAndDate: {
+    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(120, 120, 120, 0.75)',
   },
   articleImage: {
     width: 100,
@@ -144,25 +178,27 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#f0f0f0',
   },
-  articleTitle: {
-    fontSize: 16,
-    marginBottom: 4,
+  articleCardBottom: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
   },
-  articleUrl: {
-    fontSize: 14,
-    marginBottom: 4,
-    opacity: 0.7,
+  articleTagList: {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 4,
   },
-  articleDate: {
+  articleTag: {
     fontSize: 12,
-    opacity: 0.6,
+    color: 'rgba(120, 120, 120, 0.75)',
+    backgroundColor: 'rgba(120, 120, 120, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  menuButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    padding: 8,
-    zIndex: 10,
+  articleIconList: {
+    display: 'flex',
   },
 })
 

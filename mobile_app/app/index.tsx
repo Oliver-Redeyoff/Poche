@@ -15,6 +15,8 @@ interface Article {
   content?: string | null
   url?: string
   created_time: string
+  length?: number | null
+  siteName?: string | null
 }
 
 export default function HomeScreen() {
