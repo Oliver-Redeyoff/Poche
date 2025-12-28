@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ArticleCard } from '../components/article-card'
 import { Article } from '../shared/types'
 import { tagToColor } from '../shared/util'
+import { processArticlesImages } from '../lib/image-cache'
 
 
 export default function HomeScreen() {
@@ -158,11 +159,25 @@ export default function HomeScreen() {
           index === self.findIndex((a) => a.id === article.id)
         )
         
+        // Process images for new articles only (cache images and replace URLs)
+        const articlesToProcess = uniqueArticles.filter(article => 
+          !storedArticleIds.includes(article.id)
+        )
+        const processedNewArticles = articlesToProcess.length > 0
+          ? await processArticlesImages(articlesToProcess, session.user.id)
+          : []
+        
+        // Merge processed new articles with stored articles (which already have processed images)
+        const finalArticles = uniqueArticles.map(article => {
+          const processed = processedNewArticles.find(a => a.id === article.id)
+          return processed || article
+        })
+        
         // Track which articles are new (not seen before) for animation
         // Don't mark as seen yet - let the animation trigger first
-        setArticles(uniqueArticles)
-        // Save merged articles back to storage
-        await saveArticlesToStorage(uniqueArticles)
+        setArticles(finalArticles)
+        // Save merged articles back to storage (with processed images)
+        await saveArticlesToStorage(finalArticles)
       } else if (storedArticles.length === 0) {
         // No new articles and no stored articles - set empty array
         setArticles([])
@@ -271,9 +286,23 @@ export default function HomeScreen() {
           index === self.findIndex((a) => a.id === article.id)
         )
         
-        setArticles(uniqueArticles)
-        // Save merged articles back to storage
-        await saveArticlesToStorage(uniqueArticles)
+        // Process images for new articles only (cache images and replace URLs)
+        const articlesToProcess = uniqueArticles.filter(article => 
+          !storedArticleIds.includes(article.id)
+        )
+        const processedNewArticles = articlesToProcess.length > 0
+          ? await processArticlesImages(articlesToProcess, session.user.id)
+          : []
+        
+        // Merge processed new articles with stored articles (which already have processed images)
+        const finalArticles = uniqueArticles.map(article => {
+          const processed = processedNewArticles.find(a => a.id === article.id)
+          return processed || article
+        })
+        
+        setArticles(finalArticles)
+        // Save merged articles back to storage (with processed images)
+        await saveArticlesToStorage(finalArticles)
       } else if (storedArticles.length === 0) {
         // No new articles and no stored articles - set empty array
         setArticles([])
@@ -372,6 +401,7 @@ export default function HomeScreen() {
   }
 
   // Extract first image URL from HTML content
+  // Handles both remote URLs and local file:// URIs
   function extractFirstImageUrl(htmlContent: string | null): string | null {
     if (!htmlContent) return null
     
@@ -379,6 +409,11 @@ export default function HomeScreen() {
     const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
     if (imgMatch && imgMatch[1]) {
       let imageUrl = imgMatch[1]
+      
+      // If it's already a local file URI, return it as is
+      if (imageUrl.startsWith('file://')) {
+        return imageUrl
+      }
       
       // Handle relative URLs (convert to absolute if needed)
       if (imageUrl.startsWith('//')) {
