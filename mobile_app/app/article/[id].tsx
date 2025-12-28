@@ -8,16 +8,9 @@ import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import RenderHTML from 'react-native-render-html'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Article } from '../../../shared/types'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
-
-interface Article {
-  id: number
-  title?: string | null
-  content?: string | null
-  created_time: string
-  user_id: string
-}
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()

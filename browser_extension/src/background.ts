@@ -1,8 +1,17 @@
 // Background service worker for the extension
-import { supabase } from './lib/supabase.js'
+import { supabase } from './lib/supabase'
 
 // Cross-browser API compatibility
-const browserAPI = typeof chrome !== 'undefined' ? chrome : browser
+const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : (browser as typeof chrome)
+
+// Type definitions
+interface MessageRequest {
+  action: 'saveArticle' | 'refreshSession'
+}
+
+interface MessageResponse {
+  success: boolean
+}
 
 // Listen for extension installation
 browserAPI.runtime.onInstalled.addListener(() => {
@@ -12,7 +21,11 @@ browserAPI.runtime.onInstalled.addListener(() => {
 })
 
 // Handle messages from content scripts and popup
-browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((
+  request: MessageRequest,
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response: MessageResponse) => void
+): boolean => {
   if (request.action === 'saveArticle') {
     // Forward to popup or handle here
     sendResponse({ success: true })
@@ -27,7 +40,7 @@ browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
 })
 
 // Refresh session periodically to keep it alive
-async function refreshSession() {
+async function refreshSession(): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     
@@ -75,7 +88,7 @@ if (browserAPI.alarms) {
   })
   
   // Listen for alarm and refresh session
-  browserAPI.alarms.onAlarm.addListener((alarm) => {
+  browserAPI.alarms.onAlarm.addListener((alarm: chrome.alarms.Alarm) => {
     if (alarm.name === 'refreshSession') {
       refreshSession()
     }
