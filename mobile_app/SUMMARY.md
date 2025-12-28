@@ -17,6 +17,9 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Article Animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article Deletion**: Delete articles with confirmation dialog and smooth animations
 - **Article Detail View**: Full article reading experience with offline support
+- **Tag Management**: Add and remove tags from articles directly from article cards with confirmation dialogs
+- **Tag Filtering**: Filter articles by tag using tag chips at the top of the homepage
+- **Reading Time**: Display estimated reading time based on article character count (replaces created time display)
 
 ## Architecture
 
@@ -37,17 +40,18 @@ The Poche mobile app is a React Native application built with Expo that allows u
 mobile_app/
 ├── app/                    # Expo Router file-based routes
 │   ├── _layout.tsx        # Root layout (Stack navigator)
-│   ├── (tabs)/            # Tab navigation group
-│   │   ├── _layout.tsx    # Tab layout with native iOS blur
-│   │   ├── index.tsx      # Home tab (auth/account)
-│   │   └── explore.tsx    # Explore tab
-│   └── modal.tsx          # Modal screen
+│   ├── index.tsx          # Home screen with article list and tag filtering
+│   ├── article/[id].tsx    # Article detail screen
+│   ├── auth.tsx            # Authentication screen
+│   └── settings.tsx        # Settings screen
 ├── components/            # React components
-│   ├── auth.tsx          # Authentication component
-│   ├── account.tsx        # Account/profile component with articles
-│   ├── article-card.tsx  # Reusable article card component with delete logic
-│   ├── themed-text.tsx   # Themed text component
+│   ├── article-card.tsx   # Article card with tag management, delete, and animations
+│   ├── themed-text.tsx    # Themed text component
+│   ├── themed-view.tsx    # Themed view component
 │   └── ...
+├── shared/                # Shared types and utilities
+│   ├── types.tsx          # TypeScript types (Article, Database, etc.)
+│   └── util.ts            # Utility functions (tagToColor, etc.)
 ├── lib/
 │   ├── supabase.ts       # Supabase client configuration
 │   └── background-sync.ts # Background task for syncing articles
@@ -70,6 +74,8 @@ Home screen that:
 - Syncs new articles from Supabase in background
 - Handles article deletion with animations
 - Manages article list state and storage
+- **Tag filtering**: Displays tag chips at top for filtering articles by tag
+- **Tag updates**: Handles tag updates from ArticleCard and syncs to Supabase and local storage
 
 ### components/auth.tsx
 Authentication component:
@@ -81,12 +87,17 @@ Authentication component:
 
 ### components/article-card.tsx
 Article card component:
-- Renders individual article card with title, site name, date, and optional image
+- Renders individual article card with title, site name, reading time, and optional image
 - Handles navigation to article detail page
 - Delete button with confirmation dialog
 - Entry and exit animations using react-native-reanimated
-- Manages delete animation state internally
-- Updates parent state and storage on deletion
+- **Tag management**: 
+  - Displays tags as colored chips
+  - Click tag to remove (with confirmation alert)
+  - Click "+" button to add new tag (cross-platform modal)
+  - Updates tags via `onUpdateTags` callback
+- **Reading time**: Calculates and displays reading time based on article length
+- Updates parent state and storage on deletion and tag changes
 
 ### app/article/[id].tsx
 Article detail screen:
@@ -112,10 +123,15 @@ Expo Router uses file-based routing similar to Next.js:
 The app fetches articles with:
 - `user_id` filter to show only user's articles
 - Ordered by `created_time` (newest first)
-- Displays: title, content preview, creation date, site name, URL
+- Displays: title, content preview, reading time, site name, tags, URL
+- **Article Fields**: 
+  - `title`, `content`, `excerpt` (HTML entities decoded)
+  - `url`, `siteName`, `length` (character count)
+  - `tags` (comma-delimited string)
 - **Local Storage**: Articles cached in AsyncStorage with key `@poche_articles_{userId}`
 - **Incremental Sync**: Only fetches new articles not already in local storage
 - **Offline Support**: Article detail view loads only from local storage
+- **Tag Updates**: Tags can be updated and synced to Supabase and local storage
 
 ### Profiles Table
 User profile management:
@@ -179,6 +195,7 @@ Key dependencies:
 - `expo-background-task` - Background task management for article syncing
 - `expo-task-manager` - Task manager for background tasks
 - `react-native-reanimated` - Smooth animations for article list
+- `expo-image` - Optimized image component for article thumbnails
 
 ## State Management
 
@@ -215,21 +232,30 @@ Key dependencies:
 - ✅ Offline article reading support
 - ✅ Background article syncing with expo-background-task
 - ✅ Instant article loading from local storage
-- ✅ Article entry animations (FadeInDown) for new articles
+- ✅ Article entry animations (FadeIn) for new articles
 - ✅ Article exit animations (FadeOut) for deleted articles
 - ✅ Article deletion with confirmation dialog
 - ✅ Modular ArticleCard component
 - ✅ Incremental article syncing (only new articles)
 - ✅ Network error handling with local storage fallback
+- ✅ Tag management UI (add/remove tags from article cards)
+- ✅ Tag filtering on homepage with tag chips
+- ✅ Reading time display (replaces created time)
+- ✅ Cross-platform tag input modal (replaces iOS-only Alert.prompt)
+- ✅ Shared types and utilities folder for code reuse
+- ✅ Tag removal confirmation alerts
 
 ## Future Enhancements
 
 Potential features:
-- Article search and filtering
-- Article organization (tags, folders)
+- Article search functionality
+- Article organization (folders/categories)
 - Reading progress tracking
 - Article sharing
 - Push notifications for new articles
 - Article editing
 - Enhanced sync conflict resolution
+- Tag autocomplete/suggestions
+- Bulk tag operations
+- Tag colors customization
 

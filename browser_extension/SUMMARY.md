@@ -19,8 +19,9 @@ The Poche browser extension allows users to save articles from any webpage to th
 ### Technology Stack
 
 - **Build Tool**: Webpack
-- **Language**: JavaScript (ES6+)
-- **Bundler**: Webpack with Babel for transpilation
+- **Language**: TypeScript
+- **UI Framework**: React
+- **Bundler**: Webpack with TypeScript and Babel for transpilation
 - **Article Parsing**: Mozilla Readability (bundled with extension)
 - **Backend**: Supabase (authentication and database)
 - **Storage**: Chrome/Firefox storage API for session persistence
@@ -30,25 +31,29 @@ The Poche browser extension allows users to save articles from any webpage to th
 ```
 browser_extension/
 ├── src/
-│   ├── popup.js          # Main popup logic and UI handlers
+│   ├── popup.tsx         # Main popup React component (TypeScript)
 │   ├── popup.html        # Popup HTML structure
 │   ├── popup.css         # Popup styles with dark mode support
-│   ├── content.js        # Content script for parsing articles
-│   ├── background.js     # Background service worker
+│   ├── content.ts        # Content script for parsing articles (TypeScript)
+│   ├── background.ts     # Background service worker (TypeScript)
 │   └── lib/
-│       └── supabase.js   # Supabase client with browser storage adapter
+│       └── supabase.ts   # Supabase client with browser storage adapter (TypeScript)
+├── shared/               # Shared types and utilities
+│   ├── types.tsx         # TypeScript types (Article, Database, etc.)
+│   └── util.ts           # Utility functions (tagToColor, etc.)
 ├── icons/                # Extension icons (16x16, 48x48, 128x128)
 ├── dist/                 # Built extension files (generated)
 ├── manifest.json         # Extension manifest (Manifest V3)
 ├── package.json          # Dependencies and build scripts
+├── tsconfig.json         # TypeScript configuration
 ├── webpack.config.js     # Webpack configuration
 └── SUMMARY.md            # This file
 ```
 
 ## Key Components
 
-### popup.js
-Main extension logic:
+### popup.tsx
+Main extension React component (TypeScript):
 - Authentication (login/signup)
 - Content script injection and communication
 - Article parsing coordination
@@ -57,19 +62,23 @@ Main extension logic:
 - **Saved article tracking**: Stores list of saved article URLs and IDs in browser storage
 - **Button state management**: Updates save button state based on whether current URL is already saved
 - **Article sync**: Syncs saved articles from Supabase on popup open to keep local storage in sync
+- **Tag input UI**: Text input field for specifying comma-delimited list of tags before saving
+- **HTML entity decoding**: Decodes HTML entities in article titles and excerpts before saving
 
-### content.js
-Content script that runs on web pages:
+### content.ts
+Content script that runs on web pages (TypeScript):
 - Listens for parse requests from popup
 - Uses Mozilla Readability to extract article content
-- Returns parsed article data (title, content, etc.)
+- Returns parsed article data (title, content, excerpt, length, etc.)
 - Handles cross-browser API differences
+- Calculates article length (character count excluding HTML)
 
-### supabase.js
-Supabase client configuration:
+### supabase.ts
+Supabase client configuration (TypeScript):
 - Custom storage adapter using browser storage API
 - Works with both Chrome and Firefox APIs
 - Session persistence across extension restarts
+- Type-safe database queries using generated types
 
 ## How It Works
 
@@ -91,8 +100,13 @@ Supabase client configuration:
 ### Articles Table Schema
 The extension saves articles with the following fields:
 - `user_id` (string, required) - Links article to user
-- `title` (string, nullable) - Article title
+- `title` (string, nullable) - Article title (HTML entities decoded)
 - `content` (string, nullable) - Parsed text content
+- `excerpt` (string, nullable) - Article excerpt (HTML entities decoded)
+- `url` (string, nullable) - Original article URL
+- `siteName` (string, nullable) - Website name
+- `length` (number, nullable) - Character count of article text (excluding HTML)
+- `tags` (string, nullable) - Comma-delimited list of tags
 - `created_time` (string, auto-generated) - Timestamp
 
 ### Authentication
@@ -178,10 +192,15 @@ The extension requires:
 
 ## Recent Enhancements
 
+- ✅ Converted to React with TypeScript
 - ✅ Saved article URL tracking in browser storage
 - ✅ Smart save button state management
 - ✅ Automatic sync of saved articles from Supabase on popup open
 - ✅ Prevention of duplicate article saves
+- ✅ Tag input UI for specifying tags before saving articles
+- ✅ HTML entity decoding for article titles and excerpts
+- ✅ Article length calculation (character count excluding HTML)
+- ✅ Shared types and utilities folder for code reuse
 
 ## Future Enhancements
 
@@ -189,6 +208,8 @@ Potential improvements:
 - Real-time sync of saved articles (not just on popup open)
 - Article preview before saving
 - Batch article saving
-- Custom article tags/categories
-- Reading time estimation
+- Tag autocomplete/suggestions
+- Reading time estimation display
 - Article thumbnail extraction
+- Tag color customization
+- Bulk tag operations
