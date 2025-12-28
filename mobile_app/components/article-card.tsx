@@ -108,7 +108,7 @@ export function ArticleCard({
         <View style={styles.articleCardBottom}>
           <View style={styles.articleTagList}>
             {article.tags?.split(',').map((tag) => (
-              <ThemedText key={tag} style={[styles.articleTag, { backgroundColor: tagToColor(tag, 0.15), color: tagToColor(tag) }]}>{tag}</ThemedText>
+              <ThemedText key={tag} style={[styles.articleTag, { backgroundColor: tagToColor(tag, 0.2), color: tagToColor(tag) }]}>{tag}</ThemedText>
             ))}
           </View>
 

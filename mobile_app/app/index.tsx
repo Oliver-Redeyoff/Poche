@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "../lib/supabase"
 import { Session } from "@supabase/supabase-js"
-import { StyleSheet, View, Alert, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
+import { StyleSheet, View, Alert, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
+import { useColorScheme } from '@/hooks/use-color-scheme'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ArticleCard } from '../components/article-card'
 import { Article } from '../shared/types'
+import { tagToColor } from '../shared/util'
 
 
 export default function HomeScreen() {
@@ -18,7 +20,9 @@ export default function HomeScreen() {
   const [articlesLoading, setArticlesLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const seenArticleIds = useRef<Set<number>>(new Set())
+  const colorScheme = useColorScheme()
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
@@ -367,11 +371,38 @@ export default function HomeScreen() {
     
     return null
   }
+
+  // Extract all unique tags from articles
+  function getAllTags(): string[] {
+    const tagSet = new Set<string>()
+    articles.forEach(article => {
+      if (article.tags) {
+        const tags = article.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+        tags.forEach(tag => tagSet.add(tag))
+      }
+    })
+    return Array.from(tagSet).sort()
+  }
+
+  // Filter articles by selected tag
+  function getFilteredArticles(): Article[] {
+    if (!selectedTag) {
+      return articles
+    }
+    return articles.filter(article => {
+      if (!article.tags) return false
+      const tags = article.tags.split(',').map(tag => tag.trim())
+      return tags.includes(selectedTag)
+    })
+  }
   
   if (!session || !session.user) {
     return null // Auth is handled in _layout.tsx
   }
   
+  const allTags = getAllTags()
+  const filteredArticles = getFilteredArticles()
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView 
@@ -388,20 +419,81 @@ export default function HomeScreen() {
           />
         }
       >
+        {/* Tag Filter Section */}
+        {allTags.length > 0 && (
+          <View style={styles.tagFilterContainer}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tagFilterContent}
+            >
+              <Pressable
+                onPress={() => setSelectedTag(null)}
+                style={[
+                  styles.tagChip,
+                  { 
+                    backgroundColor: colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
+                    opacity: selectedTag ? 0.5 : 1,
+                  }
+                ]}
+              >
+                <ThemedText style={[
+                  styles.tagChipText,
+                  { color: backgroundColor }
+                ]}>
+                  all
+                </ThemedText>
+              </Pressable>
+
+              {allTags.map((tag) => {
+                const isSelected = selectedTag === tag
+
+                return (
+                  <Pressable
+                    key={tag}
+                    onPress={() => setSelectedTag(isSelected ? null : tag)}
+                    style={[
+                      styles.tagChip,
+                      { 
+                        backgroundColor: tagToColor(tag, 0.2),
+                        opacity: isSelected ? 1 : 0.5,
+                        borderWidth: 1,
+                        borderColor: tagToColor(tag, isSelected ? 1.0 : 0),
+                      }
+                    ]}
+                  >
+                    <ThemedText style={[
+                      styles.tagChipText,
+                      { color: tagToColor(tag, 1.0) }
+                    ]}>
+                      {tag}
+                    </ThemedText>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         {articlesLoading && articles.length === 0 ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" />
             <ThemedText style={styles.loadingText}>Loading articles...</ThemedText>
           </View>
-        ) : articles.length === 0 ? (
+        ) : filteredArticles.length === 0 ? (
           <View style={styles.centerContent}>
-            <ThemedText style={styles.emptyText}>No articles found</ThemedText>
+            <ThemedText style={styles.emptyText}>
+              {selectedTag ? `No articles with tag "${selectedTag}"` : 'No articles found'}
+            </ThemedText>
             <ThemedText style={[styles.emptySubtext, { color: borderColor }]}>
-              Save articles from the browser extension to see them here
+              {selectedTag 
+                ? 'Try selecting a different tag or view all articles'
+                : 'Save articles from the browser extension to see them here'
+              }
             </ThemedText>
           </View>
         ) : (
-          articles.map((article) => {
+          filteredArticles.map((article) => {
             return (
               <ArticleCard
                 key={article.id}
@@ -455,5 +547,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.5,
     textAlign: 'center',
+  },
+  tagFilterContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 18,
+  },
+  tagFilterContent: {
+    paddingHorizontal: 4,
+    gap: 6,
+  },
+  tagChip: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxSizing: 'border-box',
+    height: 32,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  tagChipText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 })
