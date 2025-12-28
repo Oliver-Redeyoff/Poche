@@ -407,7 +407,7 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={{ paddingTop: topPadding }}
+        contentContainerStyle={{ paddingTop: topPadding, paddingBottom: 48 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

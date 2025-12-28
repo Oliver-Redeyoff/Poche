@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   articleUrlAndDate: {
     marginBottom: 4,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     color: 'rgba(120, 120, 120, 0.75)',
   },
   articleImage: {
