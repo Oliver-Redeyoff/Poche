@@ -356,7 +356,6 @@ const styles = StyleSheet.create({
   articleTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,

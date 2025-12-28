@@ -15,7 +15,7 @@ Both components use **Supabase** for authentication and data storage.
 
 - **Backend/Database**: Supabase (PostgreSQL database with authentication)
 - **Mobile App**: React Native with Expo Router
-- **Browser Extension**: Vanilla JavaScript with Webpack
+- **Browser Extension**: React with TypeScript, built with Webpack
 - **Authentication**: Supabase Auth (email/password)
 - **Article Parsing**: Mozilla Readability
 
@@ -26,8 +26,13 @@ The project uses a Supabase database with the following main tables:
 #### `articles` table
 - `id` (number, auto-generated)
 - `user_id` (string, foreign key to auth.users)
-- `title` (string, nullable)
+- `title` (string, nullable) - article title (HTML entities decoded)
 - `content` (string, nullable) - parsed article text content
+- `excerpt` (string, nullable) - article excerpt (HTML entities decoded)
+- `url` (string, nullable) - original article URL
+- `siteName` (string, nullable) - website name
+- `length` (number, nullable) - character count of article text (excluding HTML)
+- `tags` (string, nullable) - comma-delimited list of tags
 - `created_time` (string, auto-generated)
 
 #### `profiles` table
@@ -52,9 +57,11 @@ Poche/
 │   ├── app/            # Expo Router file-based routing
 │   ├── components/     # React components
 │   ├── lib/            # Supabase client configuration
+│   ├── shared/         # Shared types and utilities
 │   └── ...
 ├── browser_extension/   # Browser extension for saving articles
-│   ├── src/            # Source files
+│   ├── src/            # Source files (React/TypeScript)
+│   ├── shared/         # Shared types and utilities
 │   ├── dist/           # Built extension files
 │   └── ...
 └── SUMMARY.md          # This file
@@ -74,6 +81,9 @@ Poche/
 - **Article animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article deletion**: Delete articles with confirmation dialog and smooth animations
 - **Article detail view**: Full article reading experience with offline support
+- **Tag management**: Add and remove tags from articles directly from article cards
+- **Tag filtering**: Filter articles by tag using tag chips at the top of the homepage
+- **Reading time**: Display estimated reading time based on article character count
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -84,6 +94,8 @@ Poche/
 - **Saved article tracking**: Tracks which URLs have already been saved to prevent duplicate saves
 - **Smart button state**: "Save Article" button is disabled and shows "Already Saved" if current URL is already saved
 - **Automatic sync**: Syncs saved article list from Supabase on popup open to reflect deletions from mobile app
+- **Tag input**: UI to specify comma-delimited list of tags before saving an article
+- **HTML entity decoding**: Automatically decodes HTML entities in article titles and excerpts (e.g., `&rsquo;` → `'`)
 
 ## Workflow
 
@@ -107,9 +119,11 @@ Poche/
 
 ### Browser Extension
 - Built with Webpack
+- React with TypeScript for UI components
 - Uses Manifest V3 for Chrome/Firefox
 - Bundles Mozilla Readability for article parsing
 - Cross-browser API compatibility layer
+- HTML entity decoding for article titles and excerpts
 
 ## Configuration
 
@@ -132,18 +146,27 @@ Poche/
 - ✅ Article entry and exit animations
 - ✅ Article deletion with confirmation
 - ✅ Modular ArticleCard component
+- ✅ Tag management (add/remove tags from article cards)
+- ✅ Tag filtering on homepage
+- ✅ Reading time display based on article length
+- ✅ Shared types and utilities folder
 
 ### Browser Extension
 - ✅ Saved article URL tracking
 - ✅ Smart save button state management
 - ✅ Automatic sync of saved articles from Supabase
+- ✅ Converted to React with TypeScript
+- ✅ Tag input UI for specifying tags before saving
+- ✅ HTML entity decoding for titles and excerpts
 
 ## Future Enhancements
 
 Potential features to add:
-- Article organization (tags, folders)
+- Article folders/categories
 - Search functionality
 - Article sharing
 - Reading progress tracking
 - Enhanced sync across devices
+- Tag autocomplete/suggestions
+- Bulk tag operations
 
