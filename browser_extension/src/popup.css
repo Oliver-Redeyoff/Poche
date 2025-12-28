@@ -92,18 +92,11 @@ body {
   justify-content: center;
   gap: 4px;
 
-  img {
+  .logo {
     width: 24px;
     height: 24px;
     padding-top: 3px;
     box-sizing: content-box;
-
-    &.logo-black {
-      display: block;
-    }
-    &.logo-white {
-      display: none;
-    }
   }
 
   .header-right {
