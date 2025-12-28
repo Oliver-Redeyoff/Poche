@@ -108,58 +108,23 @@ export default function SettingsScreen() {
   return (
     <ThemedView style={{...styles.container, paddingTop: topPadding}}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.verticallySpaced, styles.mt20]}>
-          <ThemedText style={styles.label}>
-            Email
-          </ThemedText>
-          <TextInput
-            value={session?.user?.email || ''}
-            editable={false}
-            style={[styles.input, { borderColor, backgroundColor, color: textColor, opacity: 0.6 }]}
-          />
-        </View>
-        <View style={styles.verticallySpaced}>
-          <ThemedText style={styles.label}>
-            Username
-          </ThemedText>
-          <TextInput
-            value={username || ''}
-            onChangeText={(text) => setUsername(text)}
-            placeholder="Username"
-            placeholderTextColor={borderColor}
-            autoCapitalize="none"
-            style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
-          />
-        </View>
-        <View style={styles.verticallySpaced}>
-          <ThemedText style={styles.label}>
-            Website
-          </ThemedText>
-          <TextInput
-            value={website || ''}
-            onChangeText={(text) => setWebsite(text)}
-            placeholder="Website URL"
-            placeholderTextColor={borderColor}
-            autoCapitalize="none"
-            keyboardType="url"
-            style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
-          />
-        </View>
+        <View style={styles.userInfoContainer}>
+          <View style={styles.userInfoTextContainer}>
+            <ThemedText style={styles.userInfoText}>
+              Logged in as
+            </ThemedText>
+            <ThemedText style={[styles.userInfoText, { fontWeight: '600' }]}>
+              {session?.user?.email}
+            </ThemedText>
+          </View>
 
-        <View style={[styles.verticallySpaced, styles.mt20]}>
-          <Button
-            title={loading ? 'Loading ...' : 'Update Profile'}
-            onPress={() => updateProfile({ username, website, avatar_url: avatarUrl })}
-            disabled={loading}
-          />
-        </View>
-
-        <View style={[styles.verticallySpaced, styles.mt20]}>
-          <Button 
-            title="Sign Out" 
-            onPress={() => supabase.auth.signOut()} 
-            color="#ff3b30"
-          />
+          <View style={[styles.button, styles.buttonSecondary]}>
+            <Button 
+              title="Logout" 
+              onPress={() => supabase.auth.signOut()} 
+              color="white"
+            />
+          </View>
         </View>
       </ScrollView>
     </ThemedView>
@@ -169,6 +134,26 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  userInfoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 18,
+    backgroundColor: 'rgba(120, 120, 120, 0.1)',
+  },
+  userInfoTextContainer: {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    height: '100%',
+  },
+  userInfoText: {
+    fontSize: 14,
   },
   scrollView: {
     flex: 1,
@@ -198,5 +183,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+  },
+  button: {
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    fontWeight: '600',
+  },
+    buttonPrimary: {
+    backgroundColor: "#EF4056",
+  },
+    buttonSecondary: {
+    backgroundColor: "#aaaaaa",
   },
 })

@@ -251,7 +251,7 @@ function MainSection({
       </button>
 
       <div className="user-info">
-        <p>Logged in as: <strong>{userEmail}</strong></p>
+        <p>Logged in as <strong>{userEmail}</strong></p>
         <button className="btn btn-secondary" onClick={onLogout}>Logout</button>
       </div>
     </div>
