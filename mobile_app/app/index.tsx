@@ -8,7 +8,7 @@ import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ArticleCard } from '../components/article-card'
-import { Article } from '../../shared/types'
+import { Article } from '../shared/types'
 
 
 export default function HomeScreen() {

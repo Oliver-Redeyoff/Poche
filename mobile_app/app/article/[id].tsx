@@ -8,7 +8,7 @@ import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import RenderHTML from 'react-native-render-html'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Article } from '../../../shared/types'
+import { Article } from '../../shared/types'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 

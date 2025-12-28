@@ -4,8 +4,8 @@ import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { IconSymbol } from './ui/icon-symbol'
-import { Article } from '../../shared/types'
-import { tagToColor } from '../../shared/util'
+import { Article } from '../shared/types'
+import { tagToColor } from '../shared/util'
 
 interface ArticleCardProps {
   article: Article
@@ -108,7 +108,7 @@ export function ArticleCard({
         <View style={styles.articleCardBottom}>
           <View style={styles.articleTagList}>
             {article.tags?.split(',').map((tag) => (
-              <ThemedText key={tag} style={[styles.articleTag, { backgroundColor: tagToColor(tag) }]}>{tag}</ThemedText>
+              <ThemedText key={tag} style={[styles.articleTag, { backgroundColor: tagToColor(tag, 0.15), color: tagToColor(tag) }]}>{tag}</ThemedText>
             ))}
           </View>
 
@@ -185,8 +185,7 @@ const styles = StyleSheet.create({
   },
   articleTag: {
     fontSize: 12,
-    color: 'rgba(120, 120, 120, 0.75)',
-    // backgroundColor: 'rgba(120, 120, 120, 0.1)',
+    fontWeight: '600',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
