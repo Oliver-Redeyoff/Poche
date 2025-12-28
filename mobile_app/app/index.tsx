@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "../lib/supabase"
 import { Session } from "@supabase/supabase-js"
-import { StyleSheet, View, Alert, ScrollView, FlatList, Pressable, ActivityIndicator, RefreshControl, Modal } from 'react-native'
-import { Image } from 'expo-image'
-import { useRouter } from 'expo-router'
+import { StyleSheet, View, Alert, ScrollView, ActivityIndicator, RefreshControl } from 'react-native'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
@@ -23,7 +21,6 @@ interface Article {
 
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null)
-  const router = useRouter()
   const headerHeight = useHeaderHeight()
   const [articles, setArticles] = useState<Article[]>([])
   const [articlesLoading, setArticlesLoading] = useState(false)
@@ -343,6 +340,8 @@ export default function HomeScreen() {
       throw error
     }
 
+    // The ArticleCard component already waits 300ms for the animation to complete
+    // before calling this function, so we can remove it immediately
     // Remove article from local state
     const updatedArticles = articles.filter(article => article.id !== articleId)
     setArticles(updatedArticles)
@@ -410,31 +409,16 @@ export default function HomeScreen() {
             </ThemedText>
           </View>
         ) : (
-          <FlatList
-            data={articles}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-            renderItem={({ item, index }) => {
-              const isNewArticle = !seenArticleIds.current.has(item.id)
-              
-              // Mark as seen after render
-              if (isNewArticle) {
-                setTimeout(() => {
-                  seenArticleIds.current.add(item.id)
-                }, 0)
-              }
-              
-              return (
-                <ArticleCard
-                  article={item}
-                  index={index}
-                  isNewArticle={isNewArticle}
-                  onDelete={deleteArticle}
-                  extractFirstImageUrl={extractFirstImageUrl}
-                />
-              )
-            }}
-          />
+          articles.map((article) => {
+            return (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                onDelete={deleteArticle}
+                extractFirstImageUrl={extractFirstImageUrl}
+              />
+            )
+          })
         )}
       </ScrollView>
     </ThemedView>

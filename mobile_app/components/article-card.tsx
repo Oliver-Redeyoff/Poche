@@ -1,11 +1,10 @@
-import { useState } from 'react'
 import { StyleSheet, View, Pressable, Alert } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
 
 interface Article {
   id: number
@@ -20,21 +19,16 @@ interface Article {
 
 interface ArticleCardProps {
   article: Article
-  index: number
-  isNewArticle: boolean
   onDelete: (articleId: number) => Promise<void>
   extractFirstImageUrl: (htmlContent: string | null) => string | null
 }
 
 export function ArticleCard({
   article,
-  index,
-  isNewArticle,
   onDelete,
   extractFirstImageUrl,
 }: ArticleCardProps) {
   const router = useRouter()
-  const [isDeleting, setIsDeleting] = useState(false)
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
@@ -54,17 +48,9 @@ export function ArticleCard({
           style: 'destructive',
           onPress: async () => {
             try {
-              // Start deletion animation
-              setIsDeleting(true)
-              
-              // Wait for animation to complete (300ms)
-              await new Promise(resolve => setTimeout(resolve, 300))
-              
               // Call the delete callback
               await onDelete(article.id)
             } catch (error) {
-              // Reset deleting state on error
-              setIsDeleting(false)
               if (error instanceof Error) {
                 Alert.alert('Error deleting article', error.message)
               }
@@ -76,10 +62,11 @@ export function ArticleCard({
   }
 
   return (
-    <Animated.View 
+    <Animated.View
       style={styles.articleCardWrapper}
-      entering={isNewArticle ? FadeInDown.duration(500).delay(Math.min(index * 30, 300)) : undefined}
-      exiting={isDeleting ? FadeOut.duration(300) : undefined}
+      entering={FadeIn.duration(200)}
+      exiting={FadeOut.duration(200)}
+      layout={LinearTransition.duration(200)}
     >
       {/* Top part of article card */}
       <Pressable
