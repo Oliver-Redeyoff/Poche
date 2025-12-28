@@ -121,7 +121,7 @@ function HeaderLogo() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       <Image 
-        source={ colorScheme === 'dark' ? require('@/assets/images/icon_white.png') : require('@/assets/images/icon_black.png')} 
+        source={ require('@/assets/images/icon.png') } 
         style={{ width: 24, height: 24 }} 
       />
       <ThemedText style={{ fontSize: 32, lineHeight: 32, fontWeight: 'bold' }}>poche</ThemedText>
