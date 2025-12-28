@@ -1,4 +1,4 @@
-import { StyleSheet, View, Pressable, Alert } from 'react-native'
+import { StyleSheet, View, Pressable, Alert, Modal, TextInput, Platform } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
@@ -6,10 +6,13 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import { IconSymbol } from './ui/icon-symbol'
 import { Article } from '../shared/types'
 import { tagToColor } from '../shared/util'
+import { useState } from 'react'
+import { useThemeColor } from '@/hooks/use-theme-color'
 
 interface ArticleCardProps {
   article: Article
   onDelete: (articleId: number) => Promise<void>
+  onUpdateTags: (articleId: number, tags: string) => Promise<void>
   extractFirstImageUrl: (htmlContent: string | null) => string | null
 }
 
@@ -33,11 +36,21 @@ function calculateReadingTime(length: number | null | undefined): string {
 export function ArticleCard({
   article,
   onDelete,
+  onUpdateTags,
   extractFirstImageUrl,
 }: ArticleCardProps) {
   const router = useRouter()
   const imageUrl = extractFirstImageUrl(article.content || null)
   const readingTime = calculateReadingTime(article.length)
+  const [showAddTagModal, setShowAddTagModal] = useState(false)
+  const [newTagInput, setNewTagInput] = useState('')
+  const borderColor = useThemeColor({}, 'icon')
+  const backgroundColor = useThemeColor({}, 'background')
+  const textColor = useThemeColor({}, 'text')
+
+  const currentTags = article.tags 
+    ? article.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    : []
 
   const handleDelete = () => {
     Alert.alert(
@@ -64,6 +77,76 @@ export function ArticleCard({
         },
       ]
     )
+  }
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    try {
+      const updatedTags = currentTags.filter(tag => tag !== tagToRemove)
+      const tagsString = updatedTags.length > 0 ? updatedTags.join(',') : null
+      await onUpdateTags(article.id, tagsString || '')
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error removing tag', error.message)
+      }
+    }
+  }
+
+  const handleAddTagPrompt = () => {
+    if (Platform.OS === 'ios') {
+      // Use native prompt on iOS
+      Alert.prompt(
+        'Add Tag',
+        'Enter a new tag for this article',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Add',
+            onPress: async (tag) => {
+              if (!tag || !tag.trim()) {
+                return
+              }
+              await addTag(tag.trim())
+            },
+          },
+        ],
+        'plain-text'
+      )
+    } else {
+      // Use modal on Android and other platforms
+      setShowAddTagModal(true)
+    }
+  }
+
+  const addTag = async (tag: string) => {
+    if (!tag || !tag.trim()) {
+      return
+    }
+    const trimmedTag = tag.trim()
+    
+    // Check if tag already exists
+    if (currentTags.includes(trimmedTag)) {
+      Alert.alert('Tag already exists', 'This tag is already added to the article.')
+      return
+    }
+
+    try {
+      const updatedTags = [...currentTags, trimmedTag]
+      const tagsString = updatedTags.join(',')
+      await onUpdateTags(article.id, tagsString)
+      setNewTagInput('')
+      setShowAddTagModal(false)
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error adding tag', error.message)
+      }
+    }
+  }
+
+  const handleModalAdd = () => {
+    addTag(newTagInput)
   }
 
   return (
@@ -103,37 +186,108 @@ export function ArticleCard({
             placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
           />
         </View>
+      </Pressable>
 
-        {/* Bottom part of article card */}
-        <View style={styles.articleCardBottom}>
-          <View style={styles.articleTagList}>
-            {article.tags?.split(',').map((tag) => (
-              <ThemedText key={tag} style={[styles.articleTag, { backgroundColor: tagToColor(tag, 0.2), color: tagToColor(tag) }]}>{tag}</ThemedText>
-            ))}
-          </View>
-
-          {/* Icon list */}
-          <View style={styles.articleIconList}>
+      {/* Bottom part of article card - tags and actions (outside main pressable) */}
+      <View style={styles.articleCardBottom}>
+        <View style={styles.articleTagList}>
+          {currentTags.map((tag) => (
             <Pressable
-              onPress={handleDelete}
+              key={tag}
+              onPress={() => handleRemoveTag(tag)}
+              style={({ pressed }) => [
+                styles.articleTag,
+                { 
+                  backgroundColor: tagToColor(tag, 0.2), 
+                  opacity: pressed ? 0.7 : 1,
+                }
+              ]}
             >
-              <IconSymbol name="trash" size={20} color="rgba(120, 120, 120, 0.75)" />
+              <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '600' }}>
+                {tag}
+              </ThemedText>
+              <View style={styles.tagRemoveIcon}>
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '700', opacity: 0.4 }}>
+                  ×
+                </ThemedText>
+              </View>
             </Pressable>
+          ))}
+          <Pressable
+            onPress={handleAddTagPrompt}
+            style={({ pressed }) => [
+              styles.addTagButton,
+              { opacity: pressed ? 0.7 : 1 }
+            ]}
+          >
+            <IconSymbol name="plus" size={16} color="rgba(120, 120, 120, 0.75)" />
+          </Pressable>
+        </View>
+
+        {/* Icon list */}
+        <View style={styles.articleIconList}>
+          <Pressable
+            onPress={handleDelete}
+          >
+            <IconSymbol name="trash" size={20} color="rgba(120, 120, 120, 0.75)" />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Add Tag Modal for Android/Web */}
+      <Modal
+        visible={showAddTagModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowAddTagModal(false)
+          setNewTagInput('')
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor }]}>
+            <ThemedText style={styles.modalTitle}>Add Tag</ThemedText>
+            <ThemedText style={[styles.modalSubtitle, { color: borderColor }]}>
+              Enter a new tag for this article
+            </ThemedText>
+            <TextInput
+              style={[styles.modalInput, { borderColor, color: textColor }]}
+              value={newTagInput}
+              onChangeText={setNewTagInput}
+              placeholder="Tag name"
+              placeholderTextColor={borderColor}
+              autoFocus={true}
+              onSubmitEditing={handleModalAdd}
+            />
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => {
+                  setShowAddTagModal(false)
+                  setNewTagInput('')
+                }}
+                style={[styles.modalButton, styles.modalButtonCancel]}
+              >
+                <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleModalAdd}
+                style={[styles.modalButton, styles.modalButtonAdd]}
+              >
+                <ThemedText style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Add</ThemedText>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </Pressable>
+      </Modal>
     </Animated.View>
   )
 }
 
 const styles = StyleSheet.create({
   articleCardWrapper: {
-    position: 'relative',
-    marginHorizontal: 12,
-    borderBottomColor: 'rgba(120, 120, 120, 0.2)',
-    borderBottomWidth: 1,
-    paddingTop: 12,
-    paddingBottom: 12,
+    padding: 12,
+    backgroundColor: 'rgba(120, 120, 120, 0.08)',
+    borderRadius: 18,
   },
   articleCard: {
     display: 'flex',
@@ -148,6 +302,7 @@ const styles = StyleSheet.create({
   articleCardTop: {
     flexDirection: 'row',
     gap: 12,
+    marginBottom: 8,
   },
   articleCardText: {
     flex: 1,
@@ -175,6 +330,7 @@ const styles = StyleSheet.create({
   articleCardBottom: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
     width: '100%',
   },
   articleTagList: {
@@ -184,14 +340,87 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   articleTag: {
-    fontSize: 12,
-    fontWeight: '600',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
+  addTagButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(120, 120, 120, 0.3)',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 32,
+    height: 28,
+  },
   articleIconList: {
     display: 'flex',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    opacity: 0.7,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: 'rgba(120, 120, 120, 0.1)',
+  },
+  modalButtonAdd: {
+    backgroundColor: 'rgba(239, 64, 86, 0.8)',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 })
 

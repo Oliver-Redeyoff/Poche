@@ -145,14 +145,19 @@ export default function ArticleScreen() {
     picture: {
       maxWidth: SCREEN_WIDTH - 32,
       height: 'auto',
-      marginTop: 16,
-      marginBottom: 16,
+      borderRadius: 24,
+      overflow: 'hidden',
+      textAlign: 'center',
+    },
+    figure: {
+      textAlign: 'center',
+      marginBottom: 12,
     },
     img: {
       maxWidth: SCREEN_WIDTH - 32,
       height: 'auto',
-      marginTop: 16,
-      marginBottom: 16,
+      borderRadius: 24,
+      overflow: 'hidden',
     },
   }
 
