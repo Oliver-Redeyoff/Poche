@@ -11,7 +11,6 @@ interface Article {
   content?: string | null
   url?: string
   created_time?: string
-  created_at?: string
   [key: string]: any
 }
 
@@ -82,8 +81,8 @@ async function syncArticlesInBackground() {
       const mergedArticles = [...newArticles, ...storedArticles]
         .sort((a, b) => {
           // Sort by created_time descending (newest first)
-          const timeA = new Date(a.created_time || a.created_at || 0).getTime()
-          const timeB = new Date(b.created_time || b.created_at || 0).getTime()
+          const timeA = new Date(a.created_time || 0).getTime()
+          const timeB = new Date(b.created_time || 0).getTime()
           return timeB - timeA
         })
       
