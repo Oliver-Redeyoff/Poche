@@ -29,7 +29,6 @@ The project uses a Supabase database with the following main tables:
 - `title` (string, nullable)
 - `content` (string, nullable) - parsed article text content
 - `created_time` (string, auto-generated)
-- `published_time` (string, nullable)
 
 #### `profiles` table
 - `id` (string, foreign key to auth.users)

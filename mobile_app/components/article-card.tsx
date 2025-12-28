@@ -12,8 +12,7 @@ interface Article {
   content?: string | null
   url?: string
   siteName?: string | null
-  created_time?: string
-  [key: string]: any
+  created_time: string
 }
 
 interface ArticleCardProps {
