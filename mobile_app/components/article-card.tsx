@@ -79,16 +79,32 @@ export function ArticleCard({
     )
   }
 
-  const handleRemoveTag = async (tagToRemove: string) => {
-    try {
-      const updatedTags = currentTags.filter(tag => tag !== tagToRemove)
-      const tagsString = updatedTags.length > 0 ? updatedTags.join(',') : null
-      await onUpdateTags(article.id, tagsString || '')
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error removing tag', error.message)
-      }
-    }
+  const handleRemoveTag = (tagToRemove: string) => {
+    Alert.alert(
+      'Remove Tag',
+      `Are you sure you want to remove the tag "${tagToRemove}"?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updatedTags = currentTags.filter(tag => tag !== tagToRemove)
+              const tagsString = updatedTags.length > 0 ? updatedTags.join(',') : null
+              await onUpdateTags(article.id, tagsString || '')
+            } catch (error) {
+              if (error instanceof Error) {
+                Alert.alert('Error removing tag', error.message)
+              }
+            }
+          },
+        },
+      ]
+    )
   }
 
   const handleAddTagPrompt = () => {
@@ -104,7 +120,7 @@ export function ArticleCard({
           },
           {
             text: 'Add',
-            onPress: async (tag) => {
+            onPress: async (tag: string | undefined) => {
               if (!tag || !tag.trim()) {
                 return
               }
@@ -206,11 +222,9 @@ export function ArticleCard({
               <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '600' }}>
                 {tag}
               </ThemedText>
-              <View style={styles.tagRemoveIcon}>
-                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '700', opacity: 0.4 }}>
-                  ×
-                </ThemedText>
-              </View>
+              <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '700', opacity: 0.4, marginLeft: 4 }}>
+                ×
+              </ThemedText>
             </Pressable>
           ))}
           <Pressable
