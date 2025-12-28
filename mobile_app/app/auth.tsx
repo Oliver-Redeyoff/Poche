@@ -73,7 +73,7 @@ export default function Auth() {
   return (
 	<View style={[styles.container, { paddingTop: topPadding }]}>
 	  <View style={styles.verticallySpaced}>
-		<ThemedText type="defaultSemiBold" style={styles.label}>
+		<ThemedText style={styles.label}>
 		  Email
 		</ThemedText>
 		<TextInput
@@ -87,7 +87,7 @@ export default function Auth() {
 		/>
 	  </View>
 	  <View style={styles.verticallySpaced}>
-		<ThemedText type="defaultSemiBold" style={styles.label}>
+		<ThemedText style={styles.label}>
 		  Password
 		</ThemedText>
 		<TextInput

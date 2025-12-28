@@ -5,6 +5,7 @@ import { ThemedText } from './themed-text'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
+import { IconSymbol } from './ui/icon-symbol'
 
 interface Article {
   id: number
@@ -78,18 +79,13 @@ export function ArticleCard({
         <View style={styles.articleCardContent}>
           <View style={styles.articleCardText}>
             {article.title && (
-              <ThemedText type="defaultSemiBold" style={styles.articleTitle}>
+              <ThemedText style={styles.articleTitle}>
                 {article.title}
               </ThemedText>
             )}
             {article.siteName && (
               <ThemedText style={[styles.articleUrl, { color: textColor }]}>
-                {article.siteName}
-              </ThemedText>
-            )}
-            {(article.created_time) && (
-              <ThemedText style={[styles.articleDate, { color: borderColor }]}>
-                {new Date(article.created_time || '').toLocaleDateString()}
+                {article.siteName}  •  {new Date(article.created_time || '').toLocaleDateString()}
               </ThemedText>
             )}
           </View>
@@ -111,7 +107,7 @@ export function ArticleCard({
         onPress={handleDelete}
         style={styles.menuButton}
       >
-        <Ionicons name="trash-outline" size={20} color="red" />
+        <IconSymbol name="trash" size={20} color="red" />
       </Pressable>
     </Animated.View>
   )
