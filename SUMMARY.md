@@ -69,6 +69,12 @@ Poche/
 - User profile management
 - Tab-based navigation with native iOS blur effects
 - Dark mode support
+- **Offline article access**: Signed-in users can access articles stored locally even when offline
+- **Background article sync**: Periodic background task to sync latest articles from database
+- **Instant article loading**: Articles from local storage appear immediately on homepage, with new articles synced in background
+- **Article animations**: Smooth entry animations for new articles and exit animations for deleted articles
+- **Article deletion**: Delete articles with confirmation dialog and smooth animations
+- **Article detail view**: Full article reading experience with offline support
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -76,6 +82,9 @@ Poche/
 - Save articles to Supabase articles table
 - Cross-browser compatibility (Chrome, Firefox, Safari)
 - Automatic content extraction from web pages
+- **Saved article tracking**: Tracks which URLs have already been saved to prevent duplicate saves
+- **Smart button state**: "Save Article" button is disabled and shows "Already Saved" if current URL is already saved
+- **Automatic sync**: Syncs saved article list from Supabase on popup open to reflect deletions from mobile app
 
 ## Workflow
 
@@ -93,6 +102,9 @@ Poche/
 - Uses Expo Router for file-based routing
 - TypeScript for type safety
 - Supabase client configured with AsyncStorage for session persistence
+- **Local storage**: Articles stored in AsyncStorage for offline access
+- **Background tasks**: Uses `expo-background-task` for periodic article syncing
+- **Animations**: Uses `react-native-reanimated` for smooth article list animations
 
 ### Browser Extension
 - Built with Webpack
@@ -112,13 +124,27 @@ Poche/
 - Users can only insert/view their own articles
 - Authentication required for all operations
 
+## Recent Enhancements
+
+### Mobile App
+- ✅ Offline article reading support
+- ✅ Background article syncing
+- ✅ Instant article loading from local storage
+- ✅ Article entry and exit animations
+- ✅ Article deletion with confirmation
+- ✅ Modular ArticleCard component
+
+### Browser Extension
+- ✅ Saved article URL tracking
+- ✅ Smart save button state management
+- ✅ Automatic sync of saved articles from Supabase
+
 ## Future Enhancements
 
 Potential features to add:
-- Offline reading support
 - Article organization (tags, folders)
 - Search functionality
 - Article sharing
 - Reading progress tracking
-- Sync across devices
+- Enhanced sync across devices
 

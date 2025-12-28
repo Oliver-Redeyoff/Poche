@@ -11,6 +11,12 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **User Profile**: Manage username, website, and avatar
 - **Native Navigation**: Tab-based navigation with native iOS blur effects
 - **Dark Mode**: Automatic theme switching based on system preferences
+- **Offline Access**: Signed-in users can access articles stored locally even when offline
+- **Background Sync**: Periodic background task to sync latest articles from database
+- **Instant Loading**: Articles from local storage appear immediately on homepage
+- **Article Animations**: Smooth entry animations for new articles and exit animations for deleted articles
+- **Article Deletion**: Delete articles with confirmation dialog and smooth animations
+- **Article Detail View**: Full article reading experience with offline support
 
 ## Architecture
 
@@ -21,7 +27,9 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Language**: TypeScript
 - **Navigation**: Expo Router with Stack and Tab navigators
 - **Backend**: Supabase (authentication and database)
-- **Storage**: AsyncStorage for session persistence
+- **Storage**: AsyncStorage for session persistence and article caching
+- **Background Tasks**: expo-background-task for periodic article syncing
+- **Animations**: react-native-reanimated for smooth list animations
 
 ### File Structure
 
@@ -36,11 +44,13 @@ mobile_app/
 │   └── modal.tsx          # Modal screen
 ├── components/            # React components
 │   ├── auth.tsx          # Authentication component
-│   ├── account.tsx       # Account/profile component with articles
+│   ├── account.tsx        # Account/profile component with articles
+│   ├── article-card.tsx  # Reusable article card component with delete logic
 │   ├── themed-text.tsx   # Themed text component
 │   └── ...
 ├── lib/
-│   └── supabase.ts       # Supabase client configuration
+│   ├── supabase.ts       # Supabase client configuration
+│   └── background-sync.ts # Background task for syncing articles
 ├── hooks/                # Custom React hooks
 │   ├── use-color-scheme.ts
 │   └── use-theme-color.ts
@@ -51,12 +61,15 @@ mobile_app/
 
 ## Key Components
 
-### app/(tabs)/index.tsx
+### app/index.tsx
 Home screen that:
 - Checks authentication status
 - Shows Auth component if not logged in
-- Shows Account component if logged in
-- Listens for auth state changes
+- Shows article list if logged in
+- Loads articles from local storage immediately
+- Syncs new articles from Supabase in background
+- Handles article deletion with animations
+- Manages article list state and storage
 
 ### components/auth.tsx
 Authentication component:
@@ -66,28 +79,32 @@ Authentication component:
 - Error handling
 - Themed UI with dark mode support
 
-### components/account.tsx
-Account/profile component:
-- User profile management (username, website)
-- Displays user's saved articles
-- Fetches articles from Supabase
-- Article list with cards showing title, content preview, date
-- Sign out functionality
+### components/article-card.tsx
+Article card component:
+- Renders individual article card with title, site name, date, and optional image
+- Handles navigation to article detail page
+- Delete button with confirmation dialog
+- Entry and exit animations using react-native-reanimated
+- Manages delete animation state internally
+- Updates parent state and storage on deletion
+
+### app/article/[id].tsx
+Article detail screen:
+- Displays full article content
+- Loads articles from local storage only (offline-first)
+- Handles navigation back if article not found
+- Shows article title, content, and metadata
 
 ## Routing Structure
 
 ### File-Based Routing
 Expo Router uses file-based routing similar to Next.js:
 
-- `app/_layout.tsx` - Root layout with Stack navigator
-- `app/(tabs)/_layout.tsx` - Tab navigator layout
-- `app/(tabs)/index.tsx` - Home tab (default route `/`)
-- `app/(tabs)/explore.tsx` - Explore tab (`/explore`)
+- `app/_layout.tsx` - Root layout with Stack navigator, registers background sync
+- `app/index.tsx` - Home screen (default route `/`) with article list
+- `app/article/[id].tsx` - Article detail screen with dynamic ID parameter
+- `app/settings.tsx` - Settings screen
 - `app/modal.tsx` - Modal screen (`/modal`)
-
-### Route Groups
-- `(tabs)` - Route group that doesn't affect URL structure
-- Parentheses create logical grouping without adding to path
 
 ## Database Integration
 
@@ -95,7 +112,10 @@ Expo Router uses file-based routing similar to Next.js:
 The app fetches articles with:
 - `user_id` filter to show only user's articles
 - Ordered by `created_time` (newest first)
-- Displays: title, content preview, creation date
+- Displays: title, content preview, creation date, site name, URL
+- **Local Storage**: Articles cached in AsyncStorage with key `@poche_articles_{userId}`
+- **Incremental Sync**: Only fetches new articles not already in local storage
+- **Offline Support**: Article detail view loads only from local storage
 
 ### Profiles Table
 User profile management:
@@ -109,7 +129,9 @@ User profile management:
 2. If no session → Shows Auth component
 3. User logs in/signs up → Supabase authenticates
 4. Session stored → AsyncStorage persists session
-5. Account component shown → User can view articles
+5. Background sync registered → Periodic article syncing enabled
+6. Articles loaded → From local storage immediately, then synced from Supabase
+7. User can view articles → With offline support
 
 ## UI/UX Features
 
@@ -153,13 +175,18 @@ Key dependencies:
 - `expo-router` - File-based routing
 - `@supabase/supabase-js` - Supabase client
 - `expo-blur` - Native blur effects
-- `@react-native-async-storage/async-storage` - Local storage
+- `@react-native-async-storage/async-storage` - Local storage for articles and session
+- `expo-background-task` - Background task management for article syncing
+- `expo-task-manager` - Task manager for background tasks
+- `react-native-reanimated` - Smooth animations for article list
 
 ## State Management
 
-- React hooks for local state (`useState`, `useEffect`)
+- React hooks for local state (`useState`, `useEffect`, `useRef`)
 - Supabase session management
 - Auth state changes via `onAuthStateChange`
+- Local article state with AsyncStorage persistence
+- Animation state tracking (`seenArticleIds`, `deletingArticleId`)
 - No global state management library (kept simple)
 
 ## Error Handling
@@ -168,6 +195,8 @@ Key dependencies:
 - Console logging for debugging
 - Graceful fallbacks for missing data
 - Loading states for async operations
+- Network error detection with fallback to local storage
+- Background task availability checks (Expo Go compatibility)
 
 ## Platform-Specific Features
 
@@ -181,16 +210,26 @@ Key dependencies:
 - Android-specific styling
 - Edge-to-edge support
 
+## Recent Enhancements
+
+- ✅ Offline article reading support
+- ✅ Background article syncing with expo-background-task
+- ✅ Instant article loading from local storage
+- ✅ Article entry animations (FadeInDown) for new articles
+- ✅ Article exit animations (FadeOut) for deleted articles
+- ✅ Article deletion with confirmation dialog
+- ✅ Modular ArticleCard component
+- ✅ Incremental article syncing (only new articles)
+- ✅ Network error handling with local storage fallback
+
 ## Future Enhancements
 
 Potential features:
-- Article reading view with full content
 - Article search and filtering
 - Article organization (tags, folders)
-- Offline article reading
 - Reading progress tracking
 - Article sharing
 - Push notifications for new articles
-- Article deletion
 - Article editing
+- Enhanced sync conflict resolution
 
