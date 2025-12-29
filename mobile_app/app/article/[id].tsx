@@ -158,14 +158,12 @@ export default function ArticleScreen() {
       fontSize: 18,
       lineHeight: 32, // 1.78 ratio for optimal readability
       fontFamily: 'System',
-      letterSpacing: 0.2,
     },
     p: {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
       marginBottom: 24,
-      letterSpacing: 0.2,
       textAlign: 'left' as const,
     },
     div: {
@@ -183,31 +181,28 @@ export default function ArticleScreen() {
       lineHeight: 40,
       marginBottom: 24,
       marginTop: 48,
-      letterSpacing: -0.5,
     },
     h2: {
       color: colors.text,
       fontSize: 26,
-      fontWeight: '600' as const,
       lineHeight: 34,
+      fontWeight: '700' as const,
       marginBottom: 16,
       marginTop: 8,
-      letterSpacing: -0.3,
     },
     h3: {
       color: colors.text,
       fontSize: 22,
-      fontWeight: '600' as const,
       lineHeight: 30,
+      fontWeight: '700' as const,
       marginBottom: 12,
       marginTop: 32,
-      letterSpacing: -0.2,
     },
     h4: {
       color: colors.text,
       fontSize: 19,
-      fontWeight: '600' as const,
       lineHeight: 26,
+      fontWeight: '700' as const,
       marginBottom: 10,
       marginTop: 24,
     },
@@ -449,7 +444,10 @@ export default function ArticleScreen() {
             baseStyle={{
               color: colors.text,
             }}
-            enableExperimentalMarginCollapsing={true}
+            defaultTextProps={{
+              textBreakStrategy: 'simple',
+              lineBreakStrategyIOS: 'standard',
+            }}
           />
         </View>
         
@@ -486,7 +484,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     lineHeight: 42,
-    letterSpacing: -0.5,
     marginBottom: 20,
   },
   meta: {
