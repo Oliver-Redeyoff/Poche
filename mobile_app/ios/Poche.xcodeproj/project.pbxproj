@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A1B7040FB0AB07582543D29 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B93F920CFAD640F471E61444 /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		18725B198058DB27CDCBB63A /* libPods-Poche.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C2BCC984DD7B41746BBC3223 /* libPods-Poche.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		5E616DE599EA845F4C32FD28 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA584DC38E24E75FFE66182 /* ExpoModulesProvider.swift */; };
-		75D5F43205C0946BBD64E2D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B552FFCCDAE8CA4377AA9E19 /* PrivacyInfo.xcprivacy */; };
+		96038ECB9FDBC0C7777B54AF /* libPods-Poche.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B22C247AB65DDC17EF879018 /* libPods-Poche.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		F09479FB285576685B2BF03F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 983B4798ACA1395A950D42B7 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,13 +20,13 @@
 		13B07F961A680F5B00A75B9A /* Poche.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Poche.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Poche/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Poche/Info.plist; sourceTree = "<group>"; };
-		6DE62B457598BFDC1C60CD2F /* Pods-Poche.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Poche.debug.xcconfig"; path = "Target Support Files/Pods-Poche/Pods-Poche.debug.xcconfig"; sourceTree = "<group>"; };
+		983B4798ACA1395A950D42B7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Poche/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Poche/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B552FFCCDAE8CA4377AA9E19 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Poche/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B15D250EB12F9FC6F3385B6F /* Pods-Poche.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Poche.release.xcconfig"; path = "Target Support Files/Pods-Poche/Pods-Poche.release.xcconfig"; sourceTree = "<group>"; };
+		B22C247AB65DDC17EF879018 /* libPods-Poche.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Poche.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B93F920CFAD640F471E61444 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Poche/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BDA584DC38E24E75FFE66182 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Poche/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		C2BCC984DD7B41746BBC3223 /* libPods-Poche.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Poche.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DAF9A5303696E6D09EE948C6 /* Pods-Poche.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Poche.release.xcconfig"; path = "Target Support Files/Pods-Poche/Pods-Poche.release.xcconfig"; sourceTree = "<group>"; };
+		EC446C9004EC0868F225928E /* Pods-Poche.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Poche.debug.xcconfig"; path = "Target Support Files/Pods-Poche/Pods-Poche.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Poche/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Poche-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Poche-Bridging-Header.h"; path = "Poche/Poche-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				18725B198058DB27CDCBB63A /* libPods-Poche.a in Frameworks */,
+				96038ECB9FDBC0C7777B54AF /* libPods-Poche.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,33 +53,34 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				B552FFCCDAE8CA4377AA9E19 /* PrivacyInfo.xcprivacy */,
+				983B4798ACA1395A950D42B7 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Poche;
-			sourceTree = "<group>";
-		};
-		24C4D20463FAE1BA951A6D04 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				6DE62B457598BFDC1C60CD2F /* Pods-Poche.debug.xcconfig */,
-				DAF9A5303696E6D09EE948C6 /* Pods-Poche.release.xcconfig */,
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				C2BCC984DD7B41746BBC3223 /* libPods-Poche.a */,
+				B22C247AB65DDC17EF879018 /* libPods-Poche.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		7BC09D5E3AD0F100E31401E6 /* ExpoModulesProviders */ = {
+		2FAF3434C17CE91E8CDB2F01 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				A0BBDF801091873FDEA7886D /* Poche */,
+				EC446C9004EC0868F225928E /* Pods-Poche.debug.xcconfig */,
+				B15D250EB12F9FC6F3385B6F /* Pods-Poche.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		36AC4A0E9AFD54422554BA33 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				B40A4F77366D8B995DB26F89 /* Poche */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -98,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				24C4D20463FAE1BA951A6D04 /* Pods */,
-				7BC09D5E3AD0F100E31401E6 /* ExpoModulesProviders */,
+				2FAF3434C17CE91E8CDB2F01 /* Pods */,
+				36AC4A0E9AFD54422554BA33 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -114,10 +115,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A0BBDF801091873FDEA7886D /* Poche */ = {
+		B40A4F77366D8B995DB26F89 /* Poche */ = {
 			isa = PBXGroup;
 			children = (
-				BDA584DC38E24E75FFE66182 /* ExpoModulesProvider.swift */,
+				B93F920CFAD640F471E61444 /* ExpoModulesProvider.swift */,
 			);
 			name = Poche;
 			sourceTree = "<group>";
@@ -139,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Poche" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				650315A3794B52047F930151 /* [Expo] Configure project */,
+				196B7E0362D42522E35037EB /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				EE35D01CDCB1550AB0C33CF0 /* [CP] Embed Pods Frameworks */,
+				926056A4F8FF73ED1F7EA789 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -195,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				75D5F43205C0946BBD64E2D8 /* PrivacyInfo.xcprivacy in Resources */,
+				F09479FB285576685B2BF03F /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		650315A3794B52047F930151 /* [Expo] Configure project */ = {
+		196B7E0362D42522E35037EB /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -252,6 +253,7 @@
 			inputPaths = (
 				"$(SRCROOT)/.xcode.env",
 				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/Poche/Poche.entitlements",
 				"$(SRCROOT)/Pods/Target Support Files/Pods-Poche/expo-configure-project.sh",
 			);
 			name = "[Expo] Configure project";
@@ -300,7 +302,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Poche/Pods-Poche-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		EE35D01CDCB1550AB0C33CF0 /* [CP] Embed Pods Frameworks */ = {
+		926056A4F8FF73ED1F7EA789 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -330,7 +332,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				5E616DE599EA845F4C32FD28 /* ExpoModulesProvider.swift in Sources */,
+				0A1B7040FB0AB07582543D29 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,12 +341,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 6DE62B457598BFDC1C60CD2F /* Pods-Poche.debug.xcconfig */;
+			baseConfigurationReference = EC446C9004EC0868F225928E /* Pods-Poche.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Poche/Poche.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = UM9933695A;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -368,18 +370,19 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Poche/Poche-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DAF9A5303696E6D09EE948C6 /* Pods-Poche.release.xcconfig */;
+			baseConfigurationReference = B15D250EB12F9FC6F3385B6F /* Pods-Poche.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Poche/Poche.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = UM9933695A;
 				INFOPLIST_FILE = Poche/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -397,6 +400,7 @@
 				PRODUCT_NAME = Poche;
 				SWIFT_OBJC_BRIDGING_HEADER = "Poche/Poche-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
