@@ -1,22 +1,9 @@
 import * as TaskManager from 'expo-task-manager'
 import * as BackgroundTask from 'expo-background-task'
 import { supabase } from './supabase'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { syncArticles } from './article-sync'
 
 const BACKGROUND_SYNC_TASK = 'background-article-sync'
-
-interface Article {
-  id: number
-  title?: string | null
-  content?: string | null
-  url?: string
-  created_time: string
-}
-
-// Get storage key for articles (per user)
-function getArticlesStorageKey(userId: string): string {
-  return `@poche_articles_${userId}`
-}
 
 // Background task function that syncs articles
 async function syncArticlesInBackground() {
@@ -30,70 +17,17 @@ async function syncArticlesInBackground() {
     }
 
     const userId = session.user.id
-    const storageKey = getArticlesStorageKey(userId)
     
-    // Get stored article IDs
-    const storedData = await AsyncStorage.getItem(storageKey)
-    const storedArticles: Article[] = storedData ? JSON.parse(storedData) : []
-    const storedArticleIds = storedArticles.map(article => article.id)
+    // Sync articles with image processing enabled
+    const result = await syncArticles(userId, { processImages: true })
     
-    // Build query - if we have stored articles, only fetch new ones
-    let query = supabase
-      .from('articles')
-      .select('*')
-      .eq('user_id', userId)
-    
-    // If we have stored articles, only fetch articles not in storage
-    if (storedArticleIds.length > 0) {
-      query = query.not('id', 'in', `(${storedArticleIds.join(',')})`)
+    if (result.error) {
+      console.error('Background sync error:', result.error)
+      return BackgroundTask.BackgroundTaskResult.Failed
     }
     
-    // Apply ordering after filters
-    query = query.order('created_time', { ascending: false })
-    
-    let { data, error } = await query
-
-    // If the "not in" query fails, fallback to fetching all and filtering client-side
-    if (error && storedArticleIds.length > 0) {
-      console.warn('Background sync: Not-in query failed, falling back to fetch-all approach:', error)
-      // Fallback: fetch all articles and filter client-side
-      const { data: allData, error: allError } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_time', { ascending: false })
-      
-      if (allError) {
-        throw allError
-      }
-      
-      // Filter out stored articles client-side
-      data = allData?.filter(article => !storedArticleIds.includes(article.id)) || []
-      error = null
-    } else if (error) {
-      throw error
-    }
-
-    if (data && data.length > 0) {
-      // Merge new articles with stored articles
-      const newArticles = data || []
-      const mergedArticles = [...newArticles, ...storedArticles]
-        .sort((a, b) => {
-          // Sort by created_time descending (newest first)
-          const timeA = new Date(a.created_time || 0).getTime()
-          const timeB = new Date(b.created_time || 0).getTime()
-          return timeB - timeA
-        })
-      
-      // Remove duplicates
-      const uniqueArticles = mergedArticles.filter((article, index, self) =>
-        index === self.findIndex((a) => a.id === article.id)
-      )
-      
-      // Save merged articles back to storage
-      await AsyncStorage.setItem(storageKey, JSON.stringify(uniqueArticles))
-      
-      console.log(`Background sync: Synced ${newArticles.length} new article(s)`)
+    if (result.newArticles.length > 0) {
+      console.log(`Background sync: Synced ${result.newArticles.length} new article(s)`)
       return BackgroundTask.BackgroundTaskResult.Success
     } else {
       console.log('Background sync: No new articles')
