@@ -121,7 +121,7 @@ export default function SettingsScreen() {
           <View style={[styles.button, styles.buttonSecondary]}>
             <Button 
               title="Logout" 
-              onPress={() => supabase.auth.signOut()} 
+              onPress={() => supabase.auth.signOut({ scope: 'local' })} 
               color="white"
             />
           </View>

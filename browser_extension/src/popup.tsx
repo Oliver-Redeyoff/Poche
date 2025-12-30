@@ -678,7 +678,7 @@ function App(): JSX.Element {
   }
 
   const handleLogout = async (): Promise<void> => {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     setSession(null)
     setTags([])
     showStatus('Logged out successfully', 'success')
