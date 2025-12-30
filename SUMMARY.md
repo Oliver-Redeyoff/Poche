@@ -74,13 +74,14 @@ Poche/
 - View saved articles linked to user account
 - User profile management
 - Tab-based navigation with native iOS blur effects
-- Dark mode support
+- Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
 - **Offline article access**: Signed-in users can access articles stored locally even when offline
-- **Background article sync**: Periodic background task to sync latest articles from database
+- **Offline image caching**: Images in articles are downloaded and stored locally for offline viewing
+- **Background article sync**: Periodic background task to sync latest articles and cache images
 - **Instant article loading**: Articles from local storage appear immediately on homepage, with new articles synced in background
 - **Article animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article deletion**: Delete articles with confirmation dialog and smooth animations
-- **Article detail view**: Full article reading experience with offline support
+- **Premium article reader**: Enhanced typography, dynamic styling based on content type, horizontal code block scrolling
 - **Tag management**: Add and remove tags from articles directly from article cards
 - **Tag filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading time**: Display estimated reading time based on article character count
@@ -114,8 +115,11 @@ Poche/
 - TypeScript for type safety
 - Supabase client configured with AsyncStorage for session persistence
 - **Local storage**: Articles stored in AsyncStorage for offline access
-- **Background tasks**: Uses `expo-background-task` for periodic article syncing
-- **Animations**: Uses `react-native-reanimated` for smooth article list animations
+- **Image caching**: Uses `expo-file-system/legacy` to download and cache article images locally
+- **Background tasks**: Uses `expo-background-task` for periodic article syncing and image caching
+- **Animations**: Uses `react-native-reanimated` for smooth article list animations and content fade-in
+- **HTML rendering**: Uses `react-native-render-html` with custom renderers for premium article reading experience
+- **Custom theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 
 ### Browser Extension
 - Built with Webpack
@@ -141,7 +145,8 @@ Poche/
 
 ### Mobile App
 - ✅ Offline article reading support
-- ✅ Background article syncing
+- ✅ Offline image caching with `expo-file-system/legacy`
+- ✅ Background article syncing with image caching
 - ✅ Instant article loading from local storage
 - ✅ Article entry and exit animations
 - ✅ Article deletion with confirmation
@@ -149,7 +154,14 @@ Poche/
 - ✅ Tag management (add/remove tags from article cards)
 - ✅ Tag filtering on homepage
 - ✅ Reading time display based on article length
+- ✅ Premium article reader with enhanced typography
+- ✅ Dynamic content styling based on `data-component` attributes
+- ✅ Horizontal scrolling code blocks
+- ✅ Custom Poche color theme (warm tones, coral accent)
+- ✅ iOS text wrapping fixes for react-native-render-html
+- ✅ Content fade-in animation with loading overlay
 - ✅ Shared types and utilities folder
+- ✅ Centralized article sync logic (`lib/article-sync.ts`)
 
 ### Browser Extension
 - ✅ Saved article URL tracking
