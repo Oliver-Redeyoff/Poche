@@ -1,8 +1,8 @@
-import { DarkTheme, DefaultTheme, ThemeProvider, useTheme } from '@react-navigation/native'
+import { DarkTheme, DefaultTheme, ThemeProvider, Theme } from '@react-navigation/native'
 import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { View, Image, Pressable } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@supabase/supabase-js'
@@ -13,6 +13,33 @@ import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
+
+// Custom Poche theme colors - warm tones that are easy on the eyes
+const PocheLightTheme: Theme = {
+  dark: false,
+  colors: {
+    primary: '#EF4056', // Poche coral accent
+    background: '#f2f2f2', // Warm off-white
+    card: 'white',
+    text: '#1A1A1A',
+    border: '#E8E4E0',
+    notification: '#EF4056',
+  },
+  fonts: DefaultTheme.fonts,
+}
+
+const PocheDarkTheme: Theme = {
+  dark: true,
+  colors: {
+    primary: '#F06B7E', // Lighter coral for dark mode
+    background: '#1C1A18', // Warm dark
+    card: '#151413',
+    text: '#E8E4DF',
+    border: '#2E2C2A',
+    notification: '#F06B7E',
+  },
+  fonts: DarkTheme.fonts,
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
@@ -45,7 +72,7 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === 'dark' ? PocheDarkTheme : PocheLightTheme}>
       <RootStack session={session} />
       <StatusBar style="auto" />
     </ThemeProvider>

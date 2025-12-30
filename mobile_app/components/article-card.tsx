@@ -8,6 +8,7 @@ import { Article } from '../shared/types'
 import { tagToColor } from '../shared/util'
 import { useState } from 'react'
 import { useThemeColor } from '@/hooks/use-theme-color'
+import { useTheme } from '@react-navigation/native'
 
 interface ArticleCardProps {
   article: Article
@@ -44,9 +45,7 @@ export function ArticleCard({
   const readingTime = calculateReadingTime(article.length)
   const [showAddTagModal, setShowAddTagModal] = useState(false)
   const [newTagInput, setNewTagInput] = useState('')
-  const borderColor = useThemeColor({}, 'icon')
-  const backgroundColor = useThemeColor({}, 'background')
-  const textColor = useThemeColor({}, 'text')
+  const theme = useTheme()
 
   const currentTags = article.tags 
     ? article.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
@@ -167,7 +166,7 @@ export function ArticleCard({
 
   return (
     <Animated.View
-      style={styles.articleCardWrapper}
+      style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card }]}
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(200)}
       layout={LinearTransition.duration(200)}
@@ -194,13 +193,15 @@ export function ArticleCard({
             )}
           </View>
 
-          <Image
-            source={{ uri: imageUrl ?? "" }}
-            style={styles.articleImage}
-            contentFit="cover"
-            transition={200}
-            placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-          />
+          {imageUrl && (
+            <Image
+              source={{ uri: imageUrl ?? "" }}
+              style={styles.articleImage}
+              contentFit="cover"
+              transition={200}
+              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+            />
+          )}
         </View>
       </Pressable>
 
@@ -208,34 +209,47 @@ export function ArticleCard({
       <View style={styles.articleCardBottom}>
         <View style={styles.articleTagList}>
           {currentTags.map((tag) => (
-            <Pressable
+            <Animated.View
               key={tag}
-              onPress={() => handleRemoveTag(tag)}
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+              layout={LinearTransition.duration(200)}
+            >
+              <Pressable
+                onPress={() => handleRemoveTag(tag)}
+                style={({ pressed }) => [
+                  styles.articleTag,
+                  { 
+                    backgroundColor: tagToColor(tag, 0.2), 
+                    opacity: pressed ? 0.7 : 1,
+                  }
+                ]}
+              >
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '600' }}>
+                  {tag}
+                </ThemedText>
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '700', opacity: 0.4, marginLeft: 4 }}>
+                  ×
+                </ThemedText>
+              </Pressable>
+            </Animated.View>
+          ))}
+
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(200)}
+            layout={LinearTransition.duration(200)}
+          >
+            <Pressable
+              onPress={handleAddTagPrompt}
               style={({ pressed }) => [
-                styles.articleTag,
-                { 
-                  backgroundColor: tagToColor(tag, 0.2), 
-                  opacity: pressed ? 0.7 : 1,
-                }
+                styles.addTagButton,
+                { opacity: pressed ? 0.7 : 1 }
               ]}
             >
-              <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '600' }}>
-                {tag}
-              </ThemedText>
-              <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '700', opacity: 0.4, marginLeft: 4 }}>
-                ×
-              </ThemedText>
+              <IconSymbol name="plus" size={16} color="rgba(120, 120, 120, 0.75)" />
             </Pressable>
-          ))}
-          <Pressable
-            onPress={handleAddTagPrompt}
-            style={({ pressed }) => [
-              styles.addTagButton,
-              { opacity: pressed ? 0.7 : 1 }
-            ]}
-          >
-            <IconSymbol name="plus" size={16} color="rgba(120, 120, 120, 0.75)" />
-          </Pressable>
+          </Animated.View>
         </View>
 
         {/* Icon list */}
@@ -259,17 +273,17 @@ export function ArticleCard({
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
             <ThemedText style={styles.modalTitle}>Add Tag</ThemedText>
-            <ThemedText style={[styles.modalSubtitle, { color: borderColor }]}>
+            <ThemedText style={[styles.modalSubtitle, { color: theme.colors.text }]}>
               Enter a new tag for this article
             </ThemedText>
             <TextInput
-              style={[styles.modalInput, { borderColor, color: textColor }]}
+              style={[styles.modalInput, { borderColor: theme.colors.border, color: theme.colors.text }]}
               value={newTagInput}
               onChangeText={setNewTagInput}
               placeholder="Tag name"
-              placeholderTextColor={borderColor}
+              placeholderTextColor={theme.colors.border}
               autoFocus={true}
               onSubmitEditing={handleModalAdd}
             />
@@ -300,8 +314,8 @@ export function ArticleCard({
 const styles = StyleSheet.create({
   articleCardWrapper: {
     padding: 12,
-    backgroundColor: 'rgba(120, 120, 120, 0.08)',
     borderRadius: 18,
+    boxShadow: '0px 8px 24px rgba(120, 120, 120, 0.05)',
   },
   articleCard: {
     display: 'flex',
@@ -351,13 +365,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'stretch',
     gap: 4,
   },
   articleTag: {
+    height: 26,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 8,
   },
   addTagButton: {
@@ -370,7 +385,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 32,
-    height: 28,
+    height: 26,
   },
   articleIconList: {
     display: 'flex',
