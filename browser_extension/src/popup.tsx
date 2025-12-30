@@ -46,9 +46,12 @@ interface StatusMessageProps {
   type: StatusType
 }
 
+type AuthMode = 'signin' | 'signup'
+
 interface LoginSectionProps {
   onSignIn: (email: string, password: string) => Promise<void>
   onSignUp: (email: string, password: string) => Promise<void>
+  onError: (message: string) => void
   isLoading: boolean
 }
 
@@ -163,28 +166,66 @@ function StatusMessage({ message, type }: StatusMessageProps): JSX.Element | nul
   )
 }
 
-function LoginSection({ onSignIn, onSignUp, isLoading }: LoginSectionProps): JSX.Element {
+function AuthModeSwitch({ mode, onModeChange }: { mode: AuthMode, onModeChange: (mode: AuthMode) => void }): JSX.Element {
+  return (
+    <div className="auth-mode-switch">
+      <button 
+        type="button"
+        className={`auth-mode-option ${mode === 'signin' ? 'active' : ''}`}
+        onClick={() => onModeChange('signin')}
+      >
+        Sign In
+      </button>
+      <button 
+        type="button"
+        className={`auth-mode-option ${mode === 'signup' ? 'active' : ''}`}
+        onClick={() => onModeChange('signup')}
+      >
+        Sign Up
+      </button>
+    </div>
+  )
+}
+
+function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionProps): JSX.Element {
+  const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
+    
     if (!email || !password) {
       return
     }
-    await onSignIn(email, password)
+
+    if (mode === 'signup') {
+      if (password !== confirmPassword) {
+        onError('Passwords do not match')
+        return
+      }
+      await onSignUp(email, password)
+    } else {
+      await onSignIn(email, password)
+    }
   }
 
-  const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
-    e.preventDefault()
-    if (!email || !password) {
-      return
-    }
-    await onSignUp(email, password)
+  const handleForgotPassword = (): void => {
+    // TODO: Implement forgot password functionality
+    console.log('Forgot password clicked')
+  }
+
+  // Clear confirm password when switching modes
+  const handleModeChange = (newMode: AuthMode): void => {
+    setMode(newMode)
+    setConfirmPassword('')
   }
 
   return (
     <div className="section">
+      <AuthModeSwitch mode={mode} onModeChange={handleModeChange} />
+      
       <form className="form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="email">Email</label>
@@ -209,21 +250,44 @@ function LoginSection({ onSignIn, onSignUp, isLoading }: LoginSectionProps): JSX
             name="password"
             placeholder="Password"
             required
-            autoComplete="current-password"
+            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
           />
         </div>
+
+        {mode === 'signup' && (
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              placeholder="Confirm password"
+              required
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+        )}
+
+        {mode === 'signin' && (
+          <button 
+            type="button" 
+            className="btn btn-link" 
+            onClick={handleForgotPassword}
+            disabled={isLoading}
+          >
+            Forgot password?
+          </button>
+        )}
         
-        <div className="button-group" style={{ marginTop: '8px' }}>
-          <button type="submit" className="btn btn-primary" disabled={isLoading}>
-            Sign In
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={handleSignUp} disabled={isLoading}>
-            Sign Up
-          </button>
-        </div>
+        <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+          {mode === 'signin' ? 'Sign In' : 'Create Account'}
+        </button>
       </form>
     </div>
   )
@@ -379,12 +443,10 @@ function App(): JSX.Element {
     setStatusMessage(message)
     setStatusType(type)
     
-    // Auto-hide after 2.5 seconds for success/info
-    if (type === 'success' || type === 'info') {
-      setTimeout(() => {
-        setStatusMessage('')
-      }, 2500)
-    }
+    // Auto-hide after 2.5 seconds
+    setTimeout(() => {
+      setStatusMessage('')
+    }, 2500)
   }
 
   const checkAuthStatus = async (): Promise<void> => {
@@ -783,6 +845,7 @@ function App(): JSX.Element {
         <LoginSection
           onSignIn={signIn}
           onSignUp={signUp}
+          onError={(message) => showStatus(message, 'error')}
           isLoading={isLoading}
         />
       )}
