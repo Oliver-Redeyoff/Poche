@@ -5,25 +5,34 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Poche brand colors - warm tones that are easy on the eyes
+const accentLight = '#EF4056'; // Poche coral
+const accentDark = '#F06B7E'; // Lighter coral for dark mode
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#1A1A1A',
+    textSecondary: '#666666',
+    textMuted: '#999999',
+    background: '#FAFAF8', // Warm off-white
+    tint: accentLight,
+    icon: '#666666',
+    tabIconDefault: '#999999',
+    tabIconSelected: accentLight,
+    divider: '#E8E4E0',
+    accent: accentLight,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#E8E4DF',
+    textSecondary: '#A8A4A0',
+    textMuted: '#787470',
+    background: '#1C1A18', // Warm dark
+    tint: accentDark,
+    icon: '#A8A4A0',
+    tabIconDefault: '#787470',
+    tabIconSelected: accentDark,
+    divider: '#2E2C2A',
+    accent: accentDark,
   },
 };
 
