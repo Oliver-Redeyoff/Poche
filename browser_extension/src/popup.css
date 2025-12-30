@@ -5,9 +5,16 @@
 }
 
 body {
-  --color-background: 255, 255, 255;
-  --color-text: 46, 46, 46;
+  /* Light mode - warm tones matching mobile app */
+  --color-background: 250, 250, 248;
+  --color-card: 255, 255, 255;
+  --color-text: 26, 26, 26;
+  --color-text-secondary: 102, 102, 102;
+  --color-text-muted: 153, 153, 153;
   --color-primary: 239, 64, 86;
+  --color-border: 221, 221, 221;
+  --color-divider: 229, 229, 229;
+  --color-surface: 245, 245, 240;
   
   width: 350px;
   padding: 10px;
@@ -47,11 +54,11 @@ body {
   }
 
   &.btn-secondary {
-    background: #aaaaaa;
+    background: rgb(var(--color-text-secondary));
     color: white;
 
     &:hover:not(:disabled) {
-      background: #a0a0a0;
+      background: rgb(var(--color-text-muted));
     }
   }
 
@@ -63,14 +70,14 @@ body {
 
   &.btn-link {
     background: none;
-    color: #0a7ea4;
+    color: rgb(var(--color-primary));
     text-decoration: underline;
     padding: 4px 0;
     font-size: 12px;
     flex: none;
 
     &:hover {
-      color: #086890;
+      opacity: 0.8;
     }
   }
 }
@@ -112,7 +119,7 @@ body {
     .subtitle {
       display: none;
       font-size: 14px;
-      color: #666666;
+      color: rgb(var(--color-text-secondary));
     }
   }
 }
@@ -136,10 +143,10 @@ body {
       width: 100%;
       padding: 10px 12px;
       font-size: 14px;
-      border: 1px solid #dddddd;
+      border: 1px solid rgb(var(--color-border));
       border-radius: 12px;
       color: rgb(var(--color-text));
-      background: rgb(var(--color-background));
+      background: rgb(var(--color-card));
       transition: border-color 0.2s;
 
       &:focus {
@@ -150,7 +157,7 @@ body {
 
     .form-hint {
       font-size: 12px;
-      color: #888888;
+      color: rgb(var(--color-text-muted));
       margin-top: 4px;
       margin-bottom: 0;
     }
@@ -171,10 +178,10 @@ body {
     width: 100%;
     padding: 10px 12px;
     font-size: 14px;
-    border: 1px solid #dddddd;
+    border: 1px solid rgb(var(--color-border));
     border-radius: 6px;
     color: rgb(var(--color-text));
-    background: rgb(var(--color-background));
+    background: rgb(var(--color-card));
     transition: border-color 0.2s;
 
     &:focus {
@@ -185,7 +192,7 @@ body {
 
   .form-hint {
     font-size: 12px;
-    color: #888888;
+    color: rgb(var(--color-text-muted));
     margin-top: 4px;
     margin-bottom: 0;
   }
@@ -197,9 +204,10 @@ body {
   justify-content: center;
   width: 100%;
   height: 42px;
-  border: 1px solid #dddddd;
+  border: 1px solid rgb(var(--color-border));
   border-radius: 12px;
   box-sizing: border-box;
+  background: rgb(var(--color-card));
 
   .tag-icon {
     flex-shrink: 0;
@@ -288,10 +296,10 @@ body {
 
   .article-info {
     padding: 12px;
-    background: #f0f7fa;
+    background: rgb(var(--color-surface));
     border-radius: 6px;
     font-size: 13px;
-    color: #555555;
+    color: rgb(var(--color-text-secondary));
   }
 
   .flex-filler {
@@ -304,17 +312,25 @@ body {
     align-items: center;
     width: 100%;
     padding: 12px;
-    background-color: rgba(var(--color-text), 0.1);
+    background-color: rgb(var(--color-surface));
     border-radius: 12px;
     font-size: 13px;
+    color: rgb(var(--color-text-secondary));
   }
 }
 
-/* Dark mode support */
+/* Dark mode - warm tones matching mobile app */
 @media (prefers-color-scheme: dark) {
   body {
-    --color-background: 26, 26, 26;
-    --color-text: 224, 224, 224;
+    --color-background: 28, 26, 24;
+    --color-card: 21, 20, 19;
+    --color-text: 232, 228, 223;
+    --color-text-secondary: 168, 164, 160;
+    --color-text-muted: 107, 102, 96;
+    --color-primary: 240, 107, 126;
+    --color-border: 58, 56, 53;
+    --color-divider: 58, 56, 53;
+    --color-surface: 42, 40, 37;
   }
 
   .header {

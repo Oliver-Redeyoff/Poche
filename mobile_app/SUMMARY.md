@@ -10,9 +10,11 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Article Viewing**: Display all articles saved by the user
 - **User Profile**: Manage username, website, and avatar
 - **Native Navigation**: Tab-based navigation with native iOS blur effects
-- **Dark Mode**: Automatic theme switching based on system preferences
+- **Dark Mode**: Automatic theme switching based on system preferences with custom Poche color theme
+- **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
-- **Background Sync**: Periodic background task to sync latest articles from database
+- **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
+- **Background Sync**: Periodic background task to sync latest articles and cache images
 - **Instant Loading**: Articles from local storage appear immediately on homepage
 - **Article Animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article Deletion**: Delete articles with confirmation dialog and smooth animations
@@ -54,7 +56,9 @@ mobile_app/
 │   └── util.ts            # Utility functions (tagToColor, etc.)
 ├── lib/
 │   ├── supabase.ts       # Supabase client configuration
-│   └── background-sync.ts # Background task for syncing articles
+│   ├── background-sync.ts # Background task for syncing articles
+│   ├── article-sync.ts   # Centralized article sync logic
+│   └── image-cache.ts    # Image extraction, downloading, and caching utilities
 ├── hooks/                # Custom React hooks
 │   ├── use-color-scheme.ts
 │   └── use-theme-color.ts
@@ -100,11 +104,17 @@ Article card component:
 - Updates parent state and storage on deletion and tag changes
 
 ### app/article/[id].tsx
-Article detail screen:
-- Displays full article content
+Article detail screen with premium reading experience:
+- Displays full article content with enhanced typography
+- Uses `react-native-render-html` with custom renderers for `div`, `p`, and `pre` elements
+- Dynamic styling based on `data-component` attributes (text-block, image-block, subheadline-block, etc.)
+- Horizontal scrolling code blocks with left-aligned text
+- Content fade-in animation with loading overlay pattern
+- Tags displayed at top of article with colored chips
 - Loads articles from local storage only (offline-first)
 - Handles navigation back if article not found
-- Shows article title, content, and metadata
+- Shows article title, site name, reading time, and metadata
+- Uses `useWindowDimensions()` for correct responsive width on cold start
 
 ## Routing Structure
 
@@ -159,8 +169,11 @@ User profile management:
 
 ### Theming
 - Automatic dark/light mode detection
+- Custom Poche themes (`PocheLightTheme`, `PocheDarkTheme`) defined in `_layout.tsx`
+- Warm color palette: light background #FAFAF8, dark background #1C1A18
+- Poche coral accent: #EF4056 (light mode), #F06B7E (dark mode)
+- Theme colors in `constants/theme.ts` with keys: text, textSecondary, textMuted, background, card, border, divider, accent, codeBg, blockquoteBg, blockquoteBorder
 - Themed components (ThemedText, ThemedView)
-- Consistent color scheme across app
 - System preference-based switching
 
 ### Navigation
@@ -194,7 +207,9 @@ Key dependencies:
 - `@react-native-async-storage/async-storage` - Local storage for articles and session
 - `expo-background-task` - Background task management for article syncing
 - `expo-task-manager` - Task manager for background tasks
-- `react-native-reanimated` - Smooth animations for article list
+- `expo-file-system/legacy` - Image downloading and caching for offline access
+- `react-native-reanimated` - Smooth animations for article list and content fade-in
+- `react-native-render-html` - HTML rendering with custom renderers for article content
 - `expo-image` - Optimized image component for article thumbnails
 
 ## State Management
@@ -230,7 +245,9 @@ Key dependencies:
 ## Recent Enhancements
 
 - ✅ Offline article reading support
-- ✅ Background article syncing with expo-background-task
+- ✅ Offline image caching with `expo-file-system/legacy`
+- ✅ Background article syncing with expo-background-task (includes image caching)
+- ✅ Centralized article sync logic in `lib/article-sync.ts`
 - ✅ Instant article loading from local storage
 - ✅ Article entry animations (FadeIn) for new articles
 - ✅ Article exit animations (FadeOut) for deleted articles
@@ -244,6 +261,35 @@ Key dependencies:
 - ✅ Cross-platform tag input modal (replaces iOS-only Alert.prompt)
 - ✅ Shared types and utilities folder for code reuse
 - ✅ Tag removal confirmation alerts
+- ✅ Premium article reader with enhanced typography
+- ✅ Dynamic content styling based on `data-component` attributes
+- ✅ Horizontal scrolling code blocks with left-aligned text
+- ✅ Custom Poche color theme (warm tones, coral accent #EF4056)
+- ✅ Content fade-in animation with loading overlay (fixes iOS text measurement issues)
+- ✅ iOS text wrapping fixes (`textBreakStrategy`, `lineBreakStrategyIOS`, `useWindowDimensions`)
+- ✅ Tags displayed at top of article detail view
+- ✅ iOS app icon asset catalog with all required sizes
+
+## Technical Notes
+
+### iOS Text Wrapping Fix for react-native-render-html
+To fix text cutoff issues on iOS cold start:
+1. Use `useWindowDimensions()` hook instead of `Dimensions.get('window')` at module level
+2. Add `defaultTextProps={{ textBreakStrategy: 'simple', lineBreakStrategyIOS: 'standard' }}`
+3. Use loading overlay pattern: render with opacity 0, use `onHTMLLoaded` callback, wait 200ms, fade in
+4. Add `enableExperimentalGhostLinesPrevention={true}` prop
+5. Use `ignoredStyles={['width', 'maxWidth', 'minWidth']}` to prevent inline styles from interfering
+
+### Image Caching Architecture
+- `lib/image-cache.ts` contains utilities for extracting, downloading, and caching images
+- Images are stored in `${FileSystem.documentDirectory}article-images/{userId}/{articleId}/`
+- HTML content `src` attributes are replaced with `file://` URIs pointing to cached images
+- Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function with `processImages: true`
+
+### Custom Renderers in react-native-render-html
+- `div` and `p` elements use custom renderers to apply styles based on `data-component` attribute
+- `pre` elements use custom renderer wrapping content in horizontal `ScrollView` for code block scrolling
+- `getComponentStyle()` helper returns appropriate styles for each component type
 
 ## Future Enhancements
 
