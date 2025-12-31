@@ -20,17 +20,16 @@ interface ParsedArticle {
   title?: string | null
   content?: string | null
   excerpt?: string | null
-  length?: number | null
+  wordCount?: number | null
   siteName?: string | null
   url?: string | null
-  publishedTime?: string | null
-  byline?: string | null
+  author?: string | null
 }
 
 interface PingResponse {
   success?: boolean
   ready?: boolean
-  readabilityLoaded?: boolean
+  defuddleLoaded?: boolean
 }
 
 interface ParseResponse {
@@ -583,8 +582,8 @@ function App(): JSX.Element {
         
         if (!pingResponse || !pingResponse.ready) {
           needsInjection = true
-        } else if (!pingResponse.readabilityLoaded) {
-          throw new Error('Readability library failed to load in content script')
+        } else if (!pingResponse.defuddleLoaded) {
+          throw new Error('Defuddle library failed to load in content script')
         }
       } catch (pingError) {
         // Content script not available, need to inject it
@@ -623,8 +622,8 @@ function App(): JSX.Element {
               throw new Error('Content script injected but not responding')
             }
             
-            if (!pingResponse.readabilityLoaded) {
-              throw new Error('Readability library failed to load in content script')
+            if (!pingResponse.defuddleLoaded) {
+              throw new Error('Defuddle library failed to load in content script')
             }
           } catch (verifyError) {
             const errorMessage = verifyError instanceof Error ? verifyError.message : 'Unknown error'
@@ -667,6 +666,9 @@ function App(): JSX.Element {
       }
       
       showStatus('Saving article...', 'info')
+
+      console.log('article', article);
+      
       
       // Process tags: split by comma, trim whitespace, filter empty strings, join with commas
       let tagsString: string | null = null
@@ -691,7 +693,7 @@ function App(): JSX.Element {
         .insert({
           user_id: currentSession.user.id,
           excerpt: article.excerpt || null,
-          length: article.length || null,
+          length: article.wordCount || null, // Now stores word count from Defuddle
           siteName: article.siteName || null,
           title: article.title || null,
           url: article.url || null,

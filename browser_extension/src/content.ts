@@ -1,32 +1,41 @@
 // Content script runs in the context of web pages
-// This script extracts article content using Readability
+// This script extracts article content using Defuddle
 
 // Cross-browser API compatibility
 const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : (browser as typeof chrome)
 
-// Type definitions
-interface ReadabilityModule {
-  Readability?: typeof Readability
-  default?: typeof Readability
-  new (doc: Document, options?: ReadabilityOptions): Readability
-  parse(): ParsedArticle | null
+// Type definitions for Defuddle
+interface DefuddleResult {
+  title: string
+  content: string
+  description: string
+  domain: string
+  favicon: string
+  image: string
+  published: string
+  site: string
+  author: string
+  wordCount: number
+  parseTime: number
 }
 
-interface ReadabilityOptions {
+interface DefuddleOptions {
   debug?: boolean
-  maxElemsToParse?: number
-  nbTopCandidates?: number
-  charThreshold?: number
+  markdown?: boolean
+  url?: string
 }
 
-interface ParsedArticle {
-  title?: string | null
-  content?: string | null
-  excerpt?: string | null
-  length?: number | null
-  siteName?: string | null
-  publishedTime?: string | null
-  byline?: string | null
+interface DefuddleClass {
+  new (doc: Document, options?: DefuddleOptions): DefuddleInstance
+}
+
+interface DefuddleInstance {
+  parse(): DefuddleResult
+}
+
+interface DefuddleModule {
+  default?: DefuddleClass
+  Defuddle?: DefuddleClass
 }
 
 interface MessageRequest {
@@ -36,7 +45,7 @@ interface MessageRequest {
 interface PingResponse {
   success: boolean
   ready: boolean
-  readabilityLoaded: boolean
+  defuddleLoaded: boolean
 }
 
 interface ParseResponse {
@@ -45,35 +54,31 @@ interface ParseResponse {
     title: string | null
     content: string | null
     excerpt: string | null
-    publishedTime?: string | null
-    byline: string | null
+    author: string | null
     siteName: string
     url: string
-    length: number | null
+    wordCount: number | null
   }
   error?: string
 }
 
-// Import Readability - webpack will bundle it
-let Readability: typeof Readability | null = null
+// Import Defuddle - webpack will bundle it
+let Defuddle: DefuddleClass | null = null
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const readabilityModule = require('@mozilla/readability') as ReadabilityModule
-  Readability = readabilityModule.Readability || readabilityModule.default || (readabilityModule as typeof Readability)
+  const defuddleModule = require('defuddle') as DefuddleModule
+  Defuddle = defuddleModule.default || defuddleModule.Defuddle || (defuddleModule as unknown as DefuddleClass)
 } catch (error) {
-  console.error('Failed to load Readability:', error)
-  Readability = null
+  console.error('Failed to load Defuddle:', error)
+  Defuddle = null
 }
 
 // Decode HTML entities to their actual characters
-// This handles entities like &rsquo;, &quot;, &amp;, &lt;, &gt;, &nbsp;, etc.
 function decodeHtmlEntities(text: string | null | undefined): string | null {
   if (!text || typeof text !== 'string') {
     return text || null
   }
   
-  // Create a temporary DOM element to decode HTML entities
-  // This is the standard browser method for decoding HTML entities
   const textarea = document.createElement('textarea')
   textarea.innerHTML = text
   return textarea.value
@@ -83,44 +88,40 @@ function parseCurrentPage(): {
   title: string | null
   content: string | null
   excerpt: string | null
-  publishedTime?: string | null
-  byline: string | null
+  author: string | null
   siteName: string
   url: string
-  length: number | null
+  wordCount: number | null
 } {
-  if (!Readability) {
-    throw new Error('Readability library not loaded')
+  if (!Defuddle) {
+    throw new Error('Defuddle library not loaded')
   }
 
   // Clone the document to avoid modifying the original
   const documentClone = document.cloneNode(true) as Document
   
-  // Create a new document from the clone
-  const reader = new Readability(documentClone, {
+  // Create a new Defuddle instance (outputs HTML in browser environment)
+  const defuddle = new Defuddle(documentClone, {
     debug: false,
-    maxElemsToParse: 10000,
-    nbTopCandidates: 5,
-    charThreshold: 500,
+    url: window.location.href,
   })
   
-  const article = reader.parse()
+  const result = defuddle.parse()
   
-  if (!article) {
+  if (!result || !result.content) {
     throw new Error('Could not parse article content')
   }
 
-  console.log(article)
+  console.log('Defuddle result:', result)
   
   return {
-    title: decodeHtmlEntities(article.title),
-    content: article.content || null,
-    excerpt: decodeHtmlEntities(article.excerpt),
-    publishedTime: article.publishedTime || null,
-    byline: decodeHtmlEntities(article.byline),
-    siteName: article.siteName || new URL(window.location.href).hostname,
+    title: decodeHtmlEntities(result.title) || null,
+    content: result.content || null,
+    excerpt: decodeHtmlEntities(result.description) || null,
+    author: decodeHtmlEntities(result.author) || null,
+    siteName: result.site || result.domain || new URL(window.location.href).hostname,
     url: window.location.href,
-    length: article.length || null,
+    wordCount: result.wordCount || null,
   }
 }
 
@@ -136,15 +137,15 @@ function parseCurrentPage(): {
   ): boolean => {
     if (request.action === 'ping') {
       // Simple ping to check if content script is ready
-      sendResponse({ success: true, ready: true, readabilityLoaded: !!Readability })
+      sendResponse({ success: true, ready: true, defuddleLoaded: !!Defuddle })
       return true
     }
     
     if (request.action === 'parseArticle') {
       // Handle response - wrap in try/catch since it's synchronous
       try {
-        if (!Readability) {
-          throw new Error('Readability library not loaded')
+        if (!Defuddle) {
+          throw new Error('Defuddle library not loaded')
         }
         const article = parseCurrentPage()
         sendResponse({ success: true, article })
@@ -160,10 +161,9 @@ function parseCurrentPage(): {
   })
   
   // Log that content script is ready
-  if (Readability) {
-    console.log('Poche content script loaded and ready')
+  if (Defuddle) {
+    console.log('Poche content script loaded and ready (using Defuddle)')
   } else {
-    console.error('Poche content script loaded but Readability failed to initialize')
+    console.error('Poche content script loaded but Defuddle failed to initialize')
   }
 })()
-
