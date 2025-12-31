@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState, Button, TextInput } from 'react-native'
+import { Alert, StyleSheet, View, AppState, TextInput, TouchableOpacity, Pressable } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { ThemedText } from '../components/themed-text'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useHeaderHeight } from '@react-navigation/elements'
+import { Colors } from '@/constants/theme'
+import { useColorScheme } from '@/hooks/use-color-scheme'
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -11,141 +13,254 @@ import { useHeaderHeight } from '@react-navigation/elements'
 // if the user's session is terminated. This should only be registered once.
 AppState.addEventListener('change', (state) => {
   if (state === 'active') {
-	supabase.auth.startAutoRefresh()
+    supabase.auth.startAutoRefresh()
   } else {
-	supabase.auth.stopAutoRefresh()
+    supabase.auth.stopAutoRefresh()
   }
 })
 
+type AuthMode = 'signin' | 'signup'
+
 export default function Auth() {
-	const headerHeight = useHeaderHeight()
+  const headerHeight = useHeaderHeight()
+  const colorScheme = useColorScheme() ?? 'light'
+  const colors = Colors[colorScheme]
+  
+  const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  
   const borderColor = useThemeColor({}, 'icon')
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
 
-  // Calculate padding to account for header and safe area
   const topPadding = headerHeight
 
+  const handleModeChange = (newMode: AuthMode) => {
+    setMode(newMode)
+    setConfirmPassword('')
+  }
+
+  async function handleSubmit() {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password')
+      return
+    }
+
+    if (mode === 'signup') {
+      if (password !== confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match')
+        return
+      }
+      await signUpWithEmail()
+    } else {
+      await signInWithEmail()
+    }
+  }
+
   async function signInWithEmail() {
-	if (!email || !password) {
-	  Alert.alert('Please enter both email and password')
-	  return
-	}
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
 
-	setLoading(true)
-	const { error } = await supabase.auth.signInWithPassword({
-	  email: email,
-	  password: password,
-	})
-
-	if (error) {
-	  Alert.alert('Sign In Error', error.message)
-	}
-	setLoading(false)
+    if (error) {
+      Alert.alert('Sign In Error', error.message)
+    }
+    setLoading(false)
   }
 
   async function signUpWithEmail() {
-	if (!email || !password) {
-	  Alert.alert('Please enter both email and password')
-	  return
-	}
+    setLoading(true)
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    })
 
-	setLoading(true)
-	const {
-	  data: { session },
-	  error,
-	} = await supabase.auth.signUp({
-	  email: email,
-	  password: password,
-	})
+    if (error) {
+      Alert.alert('Sign Up Error', error.message)
+    } else if (!session) {
+      Alert.alert('Success', 'Please check your inbox for email verification!')
+    }
+    setLoading(false)
+  }
 
-	if (error) {
-	  Alert.alert('Sign Up Error', error.message)
-	} else if (!session) {
-	  Alert.alert('Success', 'Please check your inbox for email verification!')
-	}
-	setLoading(false)
+  function handleForgotPassword() {
+    // TODO: Implement forgot password functionality
+    console.log('Forgot password clicked')
   }
 
   return (
-	<View style={[styles.container, { paddingTop: topPadding }]}>
-	  <View style={styles.verticallySpaced}>
-		<ThemedText style={styles.label}>
-		  Email
-		</ThemedText>
-		<TextInput
-		  onChangeText={(text) => setEmail(text)}
-		  value={email}
-		  placeholder="email@address.com"
-		  placeholderTextColor={borderColor}
-		  autoCapitalize="none"
-		  keyboardType="email-address"
-		  style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
-		/>
-	  </View>
-	  <View style={styles.verticallySpaced}>
-		<ThemedText style={styles.label}>
-		  Password
-		</ThemedText>
-		<TextInput
-		  onChangeText={(text) => setPassword(text)}
-		  value={password}
-		  secureTextEntry={true}
-		  placeholder="Password"
-		  placeholderTextColor={borderColor}
-		  autoCapitalize="none"
-		  style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
-		/>
-	  </View>
-	  <View style={styles.buttonGroup}>
-		<View style={[styles.button, styles.buttonPrimary]}>
-			<Button color="white" title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
-		</View>
-		<View style={[styles.button, styles.buttonSecondary]}>
-			<Button color="white" title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
-		</View>
-	  </View>
-	</View>
+    <View style={[styles.container, { paddingTop: topPadding }]}>
+      {/* Mode Switch */}
+      <View style={[styles.modeSwitch, { backgroundColor: colors.divider }]}>
+        <Pressable
+          style={[
+            styles.modeOption,
+            mode === 'signin' && [styles.modeOptionActive, { backgroundColor }]
+          ]}
+          onPress={() => handleModeChange('signin')}
+        >
+          <ThemedText style={[
+            styles.modeOptionText,
+            { color: mode === 'signin' ? textColor : colors.textMuted }
+          ]}>
+            Sign In
+          </ThemedText>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.modeOption,
+            mode === 'signup' && [styles.modeOptionActive, { backgroundColor }]
+          ]}
+          onPress={() => handleModeChange('signup')}
+        >
+          <ThemedText style={[
+            styles.modeOptionText,
+            { color: mode === 'signup' ? textColor : colors.textMuted }
+          ]}>
+            Sign Up
+          </ThemedText>
+        </Pressable>
+      </View>
+
+      {/* Email Input */}
+      <View style={styles.inputGroup}>
+        <ThemedText style={styles.label}>Email</ThemedText>
+        <TextInput
+          onChangeText={setEmail}
+          value={email}
+          placeholder="your@email.com"
+          placeholderTextColor={borderColor}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
+          style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+        />
+      </View>
+
+      {/* Password Input */}
+      <View style={styles.inputGroup}>
+        <ThemedText style={styles.label}>Password</ThemedText>
+        <TextInput
+          onChangeText={setPassword}
+          value={password}
+          secureTextEntry={true}
+          placeholder="Password"
+          placeholderTextColor={borderColor}
+          autoCapitalize="none"
+          autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+          style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+        />
+      </View>
+
+      {/* Confirm Password (Sign Up only) */}
+      {mode === 'signup' && (
+        <View style={styles.inputGroup}>
+          <ThemedText style={styles.label}>Confirm Password</ThemedText>
+          <TextInput
+            onChangeText={setConfirmPassword}
+            value={confirmPassword}
+            secureTextEntry={true}
+            placeholder="Confirm password"
+            placeholderTextColor={borderColor}
+            autoCapitalize="none"
+            autoComplete="new-password"
+            style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+          />
+        </View>
+      )}
+
+      {/* Forgot Password (Sign In only) */}
+      {mode === 'signin' && (
+        <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
+          <ThemedText style={[styles.forgotPasswordText, { color: colors.accent }]}>
+            Forgot password?
+          </ThemedText>
+        </TouchableOpacity>
+      )}
+
+      {/* Submit Button */}
+      <TouchableOpacity
+        style={[styles.submitButton, { backgroundColor: colors.accent, opacity: loading ? 0.6 : 1 }]}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        <ThemedText style={styles.submitButtonText}>
+          {mode === 'signin' ? 'Sign In' : 'Create Account'}
+        </ThemedText>
+      </TouchableOpacity>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-	padding: 12,
+    padding: 16,
   },
-  verticallySpaced: {
-	paddingTop: 4,
-	paddingBottom: 4,
-	alignSelf: 'stretch',
+  modeSwitch: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+    gap: 4,
+  },
+  modeOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modeOptionActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  modeOptionText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  inputGroup: {
+    marginBottom: 16,
   },
   label: {
-	marginBottom: 8,
-	marginLeft: 4,
+    marginBottom: 8,
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
   },
   input: {
-	borderWidth: 1,
-	borderRadius: 12,
-	padding: 12,
-	fontSize: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
   },
-  buttonGroup: {
-	display: 'flex',
-	flexDirection: 'row',
-	gap: 12,
-	marginTop: 26,
+  forgotPassword: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
-  button: {
-	flexGrow: 1,
-	borderRadius: 12,
-	fontWeight: '600',
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
-  buttonPrimary: {
-	backgroundColor: "#EF4056",
+  submitButton: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 16,
   },
-  buttonSecondary: {
-	backgroundColor: "#aaaaaa",
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })
