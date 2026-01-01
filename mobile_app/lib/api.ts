@@ -131,7 +131,16 @@ async function apiRequest<T>(
   const data = text ? JSON.parse(text) : {}
 
   if (!response.ok) {
-    throw new Error((data as ApiError).error || `Request failed: ${response.status}`)
+    // Handle various error response formats from Better Auth
+    const errorData = data as Record<string, unknown>
+    const errorMessage = 
+      errorData.error || 
+      errorData.message || 
+      (errorData.body && typeof errorData.body === 'object' && 'message' in errorData.body 
+        ? (errorData.body as Record<string, unknown>).message 
+        : null) ||
+      `Request failed: ${response.status}`
+    throw new Error(String(errorMessage))
   }
 
   return data as T

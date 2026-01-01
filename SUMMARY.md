@@ -211,6 +211,7 @@ Poche/
 - ✅ Shared types and utilities folder
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
 - ✅ Noto Sans font via `@expo-google-fonts/noto-sans` with weight variants
+- ✅ Improved authentication error messaging
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
