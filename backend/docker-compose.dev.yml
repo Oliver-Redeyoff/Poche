@@ -1,0 +1,47 @@
+version: '3.8'
+
+# Development configuration - mounts source code for hot reload
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: poche-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: poche
+      POSTGRES_PASSWORD: poche_dev
+      POSTGRES_DB: poche_dev
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poche -d poche_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Poche Backend API (development mode with hot reload)
+  api:
+    image: node:20-alpine
+    container_name: poche-api-dev
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://poche:poche_dev@db:5432/poche_dev
+      PORT: 3000
+      BETTER_AUTH_SECRET: dev-secret-key-at-least-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3000
+      NODE_ENV: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev"
+
+volumes:
+  postgres_data_dev:
+

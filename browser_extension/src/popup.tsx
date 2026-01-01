@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabase'
+import * as api from './lib/api'
 import { tagToColor } from '../shared/util'
 
 // Declare browser for Firefox compatibility
@@ -14,28 +13,6 @@ const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : brows
 interface SavedArticles {
   urls: string[]
   ids: number[]
-}
-
-interface ParsedArticle {
-  title?: string | null
-  content?: string | null
-  excerpt?: string | null
-  wordCount?: number | null
-  siteName?: string | null
-  url?: string | null
-  author?: string | null
-}
-
-interface PingResponse {
-  success?: boolean
-  ready?: boolean
-  defuddleLoaded?: boolean
-}
-
-interface ParseResponse {
-  success: boolean
-  article?: ParsedArticle
-  error?: string
 }
 
 type StatusType = 'info' | 'success' | 'error'
@@ -87,7 +64,6 @@ async function saveArticleToStorage(userId: string, articleId: number, url: stri
     const storageKey = getSavedArticlesStorageKey(userId)
     const saved = await getSavedArticles(userId)
     
-    // Add URL and ID if not already present
     if (url && !saved.urls.includes(url)) {
       saved.urls.push(url)
     }
@@ -101,32 +77,20 @@ async function saveArticleToStorage(userId: string, articleId: number, url: stri
   }
 }
 
-// Sync saved articles from Supabase on login
-async function syncSavedArticlesFromSupabase(userId: string): Promise<void> {
+// Sync saved articles from backend
+async function syncSavedArticlesFromBackend(userId: string): Promise<void> {
   try {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('id, url')
-      .eq('user_id', userId)
-      .not('url', 'is', null)
+    const articles = await api.getArticles()
     
-    if (error) {
-      console.error('Error syncing articles from Supabase:', error)
-      return
-    }
-    
-    // Always replace the stored list, even if empty (handles deletions)
-    const urls = data && data.length > 0 
-      ? data.map((article: { url: string | null }) => article.url).filter(Boolean) as string[]
-      : []
-    const ids = data && data.length > 0
-      ? data.map((article: { id: number }) => article.id).filter(Boolean) as number[]
-      : []
+    const urls = articles
+      .map(article => article.url)
+      .filter((url): url is string => url !== null)
+    const ids = articles.map(article => article.id)
     
     const storageKey = getSavedArticlesStorageKey(userId)
     await browserAPI.storage.local.set({ [storageKey]: { urls, ids } })
     
-    console.log(`Synced ${urls.length} article(s) from Supabase`)
+    console.log(`Synced ${urls.length} article(s) from backend`)
   } catch (error) {
     console.error('Error syncing articles:', error)
   }
@@ -215,7 +179,6 @@ function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionPr
     console.log('Forgot password clicked')
   }
 
-  // Clear confirm password when switching modes
   const handleModeChange = (newMode: AuthMode): void => {
     setMode(newMode)
     setConfirmPassword('')
@@ -361,13 +324,13 @@ function TagsInput({ tags, onTagsChange }: TagsInputProps): JSX.Element {
             autoComplete="off"
             onBlur={(e) => {
               if ((e.target as HTMLInputElement).value.trim() !== '') {
-                onTagsChange([...tags, (e.target as HTMLInputElement).value]);
+                onTagsChange([...tags, (e.target as HTMLInputElement).value.trim()]);
               }
               (e.target as HTMLInputElement).value = '';
             }}
             onKeyDown={(e) => {
               if ((e.target as HTMLInputElement).value.trim() !== '' && (e.key === 'Enter' || e.key === ',' || e.key === ' ')) {
-                onTagsChange([...tags, (e.target as HTMLInputElement).value]);
+                onTagsChange([...tags, (e.target as HTMLInputElement).value.trim()]);
                 (e.target as HTMLInputElement).value = '';
                 e.preventDefault()
               } else if (e.key === 'Backspace' && (e.target as HTMLInputElement).value === '') {
@@ -381,25 +344,21 @@ function TagsInput({ tags, onTagsChange }: TagsInputProps): JSX.Element {
 }
 
 function App(): JSX.Element {
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<api.Session | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>('')
   const [statusType, setStatusType] = useState<StatusType>('info')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false)
   const [saveButtonText, setSaveButtonText] = useState<string>('Save Article')
   const [tags, setTags] = useState<string[]>([])
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Update save button state based on current URL
   const updateSaveButtonState = async (): Promise<void> => {
+    if (!session?.user) return
+
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-      if (!currentSession || !currentSession.user) {
-        return
-      }
-      
-      // Sync articles from Supabase to ensure we have the latest list (including deletions)
-      await syncSavedArticlesFromSupabase(currentSession.user.id)
+      // Sync articles from backend
+      await syncSavedArticlesFromBackend(session.user.id)
       
       // Get current tab URL
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true })
@@ -411,7 +370,7 @@ function App(): JSX.Element {
         return
       }
       
-      // Check if we can save from this page (not browser internal pages)
+      // Check if we can save from this page
       if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || 
           tab.url.startsWith('moz-extension://') || tab.url.startsWith('about:') ||
           tab.url.startsWith('edge://') || tab.url.startsWith('opera://')) {
@@ -421,7 +380,7 @@ function App(): JSX.Element {
       }
       
       // Check if URL is already saved
-      const isSaved = await checkIfUrlIsSaved(currentSession.user.id, tab.url)
+      const isSaved = await checkIfUrlIsSaved(session.user.id, tab.url)
       
       if (isSaved) {
         setSaveButtonDisabled(true)
@@ -432,7 +391,6 @@ function App(): JSX.Element {
       }
     } catch (error) {
       console.error('Error updating save button state:', error)
-      // On error, enable the button to allow manual save
       setSaveButtonDisabled(false)
       setSaveButtonText('Save Article')
     }
@@ -450,40 +408,12 @@ function App(): JSX.Element {
 
   const checkAuthStatus = async (): Promise<void> => {
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      const currentSession = await api.getSession()
       
-      if (currentSession && currentSession.user) {
-        // Try to refresh the session to ensure it's still valid
-        try {
-          const { error: refreshError } = await supabase.auth.refreshSession(currentSession)
-          
-          if (refreshError) {
-            // Refresh token expired - user needs to sign in again
-            if (refreshError.message?.includes('refresh_token_not_found') || 
-                refreshError.message?.includes('token_expired') ||
-                refreshError.message?.includes('Invalid Refresh Token')) {
-              console.log('Session expired - user needs to sign in again')
-              setSession(null)
-              return
-            }
-          }
-          
-          // Session is valid
-          setSession(currentSession)
-          // Sync saved articles and update button state
-          await syncSavedArticlesFromSupabase(currentSession.user.id)
-          await updateSaveButtonState()
-        } catch (error) {
-          // If refresh fails, check if we still have a valid session
-          const { data: { session: validSession } } = await supabase.auth.getSession()
-          if (validSession && validSession.user) {
-            setSession(validSession)
-            await syncSavedArticlesFromSupabase(validSession.user.id)
-            await updateSaveButtonState()
-          } else {
-            setSession(null)
-          }
-        }
+      if (currentSession?.user) {
+        setSession(currentSession)
+        await syncSavedArticlesFromBackend(currentSession.user.id)
+        await updateSaveButtonState()
       } else {
         setSession(null)
       }
@@ -498,20 +428,12 @@ function App(): JSX.Element {
       showStatus('Signing in...', 'info')
       setIsLoading(true)
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const sessionData = await api.signIn(email, password)
       
-      if (error) throw error
-      
-      if (data.session && data.user) {
-        setSession(data.session)
-        showStatus('Signed in successfully!', 'success')
-        // Sync saved articles and update button state
-        await syncSavedArticlesFromSupabase(data.user.id)
-        await updateSaveButtonState()
-      }
+      setSession(sessionData)
+      showStatus('Signed in successfully!', 'success')
+      await syncSavedArticlesFromBackend(sessionData.user.id)
+      await updateSaveButtonState()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Sign in failed'
       showStatus(errorMessage, 'error')
@@ -525,22 +447,12 @@ function App(): JSX.Element {
       showStatus('Creating account...', 'info')
       setIsLoading(true)
       
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
+      const sessionData = await api.signUp(email, password)
       
-      if (error) throw error
-      
-      if (data.session && data.user) {
-        setSession(data.session)
-        showStatus('Account created and signed in!', 'success')
-        // Sync saved articles and update button state
-        await syncSavedArticlesFromSupabase(data.user.id)
-        await updateSaveButtonState()
-      } else {
-        showStatus('Please check your email to verify your account', 'info')
-      }
+      setSession(sessionData)
+      showStatus('Account created and signed in!', 'success')
+      await syncSavedArticlesFromBackend(sessionData.user.id)
+      await updateSaveButtonState()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Sign up failed'
       showStatus(errorMessage, 'error')
@@ -550,199 +462,57 @@ function App(): JSX.Element {
   }
 
   const saveCurrentArticle = async (): Promise<void> => {
+    if (!session?.user) {
+      showStatus('Not authenticated. Please log in.', 'error')
+      return
+    }
+
     try {
-      showStatus('Parsing article...', 'info')
       setSaveButtonDisabled(true)
+      showStatus('Saving article...', 'info')
       
-      // Get current tab
+      // Get current tab URL
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true })
       const tab = tabs[0]
       
-      if (!tab) {
-        throw new Error('Could not get current tab')
+      if (!tab || !tab.url) {
+        throw new Error('Could not get current tab URL')
       }
       
-      // Check if we can inject scripts on this page
-      if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || 
-          tab.url.startsWith('moz-extension://') || tab.url.startsWith('about:'))) {
-        throw new Error('Cannot save articles from browser internal pages. Please navigate to a regular webpage.')
+      // Check if we can save from this page
+      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || 
+          tab.url.startsWith('moz-extension://') || tab.url.startsWith('about:')) {
+        throw new Error('Cannot save articles from browser internal pages.')
       }
       
-      // First, try to ping the content script (it should be injected via manifest)
-      let pingResponse: PingResponse | undefined
-      let needsInjection = false
+      // Process tags
+      const tagsString = tags.length > 0 ? tags.join(',') : undefined
       
-      try {
-        pingResponse = await Promise.race([
-          browserAPI.tabs.sendMessage(tab.id!, { action: 'ping' }) as Promise<PingResponse>,
-          new Promise<PingResponse>((_, reject) => 
-            setTimeout(() => reject(new Error('Ping timeout')), 2000)
-          )
-        ])
-        
-        if (!pingResponse || !pingResponse.ready) {
-          needsInjection = true
-        } else if (!pingResponse.defuddleLoaded) {
-          throw new Error('Defuddle library failed to load in content script')
-        }
-      } catch (pingError) {
-        // Content script not available, need to inject it
-        needsInjection = true
-      }
+      // Save article - backend will fetch and extract content!
+      const article = await api.saveArticle(tab.url, tagsString)
       
-      // If content script is not available, inject it manually
-      if (needsInjection) {
-        try {
-          if (browserAPI.scripting && browserAPI.scripting.executeScript) {
-            // Chrome/Edge (Manifest V3)
-            await browserAPI.scripting.executeScript({
-              target: { tabId: tab.id! },
-              files: ['content.js']
-            })
-          } else if (browserAPI.tabs && (browserAPI.tabs as any).executeScript) {
-            // Firefox (Manifest V2 fallback)
-            await (browserAPI.tabs as any).executeScript(tab.id!, { file: 'content.js' })
-          } else {
-            throw new Error('Script injection API not available. Make sure the extension has scripting permission.')
-          }
-          
-          // Wait for script to initialize
-          await new Promise(resolve => setTimeout(resolve, 500))
-          
-          // Verify it's ready now
-          try {
-            pingResponse = await Promise.race([
-              browserAPI.tabs.sendMessage(tab.id!, { action: 'ping' }) as Promise<PingResponse>,
-              new Promise<PingResponse>((_, reject) => 
-                setTimeout(() => reject(new Error('Ping timeout after injection')), 3000)
-              )
-            ])
-            
-            if (!pingResponse || !pingResponse.ready) {
-              throw new Error('Content script injected but not responding')
-            }
-            
-            if (!pingResponse.defuddleLoaded) {
-              throw new Error('Defuddle library failed to load in content script')
-            }
-          } catch (verifyError) {
-            const errorMessage = verifyError instanceof Error ? verifyError.message : 'Unknown error'
-            throw new Error(`Content script injected but not ready: ${errorMessage}`)
-          }
-        } catch (injectError) {
-          const errorMessage = injectError instanceof Error ? injectError.message : 'Unknown error'
-          throw new Error(`Cannot inject content script: ${errorMessage}`)
-        }
-      }
+      // Save to local storage for quick "already saved" checks
+      await saveArticleToStorage(session.user.id, article.id, tab.url)
       
-      // Now send the actual parse request
-      let response: ParseResponse
-      try {
-        response = await Promise.race([
-          browserAPI.tabs.sendMessage(tab.id!, { action: 'parseArticle' }) as Promise<ParseResponse>,
-          new Promise<ParseResponse>((_, reject) => 
-            setTimeout(() => reject(new Error('Parse timeout after 10 seconds')), 10000)
-          )
-        ])
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        throw new Error(`Failed to parse article: ${errorMessage}`)
-      }
-      
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to parse article')
-      }
-      
-      const article = response.article
-      if (!article) {
-        throw new Error('No article data received')
-      }
-      
-      // Get current user session
-      const { data: { session: currentSession } } = await supabase.auth.getSession()
-      
-      if (!currentSession || !currentSession.user) {
-        throw new Error('Not authenticated. Please log in.')
-      }
-      
-      showStatus('Saving article...', 'info')
-
-      console.log('article', article);
-      
-      
-      // Process tags: split by comma, trim whitespace, filter empty strings, join with commas
-      let tagsString: string | null = null
-      if (tags.length > 0) {
-        tagsString = tags.join(',')
-      }
-
-      // if (tags && tags.trim()) {
-      //   const tagArray = tags
-      //     .split(',')
-      //     .map(tag => tag.trim())
-      //     .filter(tag => tag.length > 0)
-        
-      //   if (tagArray.length > 0) {
-      //     tagsString = tagArray.join(',')
-      //   }
-      // }
-      
-      // Save to Supabase
-      const { data, error: supabaseError } = await supabase
-        .from('articles')
-        .insert({
-          user_id: currentSession.user.id,
-          excerpt: article.excerpt || null,
-          length: article.wordCount || null, // Now stores word count from Defuddle
-          siteName: article.siteName || null,
-          title: article.title || null,
-          url: article.url || null,
-          content: article.content || null,
-          tags: tagsString || null,
-        })
-        .select()
-        .single()
-      
-      if (supabaseError) {
-        const errorMsg = supabaseError.message || supabaseError.details || supabaseError.hint || 'Database error'
-        throw new Error(`Failed to save to database: ${errorMsg}`)
-      }
-      
-      // Save article URL and ID to local storage
-      if (data && data.id && article.url) {
-        await saveArticleToStorage(currentSession.user.id, data.id, article.url)
-      }
-      
-      // Update button state after saving
-      await updateSaveButtonState()
-      
-      // Clear tags input after successful save
+      // Clear tags and update button state
       setTags([])
+      await updateSaveButtonState()
       
       showStatus('Article saved successfully!', 'success')
     } catch (error) {
       console.error('Error saving article:', error)
-      
-      // Extract error message properly
-      let errorMessage = 'Failed to save article'
-      if (error) {
-        if (typeof error === 'string') {
-          errorMessage = error
-        } else if (error instanceof Error) {
-          errorMessage = error.message
-        } else {
-          errorMessage = String(error)
-        }
-      }
-      
-      showStatus(`Error saving article: ${errorMessage}`, 'error')
-      // On error, update button state to allow retry
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save article'
+      showStatus(`Error: ${errorMessage}`, 'error')
       await updateSaveButtonState()
     }
   }
 
   const handleLogout = async (): Promise<void> => {
-    await supabase.auth.signOut({ scope: 'local' })
+    try {
+      await api.signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
     setSession(null)
     setTags([])
     showStatus('Logged out successfully', 'success')
@@ -751,75 +521,6 @@ function App(): JSX.Element {
   // Check auth status on mount
   useEffect(() => {
     checkAuthStatus()
-  }, [])
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, newSession: Session | null) => {
-      if (event === 'SIGNED_IN' && newSession) {
-        setSession(newSession)
-        syncSavedArticlesFromSupabase(newSession.user.id)
-        updateSaveButtonState()
-      } else if (event === 'SIGNED_OUT') {
-        setSession(null)
-        setTags([])
-      } else if (event === 'TOKEN_REFRESHED' && newSession) {
-        // Session was refreshed, ensure UI is updated
-        if (newSession.user) {
-          setSession(newSession)
-          updateSaveButtonState()
-        }
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  // Refresh session when popup opens to keep it alive
-  useEffect(() => {
-    const refreshSessionOnOpen = async (): Promise<void> => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession()
-        if (currentSession) {
-          // Check if session is about to expire (within 5 minutes)
-          const expiresAt = currentSession.expires_at
-          const now = Math.floor(Date.now() / 1000)
-          
-          if (expiresAt && (expiresAt - now) < 300) {
-            // Refresh the session to extend its lifetime
-            const { error } = await supabase.auth.refreshSession(currentSession)
-            if (error) {
-              console.error('Error refreshing session on popup open:', error)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error refreshing session on popup open:', error)
-      }
-    }
-
-    refreshSessionOnOpen()
-
-    // Set up periodic refresh while popup is open (every 30 minutes)
-    refreshIntervalRef.current = setInterval(async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession()
-        if (currentSession) {
-          await supabase.auth.refreshSession(currentSession)
-          console.log('Session refreshed periodically')
-        }
-      } catch (error) {
-        console.error('Error in periodic refresh:', error)
-      }
-    }, 30 * 60 * 1000) // 30 minutes
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
-    }
   }, [])
 
   // Update save button state when session changes
@@ -862,4 +563,3 @@ if (!container) {
 }
 const root = createRoot(container)
 root.render(<App />)
-

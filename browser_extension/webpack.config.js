@@ -5,7 +5,6 @@ module.exports = {
   entry: {
     popup: './src/popup.tsx',
     background: './src/background.ts',
-    content: './src/content.ts',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -16,7 +15,7 @@ module.exports = {
     rules: [
       {
         test: /\.(ts|tsx|js|jsx)$/,
-        exclude: /node_modules\/(?!@mozilla\/readability)/,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
@@ -43,21 +42,10 @@ module.exports = {
   ],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
-    fallback: {
-      "jsdom": false,
-      "canvas": false,
-      "buffer": false,
-      "stream": false,
-    },
-  },
-  externals: {
-    // Don't bundle jsdom, it's not needed in browser
   },
   optimization: {
-    // Ensure Readability is bundled properly
     usedExports: true,
   },
   mode: 'development',
   devtool: 'source-map',
 }
-

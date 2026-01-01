@@ -1,0 +1,44 @@
+{
+  "name": "poche-backend",
+  "version": "1.0.0",
+  "description": "Poche backend API - article extraction and storage",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:dev:push": "DATABASE_URL=postgresql://poche:poche_dev@localhost:5432/poche_dev drizzle-kit push",
+    "db:prod:push": "drizzle-kit push",
+    "db:dev:studio": "DATABASE_URL=postgresql://poche:poche_dev@localhost:5432/poche_dev drizzle-kit studio",
+    "db:prod:studio": "drizzle-kit studio",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up",
+    "docker:dev:build": "docker compose -f docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:prod": "docker compose up -d",
+    "docker:prod:build": "docker compose up -d --build",
+    "docker:prod:down": "docker compose down",
+    "docker:logs": "docker compose logs -f api"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "better-auth": "^1.2.0",
+    "defuddle": "^0.6.6",
+    "drizzle-orm": "^0.41.0",
+    "hono": "^4.6.14",
+    "jsdom": "^24.0.0",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
+

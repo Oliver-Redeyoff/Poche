@@ -7,12 +7,13 @@ The Poche browser extension allows users to save articles from any webpage to th
 ## Features
 
 - **Authentication**: Email/password login and signup within the extension popup
-- **Article Parsing**: Uses Mozilla Readability to extract clean article content from web pages
-- **Article Saving**: Saves parsed articles to Supabase articles table
+- **Token-Based Auth**: Bearer token authentication stored in browser extension storage
+- **Article Saving**: Sends URLs to backend for server-side extraction
 - **Cross-Browser Support**: Works with Chrome (Manifest V3), Firefox, and Safari
 - **Saved Article Tracking**: Tracks which URLs have already been saved to prevent duplicate saves
 - **Smart Button State**: "Save Article" button automatically disables and shows "Already Saved" if the current URL is already saved
-- **Automatic Sync**: Syncs saved article list from Supabase on popup open to reflect deletions from mobile app
+- **Automatic Sync**: Syncs saved article list from backend on popup open to reflect deletions from mobile app
+- **Tag Input**: Specify comma-delimited tags before saving articles
 
 ## Architecture
 
@@ -22,9 +23,8 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Language**: TypeScript
 - **UI Framework**: React
 - **Bundler**: Webpack with TypeScript and Babel for transpilation
-- **Article Parsing**: Mozilla Readability (bundled with extension)
-- **Backend**: Supabase (authentication and database)
-- **Storage**: Chrome/Firefox storage API for session persistence
+- **Backend**: Self-hosted Poche API with Better Auth
+- **Storage**: Chrome/Firefox storage API for bearer token and user data persistence
 
 ### File Structure
 
@@ -34,10 +34,9 @@ browser_extension/
 │   ├── popup.tsx         # Main popup React component (TypeScript)
 │   ├── popup.html        # Popup HTML structure
 │   ├── popup.css         # Popup styles with dark mode support
-│   ├── content.ts        # Content script for parsing articles (TypeScript)
 │   ├── background.ts     # Background service worker (TypeScript)
 │   └── lib/
-│       └── supabase.ts   # Supabase client with browser storage adapter (TypeScript)
+│       └── api.ts        # Backend API client (auth, articles)
 ├── shared/               # Shared types and utilities
 │   ├── types.tsx         # TypeScript types (Article, Database, etc.)
 │   └── util.ts           # Utility functions (tagToColor, etc.)
@@ -54,71 +53,81 @@ browser_extension/
 
 ### popup.tsx
 Main extension React component (TypeScript):
-- Authentication (login/signup)
-- Content script injection and communication
-- Article parsing coordination
-- Supabase article saving
+- Authentication (login/signup with mode switch)
+- Article saving via backend API
 - Error handling and user feedback
 - **Saved article tracking**: Stores list of saved article URLs and IDs in browser storage
 - **Button state management**: Updates save button state based on whether current URL is already saved
-- **Article sync**: Syncs saved articles from Supabase on popup open to keep local storage in sync
+- **Article sync**: Syncs saved articles from backend on popup open to keep local storage in sync
 - **Tag input UI**: Text input field for specifying comma-delimited list of tags before saving
-- **HTML entity decoding**: Decodes HTML entities in article titles and excerpts before saving
 
-### content.ts
-Content script that runs on web pages (TypeScript):
-- Listens for parse requests from popup
-- Uses Mozilla Readability to extract article content
-- Returns parsed article data (title, content, excerpt, length, etc.)
-- Handles cross-browser API differences
-- Calculates article length (character count excluding HTML)
+### api.ts
+Backend API client (TypeScript):
+- Token-based authentication (bearer tokens)
+- Sign up, sign in, sign out, get session
+- Article CRUD operations (list, save, update, delete)
+- Token and user data storage in browser extension storage API
+- Automatic bearer token inclusion in `Authorization` header for all API requests
+- Session validation with fallback to cached user data for offline scenarios
 
-### supabase.ts
-Supabase client configuration (TypeScript):
-- Custom storage adapter using browser storage API
-- Works with both Chrome and Firefox APIs
-- Session persistence across extension restarts
-- Type-safe database queries using generated types
+### background.ts
+Background service worker (TypeScript):
+- Handles extension lifecycle events
+- Manages cross-tab communication
 
 ## How It Works
 
 1. **User clicks extension icon** → Opens popup
-2. **If not logged in** → Shows login/signup form
-3. **User authenticates** → Session stored in browser storage
-4. **On popup open** → Syncs saved articles from Supabase to local storage
+2. **If not logged in** → Shows login/signup form with mode switch
+3. **User authenticates** → Bearer token stored in browser storage
+4. **On popup open** → Syncs saved articles from backend to local storage
 5. **Button state checked** → If current URL is already saved, button is disabled
 6. **User navigates to article** → Clicks "Save Article" button (if not already saved)
-7. **Content script injected** → Parses page using Readability
-8. **Article data extracted** → Title, content, metadata
-9. **Article saved to Supabase** → Linked to user via user_id
-10. **Article tracked locally** → URL and ID added to local storage
-11. **Success feedback** → User sees confirmation message
-12. **Button updates** → Button state updated to show "Already Saved"
+7. **URL sent to backend** → Backend extracts article using Defuddle
+8. **Article saved** → Backend stores in PostgreSQL
+9. **Article tracked locally** → URL and ID added to local storage
+10. **Success feedback** → User sees confirmation message
+11. **Button updates** → Button state updated to show "Already Saved"
 
-## Database Integration
+## Backend Integration
+
+### Authentication Flow
+1. User enters email/password
+2. Extension calls `POST /api/auth/sign-in/email` or `POST /api/auth/sign-up/email`
+3. Backend (Better Auth with bearer plugin) returns session with `token`
+4. Extension stores token and user data in `chrome.storage.local`
+5. All subsequent API calls include `Authorization: Bearer <token>` header
+6. Session validation on popup open - if invalid, clears local storage and shows login
+
+**Note**: Cookie-based auth doesn't work for browser extensions due to cross-origin restrictions. Bearer tokens stored in extension storage are the solution.
+
+### API Endpoints Used
+- `POST /api/auth/sign-up/email` - Create account
+- `POST /api/auth/sign-in/email` - Sign in
+- `POST /api/auth/sign-out` - Sign out
+- `GET /api/auth/get-session` - Validate session
+- `GET /api/articles` - List saved articles
+- `POST /api/articles` - Save article from URL
+- `PATCH /api/articles/:id` - Update article
+- `DELETE /api/articles/:id` - Delete article
 
 ### Articles Table Schema
-The extension saves articles with the following fields:
-- `user_id` (string, required) - Links article to user
-- `title` (string, nullable) - Article title (HTML entities decoded)
-- `content` (string, nullable) - Parsed text content
-- `excerpt` (string, nullable) - Article excerpt (HTML entities decoded)
+The backend stores articles with the following fields:
+- `userId` (string, required) - Links article to user
+- `title` (string, nullable) - Article title
+- `content` (string, nullable) - Parsed markdown content
+- `excerpt` (string, nullable) - Article excerpt
 - `url` (string, nullable) - Original article URL
 - `siteName` (string, nullable) - Website name
-- `length` (number, nullable) - Character count of article text (excluding HTML)
+- `author` (string, nullable) - Article author
+- `wordCount` (integer, nullable) - Word count for reading time
 - `tags` (string, nullable) - Comma-delimited list of tags
-- `created_time` (string, auto-generated) - Timestamp
-
-### Authentication
-- Uses Supabase Auth for email/password authentication
-- Session stored in browser storage (chrome.storage.local)
-- Automatic token refresh
-- Session persists across browser restarts
+- `createdAt`, `updatedAt` (timestamps)
 
 ### Saved Article Tracking
 - Stores list of saved article URLs and IDs per user in browser storage
 - Key format: `poche_saved_articles_{userId}`
-- Synced from Supabase on popup open to reflect deletions
+- Synced from backend on popup open to reflect deletions
 - Used to disable save button for already-saved URLs
 
 ## Build Process
@@ -164,42 +173,44 @@ npm run icons        # Generate placeholder icons
 ## Permissions
 
 The extension requires:
-- `activeTab` - Access to current tab for article parsing
-- `storage` - Store authentication session
-- `scripting` - Inject content scripts
-- `host_permissions: <all_urls>` - Access to all websites for article saving
+- `activeTab` - Access to current tab URL
+- `storage` - Store authentication token and saved articles
+- `scripting` - Inject content scripts (if needed)
+- `host_permissions: <all_urls>` - Access to all websites for reading URLs
 
 ## Content Security Policy
 
-- Content scripts run in page context
-- No external script loading (Readability is bundled)
+- No external script loading
 - All code is bundled and self-contained
+- API calls to backend only
 
 ## Error Handling
 
 - Comprehensive error messages for users
 - Console logging for debugging
-- Retry logic for content script communication
-- Timeout handling for network operations
+- Token refresh/expiration handling
+- Network error recovery
 
 ## Known Limitations
 
 - Cannot save from browser internal pages (chrome://, about:, etc.) - button shows "Cannot Save This Page"
-- Some pages may not parse correctly due to structure
-- Requires internet connection for Supabase operations
+- Some pages may not extract correctly due to structure
+- Requires internet connection for API operations
 - Safari requires additional setup and code signing for distribution
 - Saved article list syncs on popup open, not in real-time
 
 ## Recent Enhancements
 
+- ✅ Migrated from Supabase to self-hosted backend
+- ✅ Token-based authentication (bearer tokens)
+- ✅ Removed client-side article parsing (now done server-side)
+- ✅ Sign in/sign up mode switch UI
 - ✅ Converted to React with TypeScript
 - ✅ Saved article URL tracking in browser storage
 - ✅ Smart save button state management
-- ✅ Automatic sync of saved articles from Supabase on popup open
+- ✅ Automatic sync of saved articles from backend on popup open
 - ✅ Prevention of duplicate article saves
 - ✅ Tag input UI for specifying tags before saving articles
-- ✅ HTML entity decoding for article titles and excerpts
-- ✅ Article length calculation (character count excluding HTML)
 - ✅ Shared types and utilities folder for code reuse
 
 ## Future Enhancements
@@ -213,3 +224,4 @@ Potential improvements:
 - Article thumbnail extraction
 - Tag color customization
 - Bulk tag operations
+- Offline support with sync queue
