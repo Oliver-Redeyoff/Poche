@@ -1,4 +1,4 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
+import { Text, type TextProps, StyleSheet } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -12,6 +12,7 @@ export function ThemedText({
   style,
   lightColor,
   darkColor,
+  type = 'default',
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
@@ -20,9 +21,37 @@ export function ThemedText({
     <Text
       style={[
         { color },
+        type === 'default' ? styles.default : undefined,
+        type === 'title' ? styles.title : undefined,
+        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
+        type === 'subtitle' ? styles.subtitle : undefined,
+        type === 'link' ? styles.link : undefined,
         style,
       ]}
       {...rest}
     />
   )
 }
+
+const styles = StyleSheet.create({
+  default: {
+    fontFamily: 'NotoSans_400Regular',
+    fontSize: 16,
+  },
+  title: {
+    fontFamily: 'NotoSans_700Bold',
+    fontSize: 32,
+  },
+  defaultSemiBold: {
+    fontFamily: 'NotoSans_600SemiBold',
+    fontSize: 16,
+  },
+  subtitle: {
+    fontFamily: 'NotoSans_500Medium',
+    fontSize: 20,
+  },
+  link: {
+    fontFamily: 'NotoSans_400Regular',
+    fontSize: 16,
+  },
+})

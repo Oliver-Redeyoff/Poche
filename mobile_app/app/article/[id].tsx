@@ -7,6 +7,7 @@ import Markdown from 'react-native-markdown-display'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '../../shared/types'
 import { tagToColor } from '../../shared/util'
+import { getCachedImagePath } from '../../lib/image-cache'
 import { useTheme } from '@react-navigation/native'
 import { useAuth } from '../_layout'
 
@@ -103,71 +104,75 @@ export default function ArticleScreen() {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
+      fontFamily: 'NotoSans_400Regular',
     },
     paragraph: {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
       marginVertical: 12,
+      fontFamily: 'NotoSans_400Regular',
     },
     heading1: {
       color: colors.text,
       fontSize: 32,
-      fontWeight: '700',
       lineHeight: 40,
       marginBottom: 24,
       marginTop: 48,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     heading2: {
       color: colors.text,
       fontSize: 26,
       lineHeight: 34,
-      fontWeight: '700',
       marginTop: 32,
       marginBottom: 16,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     heading3: {
       color: colors.text,
       fontSize: 22,
       lineHeight: 30,
-      fontWeight: '700',
       marginTop: 24,
       marginBottom: 12,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     heading4: {
       color: colors.text,
       fontSize: 19,
       lineHeight: 26,
-      fontWeight: '700',
       marginTop: 20,
       marginBottom: 8,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     heading5: {
       color: colors.text,
       fontSize: 17,
       lineHeight: 24,
-      fontWeight: '600',
       marginTop: 16,
       marginBottom: 8,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     heading6: {
       color: colors.textSecondary,
       fontSize: 16,
       lineHeight: 22,
-      fontWeight: '600',
       marginTop: 16,
       marginBottom: 8,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     link: {
       textDecorationLine: 'underline',
       textDecorationColor: colors.accent,
+      fontFamily: 'NotoSans_400Regular',
     },
     strong: {
-      fontWeight: '600',
       color: colors.text,
+      fontFamily: 'NotoSans_600SemiBold',
     },
     em: {
       fontStyle: 'italic',
+      fontFamily: 'NotoSans_400Regular',
     },
     blockquote: {
       marginVertical: 16,
@@ -176,6 +181,7 @@ export default function ArticleScreen() {
       borderLeftWidth: 4,
       borderLeftColor: colors.accent,
       backgroundColor: colors.blockquoteBg,
+      fontFamily: 'NotoSans_400Regular',
       borderRadius: 4,
     },
     bullet_list: {
@@ -189,6 +195,7 @@ export default function ArticleScreen() {
       fontSize: 18,
       lineHeight: 30,
       marginBottom: 8,
+      fontFamily: 'NotoSans_400Regular',
     },
     code_inline: {
       fontFamily: 'Menlo',
@@ -232,16 +239,18 @@ export default function ArticleScreen() {
       borderWidth: 1,
       borderColor: colors.divider,
       borderRadius: 8,
+      fontFamily: 'NotoSans_400Regular',
     },
     th: {
       backgroundColor: colors.blockquoteBg,
       padding: 12,
-      fontWeight: '600',
+      fontFamily: 'NotoSans_600SemiBold',
     },
     td: {
       padding: 12,
       borderTopWidth: 1,
       borderTopColor: colors.divider,
+      fontFamily: 'NotoSans_400Regular',
     },
   }), [colors, contentWidth])
 
@@ -252,11 +261,29 @@ export default function ArticleScreen() {
   const MIN_IMAGE_WIDTH = 50
   const MIN_IMAGE_HEIGHT = 50
 
-  // Custom image component that handles errors and filters small images
+  // Get user ID for cached image lookup
+  const userId = session?.user?.id || null
+  const articleId = article?.id || null
+
+  // Custom image component that handles errors, filters small images, and uses cached versions
   const ArticleImage = useCallback(({ src, nodeKey }: { src: string, nodeKey: string }) => {
     const [hasError, setHasError] = useState(false)
     const [isTooSmall, setIsTooSmall] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [imageSrc, setImageSrc] = useState<string>(src)
+
+    // Look up cached version of the image
+    useEffect(() => {
+      let mounted = true
+      
+      getCachedImagePath(userId, articleId, src).then((cachedPath) => {
+        if (mounted) {
+          setImageSrc(cachedPath)
+        }
+      })
+      
+      return () => { mounted = false }
+    }, [src])
 
     // Skip rendering if this image has already failed or is too small
     if (hasError || isTooSmall || failedImages.has(src)) {
@@ -271,7 +298,7 @@ export default function ArticleScreen() {
     return (
       <View style={{ marginVertical: 16, width: '100%', display: (hasError || isTooSmall) ? 'none' : 'flex' }}>
         <Image
-          source={{ uri: src }}
+          source={{ uri: imageSrc }}
           style={{
             width: '100%',
             aspectRatio: 16 / 9,
@@ -294,7 +321,7 @@ export default function ArticleScreen() {
         />
       </View>
     )
-  }, [failedImages])
+  }, [failedImages, userId, articleId])
 
   // Helper to resolve relative URLs against article's base URL
   const resolveUrl = useCallback((href: string): string | null => {
@@ -349,6 +376,7 @@ export default function ArticleScreen() {
             color: colors.accent,
             textDecorationLine: 'underline',
             textDecorationColor: colors.accent,
+            fontFamily: 'NotoSans_400Regular',
           }}
           onPress={() => {
             if (resolvedUrl) {
@@ -487,10 +515,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
+    marginHorizontal: 16,
     marginBottom: 24,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    marginHorizontal: 8,
     borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -500,7 +528,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: 'NotoSans_700Bold',
     lineHeight: 42,
     textDecorationLine: 'underline',
   },
@@ -512,7 +540,7 @@ const styles = StyleSheet.create({
   },
   siteName: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'NotoSans_500Medium',
     color: 'rgba(120, 120, 120, 0.8)',
   },
   tagsContainer: {
@@ -527,7 +555,7 @@ const styles = StyleSheet.create({
   },
   tagChipText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'NotoSans_500Medium',
   },
   contentContainer: {
     flex: 1,

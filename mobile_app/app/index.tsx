@@ -218,35 +218,6 @@ export default function HomeScreen() {
     }
   }
 
-  // Extract first image URL from HTML content
-  // Handles both remote URLs and local file:// URIs
-  function extractFirstImageUrl(htmlContent: string | null): string | null {
-    if (!htmlContent) return null
-    
-    // Match img tags with src attribute
-    const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
-    if (imgMatch && imgMatch[1]) {
-      let imageUrl = imgMatch[1]
-      
-      // If it's already a local file URI, return it as is
-      if (imageUrl.startsWith('file://')) {
-        return imageUrl
-      }
-      
-      // Handle relative URLs (convert to absolute if needed)
-      if (imageUrl.startsWith('//')) {
-        imageUrl = 'https:' + imageUrl
-      } else if (imageUrl.startsWith('/')) {
-        // If it's a relative path, we might need the article URL to make it absolute
-        // For now, return as is - the Image component might handle it
-        return imageUrl
-      }
-      
-      return imageUrl
-    }
-    
-    return null
-  }
 
   // Extract all unique tags from articles
   function getAllTags(): string[] {
@@ -377,7 +348,6 @@ export default function HomeScreen() {
                   article={article}
                   onDelete={deleteArticle}
                   onUpdateTags={updateArticleTags}
-                  extractFirstImageUrl={extractFirstImageUrl}
                 />
               )
             })}
@@ -447,7 +417,7 @@ const styles = StyleSheet.create({
   },
   tagChipText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'NotoSans_600SemiBold',
   },
   articleList: {
     display: 'flex',
