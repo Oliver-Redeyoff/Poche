@@ -144,32 +144,25 @@ body {
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
 
-  .logo {
-    width: 24px;
-    height: 24px;
-    padding-top: 3px;
-    box-sizing: content-box;
-  }
-
-  .header-right {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    h1 {
-      font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 600;
+  .header-inner {
+    .logo {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      box-sizing: content-box;
+      vertical-align: sub;
     }
-
-    .subtitle {
-      display: none;
-      font-size: 14px;
-      color: rgb(var(--color-text-secondary));
+  
+    h1 {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      padding-left: 4px;
+      vertical-align: text-bottom;
     }
   }
 }
