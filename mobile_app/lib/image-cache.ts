@@ -2,16 +2,18 @@ import * as FileSystem from 'expo-file-system/legacy'
 import { Article } from '../shared/types'
 
 /**
- * Extract all image URLs from HTML content
+ * Extract all image URLs from markdown content
+ * Matches markdown image syntax: ![alt](url) or ![alt](url "title")
  */
-export function extractImageUrls(htmlContent: string | null): string[] {
-  if (!htmlContent) return []
+export function extractImageUrls(markdownContent: string | null): string[] {
+  if (!markdownContent) return []
   
   const imageUrls: string[] = []
-  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
+  // Markdown image syntax: ![alt text](url) or ![alt text](url "title")
+  const imgRegex = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/gi
   let match
   
-  while ((match = imgRegex.exec(htmlContent)) !== null) {
+  while ((match = imgRegex.exec(markdownContent)) !== null) {
     if (match[1]) {
       let imageUrl = match[1]
       
@@ -123,13 +125,14 @@ export async function processArticleImages(
     }
   }
   
-  // Replace all image URLs in HTML with local file URIs
+  // Replace all image URLs in markdown with local file URIs
   for (const [originalUrl, localPath] of imageUrlMap.entries()) {
     // Escape special regex characters in the URL
     const escapedUrl = originalUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    // Replace all occurrences of this URL in img src attributes
-    const regex = new RegExp(`(<img[^>]+src=["'])${escapedUrl}(["'][^>]*>)`, 'gi')
-    processedContent = processedContent.replace(regex, `$1file://${localPath}$2`)
+    // Replace all occurrences of this URL in markdown image syntax: ![alt](url) or ![alt](url "title")
+    // Note: localPath already includes file:// from FileSystem.cacheDirectory
+    const regex = new RegExp(`(!\\[[^\\]]*\\]\\()${escapedUrl}((?:\\s+"[^"]*")?\\))`, 'gi')
+    processedContent = processedContent.replace(regex, `$1${localPath}$2`)
   }
   
   return {
@@ -160,4 +163,3 @@ export async function processArticlesImages(
   
   return processedArticles
 }
-
