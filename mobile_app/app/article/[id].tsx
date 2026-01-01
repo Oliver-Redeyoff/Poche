@@ -459,11 +459,7 @@ export default function ArticleScreen() {
                   key={tag}
                   style={[
                     styles.tagChip,
-                    { 
-                      backgroundColor: tagToColor(tag, 0.15),
-                      borderWidth: 1,
-                      borderColor: tagToColor(tag, 0.4),
-                    }
+                    { backgroundColor: tagToColor(tag, 0.15) }
                   ]}
                 >
                   <ThemedText style={[

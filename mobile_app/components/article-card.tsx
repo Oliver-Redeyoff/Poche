@@ -181,7 +181,7 @@ export function ArticleCard({
         <View style={styles.articleCardTop}>
           <View style={styles.articleCardText}>
             {article.title && (
-              <ThemedText style={styles.articleTitle}>
+              <ThemedText style={styles.articleTitle} numberOfLines={2}>
                 {article.title}
               </ThemedText>
             )}
