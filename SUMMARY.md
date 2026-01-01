@@ -13,7 +13,7 @@ Poche is a "read it later" application that allows users to save articles from t
 ### Technology Stack
 
 - **Backend**: Hono (Node.js), Better Auth with bearer plugin, Drizzle ORM, PostgreSQL
-- **Mobile App**: React Native with Expo Router
+- **Mobile App**: React Native with Expo Router, react-native-markdown-display
 - **Browser Extension**: React with TypeScript, built with Webpack
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
 - **Article Extraction**: Defuddle (server-side Node.js version, markdown output)
@@ -58,6 +58,7 @@ The project uses a PostgreSQL database with the following main tables:
 - Better Auth's bearer plugin enables token-based auth alongside cookies
 - Session tokens stored in browser extension storage (`chrome.storage.local`) and mobile app AsyncStorage
 - Cookie-based auth doesn't work for browser extensions due to cross-origin restrictions
+- CSRF protection disabled for mobile app compatibility (mobile apps don't send Origin header)
 - Row Level Security equivalent through user-scoped queries
 
 ## Project Structure
@@ -88,7 +89,7 @@ Poche/
 
 ### Backend Features
 - RESTful API for authentication and article management
-- Server-side article extraction (URL → markdown)
+- Server-side article extraction (URL → markdown via Defuddle)
 - Bearer token authentication for browser extensions and mobile apps
 - Docker support for easy deployment
 - PostgreSQL with Drizzle ORM
@@ -96,16 +97,17 @@ Poche/
 ### Mobile App Features
 - User authentication (email/password login and signup)
 - View saved articles linked to user account
-- User profile management
 - Tab-based navigation with native iOS blur effects
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
-- **Offline article access**: Signed-in users can access articles stored locally even when offline
-- **Offline image caching**: Images in articles are downloaded and stored locally for offline viewing
+- **Markdown rendering**: Uses `react-native-markdown-display` for article content
+- **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
+- **Link styling**: Links appear in accent color with underline
+- **Offline article access**: Articles stored locally in AsyncStorage
+- **Offline image caching**: Images downloaded and stored locally for offline viewing
 - **Background article sync**: Periodic background task to sync latest articles and cache images
-- **Instant article loading**: Articles from local storage appear immediately on homepage, with new articles synced in background
-- **Article animations**: Smooth entry animations for new articles and exit animations for deleted articles
-- **Article deletion**: Delete articles with confirmation dialog and smooth animations
-- **Premium article reader**: Enhanced typography, dynamic styling based on content type, horizontal code block scrolling
+- **Instant article loading**: Articles from local storage appear immediately
+- **Article animations**: Smooth entry/exit animations for articles
+- **Article deletion**: Delete articles with confirmation dialog
 - **Tag management**: Add and remove tags from articles directly from article cards
 - **Tag filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading time**: Display estimated reading time based on article word count
@@ -126,9 +128,9 @@ Poche/
 2. **User browses the web** and finds an article they want to save
 3. **User clicks the browser extension** icon
 4. **Extension sends URL** to backend API
-5. **Backend extracts article** using Defuddle (server-side)
+5. **Backend extracts article** using Defuddle (server-side, outputs markdown)
 6. **Article saved** to PostgreSQL with userId
-7. **User views saved articles** in the mobile app or extension
+7. **User views saved articles** in the mobile app (markdown rendered) or extension
 
 ## Development
 
@@ -138,16 +140,19 @@ Poche/
 - Drizzle ORM for type-safe database queries
 - Docker Compose for development and production
 - Hot-reloading in development mode
+- Binds to `0.0.0.0` for mobile app access on local network
 
 ### Mobile App
 - Built with Expo SDK ~54
 - Uses Expo Router for file-based routing
 - TypeScript for type safety
+- **API client**: `lib/api.ts` handles all backend communication
+- **AuthContext**: Manages session state and navigation guards
 - **Local storage**: Articles stored in AsyncStorage for offline access
 - **Image caching**: Uses `expo-file-system/legacy` to download and cache article images locally
 - **Background tasks**: Uses `expo-background-task` for periodic article syncing and image caching
-- **Animations**: Uses `react-native-reanimated` for smooth article list animations and content fade-in
-- **HTML rendering**: Uses `react-native-render-html` with custom renderers for premium article reading experience
+- **Animations**: Uses `react-native-reanimated` for smooth article list animations
+- **Markdown rendering**: Uses `react-native-markdown-display` with custom image and link handling
 - **Custom theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 
 ### Browser Extension
@@ -162,7 +167,7 @@ Poche/
 ### Backend Configuration
 - Environment variables for database URL, auth secret, port
 - CORS configured for browser extensions and localhost
-- Better Auth configured with trusted origins for extensions
+- Better Auth configured with `trustedOrigins: ['*']` for mobile app compatibility
 
 ### Security
 - Bearer token authentication for all protected endpoints
@@ -180,8 +185,18 @@ Poche/
 - ✅ PostgreSQL with Drizzle ORM
 - ✅ Dynamic CORS for browser extensions (chrome-extension://, moz-extension://, safari-extension://)
 - ✅ Dynamic trustedOrigins in Better Auth for extension origins
+- ✅ CSRF protection disabled for mobile app compatibility
+- ✅ Server binds to 0.0.0.0 for local network access
 
 ### Mobile App
+- ✅ Migrated from Supabase to self-hosted backend
+- ✅ Bearer token authentication via `lib/api.ts`
+- ✅ AuthContext for session management and navigation guards
+- ✅ Markdown rendering with `react-native-markdown-display`
+- ✅ Custom image rendering with expo-image
+- ✅ Image filtering (invalid URLs, low-resolution < 50x50)
+- ✅ Image error handling with graceful degradation
+- ✅ Link styling with accent color and underline
 - ✅ Offline article reading support
 - ✅ Offline image caching with `expo-file-system/legacy`
 - ✅ Background article syncing with image caching
@@ -192,12 +207,7 @@ Poche/
 - ✅ Tag management (add/remove tags from article cards)
 - ✅ Tag filtering on homepage
 - ✅ Reading time display based on article word count
-- ✅ Premium article reader with enhanced typography
-- ✅ Dynamic content styling based on `data-component` attributes
-- ✅ Horizontal scrolling code blocks
 - ✅ Custom Poche color theme (warm tones, coral accent)
-- ✅ iOS text wrapping fixes for react-native-render-html
-- ✅ Content fade-in animation with loading overlay
 - ✅ Shared types and utilities folder
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
 
