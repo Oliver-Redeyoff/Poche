@@ -224,10 +224,10 @@ export function ArticleCard({
                   }
                 ]}
               >
-                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontFamily: 'NotoSans_600SemiBold' }}>
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontFamily: 'SourceSans3_600SemiBold' }}>
                   {tag}
                 </ThemedText>
-                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontFamily: 'NotoSans_700Bold', opacity: 0.4, marginLeft: 4 }}>
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontFamily: 'SourceSans3_700Bold', opacity: 0.4, marginLeft: 4 }}>
                   ×
                 </ThemedText>
               </Pressable>
@@ -340,12 +340,12 @@ const styles = StyleSheet.create({
   },
   articleTitle: {
     fontSize: 16,
-    fontFamily: 'NotoSans_700Bold',
+    fontFamily: 'Bitter_700Bold',
   },
   articleUrlAndDate: {
     marginBottom: 4,
     fontSize: 14,
-    fontFamily: 'NotoSans_500Medium',
+    fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.75)',
   },
   articleImage: {
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'NotoSans_700Bold',
+    fontFamily: 'Bitter_700Bold',
     marginBottom: 8,
   },
   modalSubtitle: {
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginBottom: 20,
-    fontFamily: 'NotoSans_400Regular',
+    fontFamily: 'SourceSans3_400Regular',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     fontSize: 16,
-    fontFamily: 'NotoSans_600SemiBold',
+    fontFamily: 'SourceSans3_600SemiBold',
   },
 })
 

@@ -235,7 +235,7 @@ Poche/
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ Shared types and utilities folder
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
-- ✅ Noto Sans font via `@expo-google-fonts/noto-sans` with weight variants
+- ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts` (Bitter for headers/logo, Source Sans 3 for body)
 - ✅ Improved authentication error messaging
 - ✅ Session expiry caching (reduces API calls)
 

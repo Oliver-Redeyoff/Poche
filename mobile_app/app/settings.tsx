@@ -31,7 +31,7 @@ export default function SettingsScreen() {
             <ThemedText style={styles.userInfoText}>
               Logged in as
             </ThemedText>
-            <ThemedText style={[styles.userInfoText, { fontFamily: 'NotoSans_600SemiBold' }]}>
+            <ThemedText style={[styles.userInfoText, { fontFamily: 'SourceSans3_600SemiBold' }]}>
               {session.user.email}
             </ThemedText>
           </View>
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: 12,
     borderRadius: 14,
-    fontFamily: 'NotoSans_600SemiBold',
+    fontFamily: 'SourceSans3_600SemiBold',
   },
   buttonSecondary: {
     backgroundColor: "#aaaaaa",
