@@ -110,10 +110,9 @@ async function checkIfUrlIsSaved(userId: string, url: string): Promise<boolean> 
 function Header(): JSX.Element {
   return (
     <div className="header">
-      <img src="assets/icon.png" alt="poche" className="logo" />
-      <div className="header-right">
+      <div className="header-inner">
+        <img src="assets/icon.png" alt="poche" className="logo" />
         <h1>Poche</h1>
-        <p className="subtitle">Read it Later</p>
       </div>
     </div>
   )
