@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import { IconSymbol } from './ui/icon-symbol'
 import { Article } from '../shared/types'
 import { tagToColor } from '../shared/util'
+import { extractFirstImageUrl } from '../lib/image-cache'
 import { useState } from 'react'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useTheme } from '@react-navigation/native'
@@ -14,7 +15,6 @@ interface ArticleCardProps {
   article: Article
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
-  extractFirstImageUrl: (htmlContent: string | null) => string | null
 }
 
 // Calculate reading time in minutes based on word count
@@ -38,7 +38,6 @@ export function ArticleCard({
   article,
   onDelete,
   onUpdateTags,
-  extractFirstImageUrl,
 }: ArticleCardProps) {
   const router = useRouter()
   const imageUrl = extractFirstImageUrl(article.content || null)
@@ -225,10 +224,10 @@ export function ArticleCard({
                   }
                 ]}
               >
-                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '600' }}>
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontFamily: 'NotoSans_600SemiBold' }}>
                   {tag}
                 </ThemedText>
-                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontWeight: '700', opacity: 0.4, marginLeft: 4 }}>
+                <ThemedText style={{ color: tagToColor(tag), fontSize: 12, fontFamily: 'NotoSans_700Bold', opacity: 0.4, marginLeft: 4 }}>
                   ×
                 </ThemedText>
               </Pressable>
@@ -341,12 +340,12 @@ const styles = StyleSheet.create({
   },
   articleTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'NotoSans_700Bold',
   },
   articleUrlAndDate: {
     marginBottom: 4,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'NotoSans_500Medium',
     color: 'rgba(120, 120, 120, 0.75)',
   },
   articleImage: {
@@ -413,7 +412,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'NotoSans_700Bold',
     marginBottom: 8,
   },
   modalSubtitle: {
@@ -427,6 +426,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginBottom: 20,
+    fontFamily: 'NotoSans_400Regular',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'NotoSans_600SemiBold',
   },
 })
 

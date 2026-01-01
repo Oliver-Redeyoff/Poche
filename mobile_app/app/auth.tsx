@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   modeOptionText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'NotoSans_600SemiBold',
   },
   inputGroup: {
     marginBottom: 16,
@@ -229,13 +229,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 4,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'NotoSans_500Medium',
   },
   input: {
     borderWidth: 1,
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
+    fontFamily: 'NotoSans_400Regular',
   },
   forgotPassword: {
     alignSelf: 'flex-start',
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'NotoSans_500Medium',
   },
   submitButton: {
     borderRadius: 12,
@@ -254,6 +255,6 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'NotoSans_600SemiBold',
   },
 })

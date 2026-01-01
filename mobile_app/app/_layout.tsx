@@ -4,6 +4,14 @@ import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { View, Image, Pressable } from 'react-native'
+import {
+  useFonts,
+  NotoSans_400Regular,
+  NotoSans_500Medium,
+  NotoSans_600SemiBold,
+  NotoSans_700Bold,
+} from '@expo-google-fonts/noto-sans'
+import * as SplashScreen from 'expo-splash-screen'
 import { getSession, AuthResponse } from '@/lib/api'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { ThemedText } from '@/components/themed-text'
@@ -12,6 +20,9 @@ import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
+
+// Prevent splash screen from hiding until fonts are loaded
+SplashScreen.preventAutoHideAsync()
 
 // Custom Poche theme colors - warm tones that are easy on the eyes
 const PocheLightTheme: Theme = {
@@ -63,6 +74,14 @@ export default function RootLayout() {
   const [session, setSession] = useState<AuthResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Load custom fonts with different weights
+  const [fontsLoaded] = useFonts({
+    NotoSans_400Regular,
+    NotoSans_500Medium,
+    NotoSans_600SemiBold,
+    NotoSans_700Bold,
+  })
+
   useEffect(() => {
     // Check for existing session on app start
     async function checkSession() {
@@ -85,6 +104,13 @@ export default function RootLayout() {
     checkSession()
   }, [])
 
+  // Hide splash screen once fonts are loaded
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync()
+    }
+  }, [fontsLoaded])
+
   // Handle session changes for background sync
   useEffect(() => {
     if (session) {
@@ -93,6 +119,11 @@ export default function RootLayout() {
       unregisterBackgroundSync()
     }
   }, [session])
+
+  // Don't render until fonts are loaded
+  if (!fontsLoaded) {
+    return null
+  }
 
   return (
     <AuthContext.Provider value={{ session, setSession, isLoading }}>
@@ -185,7 +216,7 @@ function HeaderLogo() {
         source={ require('@/assets/images/icon.png') } 
         style={{ width: 24, height: 24 }} 
       />
-      <ThemedText style={{ fontSize: 32, lineHeight: 32, fontWeight: 'bold' }}>poche</ThemedText>
+      <ThemedText style={{ fontSize: 28, letterSpacing: -1, lineHeight: 32, fontFamily: 'NotoSans_700Bold' }}>poche</ThemedText>
     </View>
   )
 }
