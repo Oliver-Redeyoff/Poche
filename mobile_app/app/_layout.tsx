@@ -227,12 +227,12 @@ function HeaderLogo() {
   const colorScheme = useColorScheme()
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
       <Image 
         source={ require('@/assets/images/icon.png') } 
         style={{ width: 24, height: 24 }} 
       />
-      <ThemedText style={{ fontSize: 28, letterSpacing: -1, lineHeight: 32, fontFamily: 'Bitter_700Bold' }}>poche</ThemedText>
+      <ThemedText style={{ fontSize: 26, letterSpacing: -1, fontFamily: 'Bitter_600SemiBold' }}>Poche</ThemedText>
     </View>
   )
 }
