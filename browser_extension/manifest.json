@@ -5,13 +5,7 @@
   "description": "Save articles to read later",
   "permissions": [
     "activeTab",
-    "storage",
-    "identity",
-    "scripting",
-    "alarms"
-  ],
-  "host_permissions": [
-    "<all_urls>"
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -27,22 +21,6 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "background.js",
-    "scripts": ["background.js"]
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_idle",
-      "all_frames": false
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["popup.html"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+    "service_worker": "background.js"
+  }
 }
-
