@@ -296,6 +296,40 @@ export default function ArticleScreen() {
     )
   }, [failedImages])
 
+  // Helper to resolve relative URLs against article's base URL
+  const resolveUrl = useCallback((href: string): string | null => {
+    if (!href) return null
+    
+    // Already a valid absolute URL
+    if (href.startsWith('http://') || href.startsWith('https://')) {
+      return href
+    }
+    
+    // Skip file:// URLs (these are cached images, not links)
+    if (href.startsWith('file://')) {
+      return null
+    }
+    
+    // Try to resolve relative URLs using article's URL as base
+    if (article?.url) {
+      try {
+        const baseUrl = new URL(article.url)
+        if (href.startsWith('/')) {
+          // Absolute path relative to domain
+          return `${baseUrl.protocol}//${baseUrl.host}${href}`
+        } else {
+          // Relative path
+          const basePath = baseUrl.pathname.substring(0, baseUrl.pathname.lastIndexOf('/') + 1)
+          return `${baseUrl.protocol}//${baseUrl.host}${basePath}${href}`
+        }
+      } catch {
+        return null
+      }
+    }
+    
+    return null
+  }, [article?.url])
+
   // Custom rules for markdown rendering
   const markdownRules = useMemo(() => ({
     // Custom image renderer to fix key prop and sizing issues
@@ -303,7 +337,30 @@ export default function ArticleScreen() {
       const { src, alt } = node.attributes
       return <ArticleImage key={node.key} src={src} nodeKey={node.key} />
     },
-  }), [ArticleImage, colors.accent])
+    // Custom link renderer to handle relative URLs and style with accent color
+    link: (node: any, children: any, parent: any, styles: any) => {
+      const { href } = node.attributes
+      const resolvedUrl = resolveUrl(href)
+      
+      return (
+        <Text
+          key={node.key}
+          style={{
+            color: colors.accent,
+            textDecorationLine: 'underline',
+            textDecorationColor: colors.accent,
+          }}
+          onPress={() => {
+            if (resolvedUrl) {
+              Linking.openURL(resolvedUrl)
+            }
+          }}
+        >
+          {children}
+        </Text>
+      )
+    },
+  }), [ArticleImage, colors.accent, resolveUrl])
 
   // Conditional returns - must come after all hooks
   if (loading) {
