@@ -2,11 +2,12 @@
 
 ## Project Overview
 
-Poche is a "read it later" application that allows users to save articles from the web and read them later. The project consists of three main components:
+Poche is a "read it later" application that allows users to save articles from the web and read them later. The project consists of four main components:
 
 1. **Backend** - Self-hosted API server for authentication and article management
 2. **Mobile App** - React Native mobile application (iOS/Android) built with Expo
 3. **Browser Extension** - Cross-browser extension (Chrome, Firefox, Safari) for saving articles
+4. **Web App** - Marketing website with app download links and SEO optimization
 
 ## Architecture
 
@@ -15,6 +16,7 @@ Poche is a "read it later" application that allows users to save articles from t
 - **Backend**: Hono (Node.js), Better Auth with bearer plugin, Drizzle ORM, PostgreSQL
 - **Mobile App**: React Native with Expo Router, react-native-markdown-display
 - **Browser Extension**: React with TypeScript, built with Webpack
+- **Web App**: React with TypeScript, Vite, React Router
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
 - **Article Extraction**: Defuddle (server-side Node.js version, markdown output)
 - **Deployment**: Docker & Docker Compose
@@ -82,6 +84,10 @@ Poche/
 │   ├── shared/         # Shared types and utilities
 │   ├── dist/           # Built extension files
 │   └── ...
+├── webapp/              # Marketing website
+│   ├── src/            # React source files
+│   ├── public/         # Static assets (logo, images)
+│   └── ...
 └── SUMMARY.md          # This file
 ```
 
@@ -122,6 +128,17 @@ Poche/
 - **Automatic sync**: Syncs saved article list from backend on popup open
 - **Tag input**: UI to specify comma-delimited list of tags before saving an article
 
+### Web App Features
+- Marketing landing page at `/` route
+- **SEO optimized**: Meta tags, Open Graph, Twitter Cards, JSON-LD structured data
+- **App download links**: iOS App Store, Google Play Store
+- **Browser extension links**: Chrome Web Store, Firefox Add-ons, Safari App Store
+- **Features showcase**: Highlights key Poche features with icons and descriptions
+- **How it works section**: Step-by-step guide for new users
+- **Responsive design**: Mobile-first with beautiful desktop layout
+- **Poche branding**: Warm color palette with coral accent (#EF4056)
+- **Custom typography**: Bitter serif for headings, Source Sans 3 for body
+
 ## Workflow
 
 1. **User logs in** to either the mobile app or browser extension
@@ -161,6 +178,14 @@ Poche/
 - Uses Manifest V3 for Chrome/Firefox
 - Token-based authentication (bearer tokens stored in browser storage)
 - Cross-browser API compatibility layer
+
+### Web App
+- Built with Vite for fast development
+- React 18 with TypeScript
+- React Router for client-side routing
+- SEO optimized with meta tags and structured data
+- Custom CSS with CSS variables for theming
+- Responsive design with mobile-first approach
 
 ## Configuration
 
@@ -225,10 +250,26 @@ Poche/
 - ✅ Converted to React with TypeScript
 - ✅ Tag input UI for specifying tags before saving
 - ✅ Sign in/sign up mode switch UI
-- ✅ Noto Sans font via Google Fonts
+- ✅ Bitter + Source Sans 3 fonts via Google Fonts
 - ✅ Error status popup for sign-in/sign-up failures
 - ✅ Loading spinner while checking auth status
 - ✅ Session expiry caching (reduces API calls)
+
+### Web App
+- ✅ React + TypeScript with Vite
+- ✅ React Router for navigation
+- ✅ Marketing landing page with hero section
+- ✅ SEO optimization (meta tags, Open Graph, Twitter Cards, JSON-LD)
+- ✅ App Store and Google Play download links
+- ✅ Browser extension links (Chrome, Firefox, Safari)
+- ✅ Features section with 6 feature cards
+- ✅ "How It Works" step-by-step guide
+- ✅ Call-to-action sections
+- ✅ Responsive design (mobile-first)
+- ✅ Custom Poche branding with warm color palette
+- ✅ Bitter + Source Sans 3 typography
+- ✅ Animated phone mockup in hero
+- ✅ Floating background shapes for depth
 
 ## Future Enhancements
 

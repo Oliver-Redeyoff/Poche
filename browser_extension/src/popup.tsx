@@ -112,7 +112,7 @@ function Header(): JSX.Element {
     <div className="header">
       <img src="assets/icon.png" alt="poche" className="logo" />
       <div className="header-right">
-        <h1>poche</h1>
+        <h1>Poche</h1>
         <p className="subtitle">Read it Later</p>
       </div>
     </div>

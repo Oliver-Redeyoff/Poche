@@ -212,7 +212,7 @@ The extension requires:
 - ✅ Prevention of duplicate article saves
 - ✅ Tag input UI for specifying tags before saving articles
 - ✅ Shared types and utilities folder for code reuse
-- ✅ Noto Sans font via Google Fonts for consistent typography
+- ✅ Bitter + Source Sans 3 fonts via Google Fonts (Bitter for logo/headers, Source Sans 3 for body)
 - ✅ Error status popup for sign-in/sign-up failures with meaningful messages
 - ✅ Loading spinner while checking auth status (prevents auth UI flash)
 - ✅ Session expiry caching - only refreshes session when < 3 days until expiry
