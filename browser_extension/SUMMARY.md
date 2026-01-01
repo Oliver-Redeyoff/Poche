@@ -214,6 +214,8 @@ The extension requires:
 - ✅ Shared types and utilities folder for code reuse
 - ✅ Noto Sans font via Google Fonts for consistent typography
 - ✅ Error status popup for sign-in/sign-up failures with meaningful messages
+- ✅ Loading spinner while checking auth status (prevents auth UI flash)
+- ✅ Session expiry caching - only refreshes session when < 3 days until expiry
 
 ## Future Enhancements
 

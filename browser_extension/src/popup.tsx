@@ -129,6 +129,14 @@ function StatusMessage({ message, type }: StatusMessageProps): JSX.Element | nul
   )
 }
 
+function LoadingSection(): JSX.Element {
+  return (
+    <div className="section loading-section">
+      <div className="loading-spinner"></div>
+    </div>
+  )
+}
+
 function AuthModeSwitch({ mode, onModeChange }: { mode: AuthMode, onModeChange: (mode: AuthMode) => void }): JSX.Element {
   return (
     <div className="auth-mode-switch">
@@ -218,7 +226,7 @@ function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionPr
             disabled={isLoading}
           />
         </div>
-
+        
         {mode === 'signup' && (
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password</label>
@@ -249,7 +257,7 @@ function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionPr
         
         <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
-        </button>
+          </button>
       </form>
     </div>
   )
@@ -345,6 +353,7 @@ function TagsInput({ tags, onTagsChange }: TagsInputProps): JSX.Element {
 
 function App(): JSX.Element {
   const [session, setSession] = useState<api.Session | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true)
   const [statusMessage, setStatusMessage] = useState<string>('')
   const [statusType, setStatusType] = useState<StatusType>('info')
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -401,9 +410,9 @@ function App(): JSX.Element {
     setStatusType(type)
     
     // Auto-hide after 2.5 seconds
-    setTimeout(() => {
-      setStatusMessage('')
-    }, 2500)
+      setTimeout(() => {
+        setStatusMessage('')
+      }, 2500)
   }
 
   const checkAuthStatus = async (): Promise<void> => {
@@ -412,7 +421,6 @@ function App(): JSX.Element {
       
       if (currentSession?.user) {
         setSession(currentSession)
-        await syncSavedArticlesFromBackend(currentSession.user.id)
         await updateSaveButtonState()
       } else {
         setSession(null)
@@ -420,6 +428,8 @@ function App(): JSX.Element {
     } catch (error) {
       console.error('Error checking auth status:', error)
       setSession(null)
+    } finally {
+      setIsCheckingAuth(false)
     }
   }
 
@@ -431,9 +441,8 @@ function App(): JSX.Element {
       const sessionData = await api.signIn(email, password)
       
       setSession(sessionData)
-      showStatus('Signed in successfully!', 'success')
-      await syncSavedArticlesFromBackend(sessionData.user.id)
-      await updateSaveButtonState()
+        showStatus('Signed in successfully!', 'success')
+        await updateSaveButtonState()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Sign in failed'
       showStatus(errorMessage, 'error')
@@ -451,7 +460,6 @@ function App(): JSX.Element {
       
       setSession(sessionData)
       showStatus('Account created and signed in!', 'success')
-      await syncSavedArticlesFromBackend(sessionData.user.id)
       await updateSaveButtonState()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Sign up failed'
@@ -534,7 +542,9 @@ function App(): JSX.Element {
     <>
       <Header />
       <StatusMessage message={statusMessage} type={statusType} />
-      {session?.user ? (
+      {isCheckingAuth ? (
+        <LoadingSection />
+      ) : session?.user ? (
         <MainSection
           userEmail={session.user.email || ''}
           onLogout={handleLogout}
