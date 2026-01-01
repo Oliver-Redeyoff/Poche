@@ -17,15 +17,15 @@ interface ArticleCardProps {
   extractFirstImageUrl: (htmlContent: string | null) => string | null
 }
 
-// Calculate reading time in minutes based on character count
-// Average reading speed is ~1000 characters per minute
-function calculateReadingTime(length: number | null | undefined): string {
-  if (!length || length === 0) {
+// Calculate reading time in minutes based on word count
+// Average reading speed is ~200 words per minute
+function calculateReadingTime(wordCount: number | null | undefined): string {
+  if (!wordCount || wordCount === 0) {
     return '1 min read'
   }
   
   // Calculate minutes (round up to nearest minute)
-  const minutes = Math.ceil(length / 1000)
+  const minutes = Math.ceil(wordCount / 200)
   
   if (minutes === 1) {
     return '1 min read'
@@ -42,7 +42,7 @@ export function ArticleCard({
 }: ArticleCardProps) {
   const router = useRouter()
   const imageUrl = extractFirstImageUrl(article.content || null)
-  const readingTime = calculateReadingTime(article.length)
+  const readingTime = calculateReadingTime(article.wordCount)
   const [showAddTagModal, setShowAddTagModal] = useState(false)
   const [newTagInput, setNewTagInput] = useState('')
   const theme = useTheme()

@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from "react"
-import { supabase } from "../lib/supabase"
-import { Session } from "@supabase/supabase-js"
 import { StyleSheet, View, Alert, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '../components/themed-text'
@@ -10,15 +8,18 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { ArticleCard } from '../components/article-card'
 import { Article } from '../shared/types'
 import { tagToColor } from '../shared/util'
+import { useAuth } from './_layout'
 import { 
   loadArticlesFromStorage, 
   saveArticlesToStorage, 
-  syncArticles
+  syncArticles,
+  deleteArticleWithSync,
+  updateArticleTagsWithSync
 } from '../lib/article-sync'
 
 
 export default function HomeScreen() {
-  const [session, setSession] = useState<Session | null>(null)
+  const { session } = useAuth()
   const headerHeight = useHeaderHeight()
   const [articles, setArticles] = useState<Article[]>([])
   const [articlesLoading, setArticlesLoading] = useState(false)
@@ -36,16 +37,7 @@ export default function HomeScreen() {
   const topPadding = headerHeight
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (session) {
+    if (session?.user) {
       // Load stored articles immediately (synchronous-like, shows right away)
       loadStoredArticles().then(() => {
         // After stored articles are loaded, sync new ones in background
@@ -68,16 +60,6 @@ export default function HomeScreen() {
       // They'll be marked as seen in the renderItem after animation
     } catch (error) {
       console.error('Error loading stored articles:', error)
-    }
-  }
-
-  // Save articles to AsyncStorage (wrapper for consistency)
-  async function saveArticlesToStorageLocal(articlesToSave: Article[]) {
-    try {
-      if (!session?.user) return
-      await saveArticlesToStorage(session.user.id, articlesToSave)
-    } catch (error) {
-      console.error('Error saving articles to storage:', error)
     }
   }
 
@@ -137,7 +119,7 @@ export default function HomeScreen() {
     try {
       setArticlesLoading(true)
       if (!session?.user) {
-        throw new Error('No user on the session!')
+        throw new Error('No user session!')
       }
       
       // Sync articles with image processing enabled
@@ -196,51 +178,43 @@ export default function HomeScreen() {
   }
 
   async function deleteArticle(articleId: number) {
-    const { error } = await supabase
-      .from('articles')
-      .delete()
-      .eq('id', articleId)
+    if (!session?.user) return
 
-    if (error) {
+    try {
+      await deleteArticleWithSync(session.user.id, articleId)
+      
+      // Remove article from local state
+      const updatedArticles = articles.filter(article => article.id !== articleId)
+      setArticles(updatedArticles)
+      
+      // Remove from seen articles set
+      seenArticleIds.current.delete(articleId)
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message)
+      }
       throw error
     }
-
-    // The ArticleCard component already waits 300ms for the animation to complete
-    // before calling this function, so we can remove it immediately
-    // Remove article from local state
-    const updatedArticles = articles.filter(article => article.id !== articleId)
-    setArticles(updatedArticles)
-    // Update storage
-    if (session?.user) {
-      await saveArticlesToStorage(session.user.id, updatedArticles)
-    }
-    
-    // Remove from seen articles set
-    seenArticleIds.current.delete(articleId)
   }
 
   async function updateArticleTags(articleId: number, tags: string) {
-    // Update in Supabase
-    const { error } = await supabase
-      .from('articles')
-      .update({ tags: tags || null })
-      .eq('id', articleId)
+    if (!session?.user) return
 
-    if (error) {
+    try {
+      await updateArticleTagsWithSync(session.user.id, articleId, tags)
+
+      // Update in local state
+      const updatedArticles = articles.map(article => 
+        article.id === articleId 
+          ? { ...article, tags: tags || null }
+          : article
+      )
+      setArticles(updatedArticles)
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message)
+      }
       throw error
-    }
-
-    // Update in local state
-    const updatedArticles = articles.map(article => 
-      article.id === articleId 
-        ? { ...article, tags: tags || null }
-        : article
-    )
-    setArticles(updatedArticles)
-    
-    // Update storage
-    if (session?.user) {
-      await saveArticlesToStorage(session.user.id, updatedArticles)
     }
   }
 
@@ -298,7 +272,7 @@ export default function HomeScreen() {
     })
   }
   
-  if (!session || !session.user) {
+  if (!session?.user) {
     return null // Auth is handled in _layout.tsx
   }
   

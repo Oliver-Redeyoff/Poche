@@ -1,6 +1,6 @@
 import * as TaskManager from 'expo-task-manager'
 import * as BackgroundTask from 'expo-background-task'
-import { supabase } from './supabase'
+import { getSession } from './api'
 import { syncArticles } from './article-sync'
 
 const BACKGROUND_SYNC_TASK = 'background-article-sync'
@@ -8,8 +8,8 @@ const BACKGROUND_SYNC_TASK = 'background-article-sync'
 // Background task function that syncs articles
 async function syncArticlesInBackground() {
   try {
-    // Get current session
-    const { data: { session } } = await supabase.auth.getSession()
+    // Get current session from API
+    const session = await getSession()
     
     if (!session || !session.user) {
       console.log('Background sync: No user session')
