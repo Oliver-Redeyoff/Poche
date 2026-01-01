@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
   tagChipText: {
     fontSize: 14,
-    fontFamily: 'NotoSans_600SemiBold',
+    fontFamily: 'SourceSans3_600SemiBold',
   },
   articleList: {
     display: 'flex',

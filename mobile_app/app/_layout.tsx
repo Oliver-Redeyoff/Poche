@@ -5,12 +5,19 @@ import 'react-native-reanimated'
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { View, Image, Pressable } from 'react-native'
 import {
-  useFonts,
-  NotoSans_400Regular,
-  NotoSans_500Medium,
-  NotoSans_600SemiBold,
-  NotoSans_700Bold,
-} from '@expo-google-fonts/noto-sans'
+  useFonts as useBitterFonts,
+  Bitter_400Regular,
+  Bitter_500Medium,
+  Bitter_600SemiBold,
+  Bitter_700Bold,
+} from '@expo-google-fonts/bitter'
+import {
+  useFonts as useSourceSansFonts,
+  SourceSans3_400Regular,
+  SourceSans3_500Medium,
+  SourceSans3_600SemiBold,
+  SourceSans3_700Bold,
+} from '@expo-google-fonts/source-sans-3'
 import * as SplashScreen from 'expo-splash-screen'
 import { getSession, AuthResponse } from '@/lib/api'
 import { useColorScheme } from '@/hooks/use-color-scheme'
@@ -74,13 +81,22 @@ export default function RootLayout() {
   const [session, setSession] = useState<AuthResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load custom fonts with different weights
-  const [fontsLoaded] = useFonts({
-    NotoSans_400Regular,
-    NotoSans_500Medium,
-    NotoSans_600SemiBold,
-    NotoSans_700Bold,
+  // Load custom fonts - Bitter for display/headers, Source Sans 3 for body
+  const [bitterLoaded] = useBitterFonts({
+    Bitter_400Regular,
+    Bitter_500Medium,
+    Bitter_600SemiBold,
+    Bitter_700Bold,
   })
+  
+  const [sourceSansLoaded] = useSourceSansFonts({
+    SourceSans3_400Regular,
+    SourceSans3_500Medium,
+    SourceSans3_600SemiBold,
+    SourceSans3_700Bold,
+  })
+  
+  const fontsLoaded = bitterLoaded && sourceSansLoaded
 
   useEffect(() => {
     // Check for existing session on app start
@@ -216,7 +232,7 @@ function HeaderLogo() {
         source={ require('@/assets/images/icon.png') } 
         style={{ width: 24, height: 24 }} 
       />
-      <ThemedText style={{ fontSize: 28, letterSpacing: -1, lineHeight: 32, fontFamily: 'NotoSans_700Bold' }}>poche</ThemedText>
+      <ThemedText style={{ fontSize: 28, letterSpacing: -1, lineHeight: 32, fontFamily: 'Bitter_700Bold' }}>poche</ThemedText>
     </View>
   )
 }

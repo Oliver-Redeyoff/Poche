@@ -210,7 +210,8 @@ Key dependencies:
 - `expo-image` - Optimized image component
 - `expo-font` - Custom font loading
 - `expo-splash-screen` - Splash screen management during font loading
-- `@expo-google-fonts/noto-sans` - Noto Sans font with weight variants
+- `@expo-google-fonts/bitter` - Bitter font for display/headers
+- `@expo-google-fonts/source-sans-3` - Source Sans 3 font for body text
 - `@react-native-async-storage/async-storage` - Local storage for articles and session
 - `expo-background-task` - Background task management for article syncing
 - `expo-task-manager` - Task manager for background tasks
@@ -275,7 +276,7 @@ Key dependencies:
 - ✅ Custom Poche color theme (warm tones, coral accent #EF4056)
 - ✅ Tags displayed at top of article detail view
 - ✅ iOS app icon asset catalog with all required sizes
-- ✅ Noto Sans font via `@expo-google-fonts/noto-sans` for consistent typography
+- ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts` (Bitter for headers/logo, Source Sans 3 for body)
 - ✅ Font weight variants: Regular (400), Medium (500), SemiBold (600), Bold (700)
 - ✅ Improved authentication error messaging with Better Auth error format handling
 - ✅ Session expiry caching - only refreshes session when < 3 days until expiry

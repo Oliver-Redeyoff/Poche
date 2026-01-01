@@ -104,14 +104,14 @@ export default function ArticleScreen() {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
     paragraph: {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
       marginVertical: 12,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
     heading1: {
       color: colors.text,
@@ -119,7 +119,7 @@ export default function ArticleScreen() {
       lineHeight: 40,
       marginBottom: 24,
       marginTop: 48,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'Bitter_600SemiBold',
     },
     heading2: {
       color: colors.text,
@@ -127,7 +127,7 @@ export default function ArticleScreen() {
       lineHeight: 34,
       marginTop: 32,
       marginBottom: 16,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'Bitter_600SemiBold',
     },
     heading3: {
       color: colors.text,
@@ -135,7 +135,7 @@ export default function ArticleScreen() {
       lineHeight: 30,
       marginTop: 24,
       marginBottom: 12,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'Bitter_600SemiBold',
     },
     heading4: {
       color: colors.text,
@@ -143,7 +143,7 @@ export default function ArticleScreen() {
       lineHeight: 26,
       marginTop: 20,
       marginBottom: 8,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'Bitter_600SemiBold',
     },
     heading5: {
       color: colors.text,
@@ -151,7 +151,7 @@ export default function ArticleScreen() {
       lineHeight: 24,
       marginTop: 16,
       marginBottom: 8,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'Bitter_600SemiBold',
     },
     heading6: {
       color: colors.textSecondary,
@@ -159,20 +159,20 @@ export default function ArticleScreen() {
       lineHeight: 22,
       marginTop: 16,
       marginBottom: 8,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'Bitter_600SemiBold',
     },
     link: {
       textDecorationLine: 'underline',
       textDecorationColor: colors.accent,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
     strong: {
       color: colors.text,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'SourceSans3_600SemiBold',
     },
     em: {
       fontStyle: 'italic',
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
     blockquote: {
       marginVertical: 16,
@@ -181,7 +181,7 @@ export default function ArticleScreen() {
       borderLeftWidth: 4,
       borderLeftColor: colors.accent,
       backgroundColor: colors.blockquoteBg,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
       borderRadius: 4,
     },
     bullet_list: {
@@ -195,7 +195,7 @@ export default function ArticleScreen() {
       fontSize: 18,
       lineHeight: 30,
       marginBottom: 8,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
     code_inline: {
       fontFamily: 'Menlo',
@@ -239,18 +239,18 @@ export default function ArticleScreen() {
       borderWidth: 1,
       borderColor: colors.divider,
       borderRadius: 8,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
     th: {
       backgroundColor: colors.blockquoteBg,
       padding: 12,
-      fontFamily: 'NotoSans_600SemiBold',
+      fontFamily: 'SourceSans3_600SemiBold',
     },
     td: {
       padding: 12,
       borderTopWidth: 1,
       borderTopColor: colors.divider,
-      fontFamily: 'NotoSans_400Regular',
+      fontFamily: 'SourceSans3_400Regular',
     },
   }), [colors, contentWidth])
 
@@ -376,7 +376,7 @@ export default function ArticleScreen() {
             color: colors.accent,
             textDecorationLine: 'underline',
             textDecorationColor: colors.accent,
-            fontFamily: 'NotoSans_400Regular',
+            fontFamily: 'SourceSans3_400Regular',
           }}
           onPress={() => {
             if (resolvedUrl) {
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: 'NotoSans_700Bold',
+    fontFamily: 'Bitter_700Bold',
     lineHeight: 42,
     textDecorationLine: 'underline',
   },
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   },
   siteName: {
     fontSize: 15,
-    fontFamily: 'NotoSans_500Medium',
+    fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.8)',
   },
   tagsContainer: {
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   },
   tagChipText: {
     fontSize: 13,
-    fontFamily: 'NotoSans_500Medium',
+    fontFamily: 'SourceSans3_500Medium',
   },
   contentContainer: {
     flex: 1,

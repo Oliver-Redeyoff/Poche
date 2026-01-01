@@ -35,23 +35,23 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   default: {
-    fontFamily: 'NotoSans_400Regular',
+    fontFamily: 'SourceSans3_400Regular',
     fontSize: 16,
   },
   title: {
-    fontFamily: 'NotoSans_700Bold',
+    fontFamily: 'Bitter_700Bold',
     fontSize: 32,
   },
   defaultSemiBold: {
-    fontFamily: 'NotoSans_600SemiBold',
+    fontFamily: 'SourceSans3_600SemiBold',
     fontSize: 16,
   },
   subtitle: {
-    fontFamily: 'NotoSans_500Medium',
+    fontFamily: 'SourceSans3_500Medium',
     fontSize: 20,
   },
   link: {
-    fontFamily: 'NotoSans_400Regular',
+    fontFamily: 'SourceSans3_400Regular',
     fontSize: 16,
   },
 })
