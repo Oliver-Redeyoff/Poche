@@ -212,6 +212,8 @@ The extension requires:
 - ✅ Prevention of duplicate article saves
 - ✅ Tag input UI for specifying tags before saving articles
 - ✅ Shared types and utilities folder for code reuse
+- ✅ Noto Sans font via Google Fonts for consistent typography
+- ✅ Error status popup for sign-in/sign-up failures with meaningful messages
 
 ## Future Enhancements
 
