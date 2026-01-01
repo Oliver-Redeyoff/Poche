@@ -212,6 +212,7 @@ Poche/
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
 - ✅ Noto Sans font via `@expo-google-fonts/noto-sans` with weight variants
 - ✅ Improved authentication error messaging
+- ✅ Session expiry caching (reduces API calls)
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
@@ -226,6 +227,8 @@ Poche/
 - ✅ Sign in/sign up mode switch UI
 - ✅ Noto Sans font via Google Fonts
 - ✅ Error status popup for sign-in/sign-up failures
+- ✅ Loading spinner while checking auth status
+- ✅ Session expiry caching (reduces API calls)
 
 ## Future Enhancements
 

@@ -278,6 +278,7 @@ Key dependencies:
 - ✅ Noto Sans font via `@expo-google-fonts/noto-sans` for consistent typography
 - ✅ Font weight variants: Regular (400), Medium (500), SemiBold (600), Bold (700)
 - ✅ Improved authentication error messaging with Better Auth error format handling
+- ✅ Session expiry caching - only refreshes session when < 3 days until expiry
 
 ## Technical Notes
 

@@ -1,3 +1,9 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Import Noto Sans from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
 
@@ -372,6 +378,22 @@ body {
     border-radius: 12px;
     font-size: 13px;
     color: rgb(var(--color-text-secondary));
+  }
+
+  &.loading-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+  
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgb(var(--color-border));
+      border-top-color: rgb(var(--color-primary));
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
   }
 }
 

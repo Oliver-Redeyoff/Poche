@@ -13,6 +13,10 @@ const API_URL = 'http://localhost:3000';
 // Storage key for auth token
 const TOKEN_STORAGE_KEY = 'poche_auth_token';
 const USER_STORAGE_KEY = 'poche_user';
+const SESSION_EXPIRY_KEY = 'poche_session_expiry';
+
+// Session refresh threshold (3 days in milliseconds)
+const SESSION_REFRESH_THRESHOLD = 3 * 24 * 60 * 60 * 1000;
 
 // Types
 export interface User {
@@ -31,6 +35,9 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+// Session duration matches backend config (7 days)
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
 
 // For compatibility with existing code
 export type Session = AuthResponse;
@@ -86,7 +93,31 @@ async function getStoredUser(): Promise<User | null> {
 }
 
 async function clearAuthStorage(): Promise<void> {
-  await browserAPI.storage.local.remove([TOKEN_STORAGE_KEY, USER_STORAGE_KEY]);
+  await browserAPI.storage.local.remove([TOKEN_STORAGE_KEY, USER_STORAGE_KEY, SESSION_EXPIRY_KEY]);
+}
+
+async function storeSessionExpiry(expiresAt: string): Promise<void> {
+  await browserAPI.storage.local.set({ [SESSION_EXPIRY_KEY]: expiresAt });
+}
+
+async function getStoredSessionExpiry(): Promise<string | null> {
+  try {
+    const result = await browserAPI.storage.local.get(SESSION_EXPIRY_KEY);
+    return result[SESSION_EXPIRY_KEY] || null;
+  } catch {
+    return null;
+  }
+}
+
+function shouldRefreshSession(expiresAt: string | null): boolean {
+  if (!expiresAt) return true;
+  
+  const expiryTime = new Date(expiresAt).getTime();
+  const now = Date.now();
+  const timeUntilExpiry = expiryTime - now;
+  
+  // Refresh if less than 3 days until expiry or already expired
+  return timeUntilExpiry < SESSION_REFRESH_THRESHOLD;
 }
 
 // ============================================
@@ -151,10 +182,13 @@ export async function signUp(email: string, password: string, name?: string): Pr
 
   console.log('signUp response:', response);
 
-  // Store the session token (token is at root level in Better Auth response)
+  // Store the session token and expiry
   if (response.token) {
     await storeToken(response.token);
     await storeUser(response.user);
+    // Calculate expiry based on backend session duration (7 days)
+    const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString();
+    await storeSessionExpiry(expiresAt);
   }
 
   return response;
@@ -168,10 +202,13 @@ export async function signIn(email: string, password: string): Promise<AuthRespo
 
   console.log('signIn response:', response);
 
-  // Store the session token (token is at root level in Better Auth response)
+  // Store the session token and expiry
   if (response.token) {
     await storeToken(response.token);
     await storeUser(response.user);
+    // Calculate expiry based on backend session duration (7 days)
+    const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString();
+    await storeSessionExpiry(expiresAt);
   }
 
   return response;
@@ -197,12 +234,33 @@ export async function getSession(): Promise<AuthResponse | null> {
   try {
     const token = await getStoredToken();
     const user = await getStoredUser();
+    const expiresAt = await getStoredSessionExpiry();
     
     if (!token || !user) {
       return null;
     }
 
-    // Verify the session is still valid by calling the API
+    // Check if session has expired
+    if (expiresAt) {
+      const expiryTime = new Date(expiresAt).getTime();
+      if (Date.now() > expiryTime) {
+        // Session has expired, clear storage
+        await clearAuthStorage();
+        return null;
+      }
+    }
+
+    // Only refresh session if expiry is less than 3 days away
+    if (!shouldRefreshSession(expiresAt)) {
+      // Session is still fresh, return cached data
+      return {
+        redirect: false,
+        user,
+        token,
+      };
+    }
+
+    // Verify and refresh the session via API
     try {
       const response = await fetch(`${API_URL}/api/auth/get-session`, {
         headers: {
@@ -218,10 +276,13 @@ export async function getSession(): Promise<AuthResponse | null> {
       
       const data = await response.json();
       
-      // Update stored user in case it changed
+      // Update stored user and refresh expiry (session was just validated)
       if (data.user) {
         await storeUser(data.user);
       }
+      // Refresh expiry since session was validated by the server
+      const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString();
+      await storeSessionExpiry(expiresAt);
       
       // Return with stored token since get-session may not return it
       return {
