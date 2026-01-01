@@ -174,6 +174,7 @@ export async function signOut(): Promise<void> {
     if (token) {
       await apiRequest('/api/auth/sign-out', {
         method: 'POST',
+        body: JSON.stringify({}), // Better Auth expects a JSON body
       }, true);
     }
   } catch (error) {
