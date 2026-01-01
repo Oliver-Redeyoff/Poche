@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi } from './api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '../shared/types'
 import { processArticlesImages } from './image-cache'
@@ -43,62 +43,32 @@ export async function saveArticlesToStorage(userId: string, articles: Article[])
 }
 
 /**
- * Fetch new articles from Supabase that aren't already in storage
+ * Fetch new articles from backend that aren't already in storage
  */
-export async function fetchNewArticlesFromSupabase(
+export async function fetchNewArticlesFromBackend(
   userId: string,
   storedArticleIds: number[]
 ): Promise<Article[]> {
-  // Build query - if we have stored articles, only fetch new ones
-  let query = supabase
-    .from('articles')
-    .select('*')
-    .eq('user_id', userId)
+  // Fetch all articles from backend
+  const allArticles = await fetchArticlesFromApi()
   
-  // If we have stored articles, only fetch articles not in storage
-  // Supabase PostgREST syntax for "not in"
+  // Filter out articles that are already in storage
   if (storedArticleIds.length > 0) {
-    query = query.not('id', 'in', `(${storedArticleIds.join(',')})`)
+    return allArticles.filter(article => !storedArticleIds.includes(article.id))
   }
   
-  // Apply ordering after filters
-  query = query.order('created_time', { ascending: false })
-  
-  let { data, error } = await query
-
-  // If the "not in" query fails, fallback to fetching all and filtering client-side
-  if (error && storedArticleIds.length > 0) {
-    console.warn('Not-in query failed, falling back to fetch-all approach:', error)
-    // Fallback: fetch all articles and filter client-side
-    const { data: allData, error: allError } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_time', { ascending: false })
-    
-    if (allError) {
-      throw allError
-    }
-    
-    // Filter out stored articles client-side
-    data = allData?.filter(article => !storedArticleIds.includes(article.id)) || []
-    error = null
-  } else if (error) {
-    throw error
-  }
-
-  return data || []
+  return allArticles
 }
 
 /**
- * Merge new articles with stored articles and sort by created_time
+ * Merge new articles with stored articles and sort by createdAt
  */
 export function mergeAndSortArticles(newArticles: Article[], storedArticles: Article[]): Article[] {
   const merged = [...newArticles, ...storedArticles]
     .sort((a, b) => {
-      // Sort by created_time descending (newest first)
-      const timeA = new Date(a.created_time || 0).getTime()
-      const timeB = new Date(b.created_time || 0).getTime()
+      // Sort by createdAt descending (newest first)
+      const timeA = new Date(a.createdAt || 0).getTime()
+      const timeB = new Date(b.createdAt || 0).getTime()
       return timeB - timeA
     })
   
@@ -126,8 +96,8 @@ export async function syncArticles(
     const storedArticles = await loadArticlesFromStorage(userId)
     const storedArticleIds = storedArticles.map(article => article.id)
     
-    // Fetch new articles from Supabase
-    const newArticles = await fetchNewArticlesFromSupabase(userId, storedArticleIds)
+    // Fetch new articles from backend
+    const newArticles = await fetchNewArticlesFromBackend(userId, storedArticleIds)
     
     if (newArticles.length === 0) {
       return {
@@ -162,3 +132,32 @@ export async function syncArticles(
   }
 }
 
+/**
+ * Delete article from backend and local storage
+ */
+export async function deleteArticleWithSync(userId: string, articleId: number): Promise<void> {
+  // Delete from backend
+  await deleteArticleApi(articleId)
+  
+  // Remove from local storage
+  const articles = await loadArticlesFromStorage(userId)
+  const updatedArticles = articles.filter(article => article.id !== articleId)
+  await saveArticlesToStorage(userId, updatedArticles)
+}
+
+/**
+ * Update article tags in backend and local storage
+ */
+export async function updateArticleTagsWithSync(userId: string, articleId: number, tags: string): Promise<void> {
+  // Update in backend
+  await updateArticleApi(articleId, { tags: tags || null })
+  
+  // Update in local storage
+  const articles = await loadArticlesFromStorage(userId)
+  const updatedArticles = articles.map(article => 
+    article.id === articleId 
+      ? { ...article, tags: tags || null }
+      : article
+  )
+  await saveArticlesToStorage(userId, updatedArticles)
+}

@@ -2,10 +2,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider, Theme } from '@react-navigation
 import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, createContext, useContext } from 'react'
 import { View, Image, Pressable } from 'react-native'
-import { supabase } from '@/lib/supabase'
-import { Session } from '@supabase/supabase-js'
+import { getSession, AuthResponse } from '@/lib/api'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { ThemedText } from '@/components/themed-text'
 // Import background sync to ensure task is defined
@@ -41,47 +40,85 @@ const PocheDarkTheme: Theme = {
   fonts: DarkTheme.fonts,
 }
 
+// Auth context to share session state across the app
+interface AuthContextType {
+  session: AuthResponse | null
+  setSession: (session: AuthResponse | null) => void
+  isLoading: boolean
+}
+
+const AuthContext = createContext<AuthContextType>({
+  session: null,
+  setSession: () => {},
+  isLoading: true,
+})
+
+export function useAuth() {
+  return useContext(AuthContext)
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
 
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<AuthResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      // Register background sync if user is logged in
-      if (session) {
-        registerBackgroundSync()
+    // Check for existing session on app start
+    async function checkSession() {
+      try {
+        const existingSession = await getSession()
+        setSession(existingSession)
+        
+        // Register background sync if user is logged in
+        if (existingSession) {
+          registerBackgroundSync()
+        }
+      } catch (error) {
+        console.error('Error checking session:', error)
+        setSession(null)
+      } finally {
+        setIsLoading(false)
       }
-    })
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      
-      // Register or unregister background sync based on auth state
-      if (session) {
-        await registerBackgroundSync()
-      } else {
-        await unregisterBackgroundSync()
-      }
-    })
-    
-    return () => {
-      subscription.unsubscribe()
     }
+    
+    checkSession()
   }, [])
 
+  // Handle session changes for background sync
+  useEffect(() => {
+    if (session) {
+      registerBackgroundSync()
+    } else {
+      unregisterBackgroundSync()
+    }
+  }, [session])
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? PocheDarkTheme : PocheLightTheme}>
-      <RootStack session={session} />
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <AuthContext.Provider value={{ session, setSession, isLoading }}>
+      <ThemeProvider value={colorScheme === 'dark' ? PocheDarkTheme : PocheLightTheme}>
+        <RootStack session={session} isLoading={isLoading} />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </AuthContext.Provider>
   )
 }
 
-function RootStack({session}: {session: Session | null}) {
+function RootStack({ session, isLoading }: { session: AuthResponse | null, isLoading: boolean }) {
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
+  
+  // Show nothing while loading to prevent flash
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor, justifyContent: 'center', alignItems: 'center' }}>
+        <Image 
+          source={require('@/assets/images/icon.png')} 
+          style={{ width: 64, height: 64 }} 
+        />
+      </View>
+    )
+  }
   
   return (
     <Stack 

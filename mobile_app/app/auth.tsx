@@ -1,23 +1,12 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState, TextInput, TouchableOpacity, Pressable } from 'react-native'
-import { supabase } from '../lib/supabase'
+import { Alert, StyleSheet, View, TextInput, TouchableOpacity, Pressable } from 'react-native'
+import { signIn, signUp } from '../lib/api'
 import { ThemedText } from '../components/themed-text'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
-
-// Tells Supabase Auth to continuously refresh the session automatically if
-// the app is in the foreground. When this is added, you will continue to receive
-// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
-// if the user's session is terminated. This should only be registered once.
-AppState.addEventListener('change', (state) => {
-  if (state === 'active') {
-    supabase.auth.startAutoRefresh()
-  } else {
-    supabase.auth.stopAutoRefresh()
-  }
-})
+import { useAuth } from './_layout'
 
 type AuthMode = 'signin' | 'signup'
 
@@ -25,6 +14,7 @@ export default function Auth() {
   const headerHeight = useHeaderHeight()
   const colorScheme = useColorScheme() ?? 'light'
   const colors = Colors[colorScheme]
+  const { setSession } = useAuth()
   
   const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
@@ -54,46 +44,49 @@ export default function Auth() {
         Alert.alert('Error', 'Passwords do not match')
         return
       }
-      await signUpWithEmail()
+      await handleSignUp()
     } else {
-      await signInWithEmail()
+      await handleSignIn()
     }
   }
 
-  async function signInWithEmail() {
+  async function handleSignIn() {
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    })
-
-    if (error) {
-      Alert.alert('Sign In Error', error.message)
+    try {
+      const response = await signIn(email, password)
+      // Update the shared auth context - this triggers navigation via Stack.Protected
+      setSession(response)
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Sign In Error', error.message)
+      } else {
+        Alert.alert('Sign In Error', 'An unexpected error occurred')
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  async function signUpWithEmail() {
+  async function handleSignUp() {
     setLoading(true)
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    })
-
-    if (error) {
-      Alert.alert('Sign Up Error', error.message)
-    } else if (!session) {
-      Alert.alert('Success', 'Please check your inbox for email verification!')
+    try {
+      const response = await signUp(email, password)
+      // Update the shared auth context - this triggers navigation via Stack.Protected
+      setSession(response)
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Sign Up Error', error.message)
+      } else {
+        Alert.alert('Sign Up Error', 'An unexpected error occurred')
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   function handleForgotPassword() {
     // TODO: Implement forgot password functionality
-    console.log('Forgot password clicked')
+    Alert.alert('Coming Soon', 'Password reset functionality will be added soon.')
   }
 
   return (
@@ -193,7 +186,7 @@ export default function Auth() {
         disabled={loading}
       >
         <ThemedText style={styles.submitButtonText}>
-          {mode === 'signin' ? 'Sign In' : 'Create Account'}
+          {loading ? 'Please wait...' : (mode === 'signin' ? 'Sign In' : 'Create Account')}
         </ThemedText>
       </TouchableOpacity>
     </View>

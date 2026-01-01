@@ -93,14 +93,16 @@ app.onError((err, c) => {
 
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
+const hostname = '0.0.0.0'; // Bind to all interfaces for external access
 
 console.log(`🚀 Poche API server starting on port ${port}`);
 
 serve({
   fetch: app.fetch,
   port,
+  hostname, // Allow connections from any IP (not just localhost)
 }, (info) => {
-  console.log(`✅ Server is running on http://localhost:${info.port}`);
+  console.log(`✅ Server is running on http://${hostname}:${info.port}`);
   console.log(`📚 API endpoints:`);
   console.log(`   GET  /                    - Health check`);
   console.log(`   POST /api/auth/sign-up    - Create account`);

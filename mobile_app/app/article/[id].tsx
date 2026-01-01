@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme } from 'react-native'
-import { supabase } from '../../lib/supabase'
 import { ThemedText } from '@/components/themed-text'
 import RenderHTML, { 
   CustomBlockRenderer
@@ -15,10 +14,12 @@ import Animated, {
   withTiming 
 } from 'react-native-reanimated'
 import { useTheme } from '@react-navigation/native'
+import { useAuth } from '../_layout'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
+  const { session } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [contentReady, setContentReady] = useState(false)
@@ -79,20 +80,15 @@ export default function ArticleScreen() {
   }))
 
   // Get storage key for articles (per user)
-  async function getArticlesStorageKey(): Promise<string> {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) return ''
-      return `@poche_articles_${session.user.id}`
-    } catch {
-      return ''
-    }
+  function getArticlesStorageKey(): string {
+    if (!session?.user) return ''
+    return `@poche_articles_${session.user.id}`
   }
 
   // Load article from local storage
   async function loadArticleFromStorage(articleId: number): Promise<Article | null> {
     try {
-      const storageKey = await getArticlesStorageKey()
+      const storageKey = getArticlesStorageKey()
       if (!storageKey) return null
       
       const storedData = await AsyncStorage.getItem(storageKey)
@@ -352,9 +348,9 @@ export default function ArticleScreen() {
 
   const htmlContent = article.content || '<p>No content available</p>'
 
-  // Calculate reading time
-  const readingTime = article.length 
-    ? Math.max(1, Math.ceil(article.length / 1200))
+  // Calculate reading time from word count
+  const readingTime = article.wordCount 
+    ? Math.max(1, Math.ceil(article.wordCount / 200))
     : null
 
   return (
@@ -550,4 +546,3 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 })
-
