@@ -1,18 +1,12 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, Text, Linking } from 'react-native'
+import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
-import RenderHTML, { 
-  CustomBlockRenderer
-} from 'react-native-render-html'
+import Markdown from 'react-native-markdown-display'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '../../shared/types'
 import { tagToColor } from '../../shared/util'
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming 
-} from 'react-native-reanimated'
 import { useTheme } from '@react-navigation/native'
 import { useAuth } from '../_layout'
 
@@ -22,8 +16,6 @@ export default function ArticleScreen() {
   const { session } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
-  const [contentReady, setContentReady] = useState(false)
-  const [renderKey, setRenderKey] = useState(0)
   const colorScheme = useColorScheme()
   const theme = useTheme()
   const isDark = colorScheme === 'dark'
@@ -31,7 +23,6 @@ export default function ArticleScreen() {
   // Use hook instead of Dimensions.get() to ensure correct values on initial render
   const { width: screenWidth } = useWindowDimensions()
   const contentWidth = Math.min(screenWidth - 40, 600) // Max width for comfortable reading
-  const horizontalPadding = (screenWidth - contentWidth) / 2
   
   // Premium reading colors - warm tones that are easy on the eyes
   const colors = useMemo(() => ({
@@ -45,7 +36,7 @@ export default function ArticleScreen() {
     blockquoteBg: isDark ? '#252320' : '#F5F3F0',
     blockquoteBorder: isDark ? '#4A4845' : '#D4D0CC',
     codeBg: isDark ? '#252320' : '#F0EDE8',
-  }), [isDark])
+  }), [isDark, theme])
   
 
   useEffect(() => {
@@ -53,31 +44,6 @@ export default function ArticleScreen() {
       getArticle()
     }
   }, [id])
-
-  // Reset content ready state when article changes
-  useEffect(() => {
-    setContentReady(false)
-    setRenderKey(prev => prev + 1)
-  }, [article?.id])
-
-  // Callback when HTML is loaded - wait a bit then show content
-  const handleHTMLLoaded = () => {
-    // Small delay to allow text measurements to complete
-    setTimeout(() => {
-      setContentReady(true)
-    }, 200)
-  }
-
-  // Animated opacity for content fade-in
-  const contentOpacity = useSharedValue(0)
-  
-  useEffect(() => {
-    contentOpacity.value = withTiming(contentReady ? 1 : 0, { duration: 300 })
-  }, [contentReady])
-
-  const contentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-  }))
 
   // Get storage key for articles (per user)
   function getArticlesStorageKey(): string {
@@ -131,97 +97,100 @@ export default function ArticleScreen() {
     }
   }
   
-  // Premium typography styles optimized for long-form reading
-  // Must be defined before any conditional returns to follow Rules of Hooks
-  const tagsStyles = useMemo(() => ({
+  // Markdown styles for premium reading experience
+  const markdownStyles = useMemo(() => StyleSheet.create({
     body: {
       color: colors.text,
       fontSize: 18,
-      lineHeight: 32, // 1.78 ratio for optimal readability
-      fontFamily: 'System',
+      lineHeight: 30,
     },
-    p: {
+    paragraph: {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
       marginVertical: 12,
-      textAlign: 'left' as const,
     },
-    div: {
-      color: colors.text,
-    },
-    span: {
-      textAlign: 'center' as const,
-      color: colors.textSecondary,
-      fontSize: 15,
-      lineHeight: 22,
-    },
-    h1: {
+    heading1: {
       color: colors.text,
       fontSize: 32,
-      fontWeight: '700' as const,
+      fontWeight: '700',
       lineHeight: 40,
       marginBottom: 24,
       marginTop: 48,
     },
-    h2: {
+    heading2: {
       color: colors.text,
       fontSize: 26,
       lineHeight: 34,
-      fontWeight: '700' as const,
-      marginTop: 16,
-      marginBottom: 8,
+      fontWeight: '700',
+      marginTop: 32,
+      marginBottom: 16,
     },
-    h3: {
+    heading3: {
       color: colors.text,
       fontSize: 22,
       lineHeight: 30,
-      fontWeight: '700' as const,
-      marginTop: 16,
-      marginBottom: 8,
+      fontWeight: '700',
+      marginTop: 24,
+      marginBottom: 12,
     },
-    h4: {
+    heading4: {
       color: colors.text,
       fontSize: 19,
       lineHeight: 26,
-      fontWeight: '700' as const,
+      fontWeight: '700',
+      marginTop: 20,
+      marginBottom: 8,
+    },
+    heading5: {
+      color: colors.text,
+      fontSize: 17,
+      lineHeight: 24,
+      fontWeight: '600',
       marginTop: 16,
       marginBottom: 8,
     },
-    a: {
-      color: colors.accent,
-      textDecorationLine: 'none' as const,
+    heading6: {
+      color: colors.textSecondary,
+      fontSize: 16,
+      lineHeight: 22,
+      fontWeight: '600',
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    link: {
+      textDecorationLine: 'underline',
+      textDecorationColor: colors.accent,
     },
     strong: {
-      fontWeight: '600' as const,
+      fontWeight: '600',
       color: colors.text,
     },
     em: {
-      fontStyle: 'italic' as const,
+      fontStyle: 'italic',
     },
     blockquote: {
-      marginVertical: 12,
-      paddingHorizontal: 12,
-      borderLeftWidth: 3,
+      marginVertical: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderLeftWidth: 4,
       borderLeftColor: colors.accent,
       backgroundColor: colors.blockquoteBg,
+      borderRadius: 4,
     },
-    ul: {
-      marginVertical: 20,
-      paddingLeft: 8,
+    bullet_list: {
+      marginVertical: 16,
     },
-    ol: {
-      marginVertical: 20,
-      paddingLeft: 8,
+    ordered_list: {
+      marginVertical: 16,
     },
-    li: {
+    list_item: {
       color: colors.text,
       fontSize: 18,
       lineHeight: 30,
-      marginBottom: 12,
-      paddingLeft: 8,
+      marginBottom: 8,
     },
-    code: {
+    code_inline: {
       fontFamily: 'Menlo',
       fontSize: 15,
       backgroundColor: colors.codeBg,
@@ -229,38 +198,34 @@ export default function ArticleScreen() {
       paddingVertical: 2,
       borderRadius: 4,
       color: colors.text,
-      textAlign: 'left' as const,
     },
-    pre: {
-      whiteSpace: 'pre' as const,
-      textAlign: 'left' as const,
-    },
-    figcaption: {
-      color: colors.textMuted,
+    code_block: {
+      fontFamily: 'Menlo',
       fontSize: 14,
-      lineHeight: 20,
-      fontStyle: 'italic' as const,
-      textAlign: 'center' as const,
-      margin: 0,
-      paddingHorizontal: 16,
+      backgroundColor: colors.codeBg,
+      padding: 16,
+      borderRadius: 8,
+      marginVertical: 16,
+      color: colors.text,
     },
-    figure: {
-      marginBottom: 18,
+    fence: {
+      fontFamily: 'Menlo',
+      fontSize: 14,
+      backgroundColor: colors.codeBg,
+      padding: 16,
+      borderRadius: 8,
+      marginVertical: 16,
+      color: colors.text,
     },
-    picture: {
-      maxWidth: contentWidth,
-      height: 'auto',
-    },
-    img: {
-      maxWidth: contentWidth,
-      height: 'auto',
-      borderRadius: 0,
+    image: {
+      width: contentWidth,
+      borderRadius: 8,
+      marginVertical: 16,
     },
     hr: {
       marginVertical: 40,
-      borderTopWidth: 1,
-      borderTopColor: colors.divider,
-      height: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
     },
     table: {
       marginVertical: 24,
@@ -271,60 +236,74 @@ export default function ArticleScreen() {
     th: {
       backgroundColor: colors.blockquoteBg,
       padding: 12,
-      fontWeight: '600' as const,
+      fontWeight: '600',
     },
     td: {
       padding: 12,
       borderTopWidth: 1,
       borderTopColor: colors.divider,
     },
-  }), [colors])
-  
-  // Custom renderers to apply component-specific styles based on data-component attribute
-  const customRenderers = useMemo(() => ({
-    div: ((props) => {
-      const { TDefaultRenderer, tnode } = props
-      
-      return (
-        <TDefaultRenderer 
-          {...props} 
-          style={tagsStyles.div as any} 
+  }), [colors, contentWidth])
+
+  // Track which images have failed to load
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
+
+  // Minimum image dimensions to render (skip tiny images like tracking pixels)
+  const MIN_IMAGE_WIDTH = 50
+  const MIN_IMAGE_HEIGHT = 50
+
+  // Custom image component that handles errors and filters small images
+  const ArticleImage = useCallback(({ src, nodeKey }: { src: string, nodeKey: string }) => {
+    const [hasError, setHasError] = useState(false)
+    const [isTooSmall, setIsTooSmall] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Skip rendering if this image has already failed or is too small
+    if (hasError || isTooSmall || failedImages.has(src)) {
+      return null
+    }
+
+    // Skip obviously invalid image URLs
+    if (!src || src.trim() === '' || src === '#' || src.startsWith('data:image/gif;base64,R0lGOD')) {
+      return null
+    }
+
+    return (
+      <View style={{ marginVertical: 16, width: '100%', display: (hasError || isTooSmall) ? 'none' : 'flex' }}>
+        <Image
+          source={{ uri: src }}
+          style={{
+            width: '100%',
+            aspectRatio: 16 / 9,
+          }}
+          contentFit="contain"
+          transition={200}
+          onLoad={(event) => {
+            setIsLoading(false)
+            // Check if the image is too small (like tracking pixels or icons)
+            const { width, height } = event.source
+            if (width < MIN_IMAGE_WIDTH || height < MIN_IMAGE_HEIGHT) {
+              setIsTooSmall(true)
+              setFailedImages(prev => new Set(prev).add(src))
+            }
+          }}
+          onError={() => {
+            setHasError(true)
+            setFailedImages(prev => new Set(prev).add(src))
+          }}
         />
-      )
-    }) as CustomBlockRenderer,
-    
-    p: ((props) => {
-      const { TDefaultRenderer, tnode } = props
-      
-      return (
-        <TDefaultRenderer 
-          {...props} 
-          style={tagsStyles.p as any} 
-        />
-      )
-    }) as CustomBlockRenderer,
-    
-    pre: ((props) => {
-      const { TDefaultRenderer } = props
-      return (
-        <View style={{
-          backgroundColor: colors.codeBg,
-          borderRadius: 8,
-          marginVertical: 12,
-        }}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={true}
-            contentContainerStyle={{
-              padding: 16,
-            }}
-          >
-            <TDefaultRenderer {...props} style={{ backgroundColor: 'transparent' } as any} />
-          </ScrollView>
-        </View>
-      )
-    }) as CustomBlockRenderer,
-  }), [colors, tagsStyles])
+      </View>
+    )
+  }, [failedImages])
+
+  // Custom rules for markdown rendering
+  const markdownRules = useMemo(() => ({
+    // Custom image renderer to fix key prop and sizing issues
+    image: (node: any, children: any, parent: any, styles: any) => {
+      const { src, alt } = node.attributes
+      return <ArticleImage key={node.key} src={src} nodeKey={node.key} />
+    },
+  }), [ArticleImage, colors.accent])
 
   // Conditional returns - must come after all hooks
   if (loading) {
@@ -346,7 +325,7 @@ export default function ArticleScreen() {
     )
   }
 
-  const htmlContent = article.content || '<p>No content available</p>'
+  const markdownContent = article.content || '*No content available*'
 
   // Calculate reading time from word count
   const readingTime = article.wordCount 
@@ -379,9 +358,10 @@ export default function ArticleScreen() {
           
           {/* Meta information */}
           <View style={styles.meta}>
-            {article.siteName && (
-              <ThemedText style={[styles.siteName]}>
-                {article.siteName} • {readingTime} min read
+            {(article.siteName || article.author) && (
+              <ThemedText style={styles.siteName}>
+                {article.siteName || article.author}
+                {readingTime && ` • ${readingTime} min read`}
               </ThemedText>
             )}
           </View>
@@ -414,39 +394,13 @@ export default function ArticleScreen() {
         </View>
         
         {/* Article Content */}
-        <View style={[styles.contentContainer, { width: contentWidth }]}>
-          {/* Loading overlay - shows while content is rendering */}
-          {!contentReady && (
-            <View 
-              style={[
-                styles.contentLoadingOverlay, 
-                { backgroundColor: colors.background }
-              ]}
-            >
-              <ActivityIndicator size="small" color={colors.accent} />
-            </View>
-          )}
-          
-          <Animated.View style={contentAnimatedStyle}>
-            <RenderHTML
-              key={`article-${article.id}-${renderKey}-${screenWidth}`}
-              contentWidth={contentWidth}
-              source={{ html: htmlContent }}
-              tagsStyles={tagsStyles}
-              renderers={customRenderers}
-              baseStyle={{
-                color: colors.text,
-              }}
-              defaultTextProps={{
-                textBreakStrategy: 'simple',
-                lineBreakStrategyIOS: 'standard',
-                allowFontScaling: false,
-              }}
-              ignoredStyles={['width', 'maxWidth', 'minWidth']}
-              enableExperimentalGhostLinesPrevention={true}
-              onHTMLLoaded={handleHTMLLoaded}
-            />
-          </Animated.View>
+        <View style={[styles.contentContainer, { maxWidth: contentWidth }]}>
+          <Markdown 
+            style={markdownStyles}
+            rules={markdownRules}
+          >
+            {markdownContent}
+          </Markdown>
         </View>
         
         {/* End of article marker */}
@@ -481,13 +435,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginHorizontal: 8,
     borderRadius: 18,
-    boxShadow: '0px 8px 24px rgba(120, 120, 120, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 42,
-    textDecorationLine: 'underline' as const,
+    textDecorationLine: 'underline',
   },
   meta: {
     flexDirection: 'row',
@@ -499,9 +457,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: 'rgba(120, 120, 120, 0.8)',
-  },
-  readingTime: {
-    fontSize: 14,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -521,6 +476,7 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     marginHorizontal: 16,
+    alignSelf: 'center',
   },
   contentLoadingOverlay: {
     position: 'absolute',
