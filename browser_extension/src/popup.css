@@ -148,21 +148,23 @@ body {
   justify-content: center;
 
   .header-inner {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+
     .logo {
-      display: inline-block;
       width: 24px;
       height: 24px;
-      box-sizing: content-box;
-      vertical-align: sub;
     }
   
     h1 {
-      display: inline-block;
+      height: 30px;
       font-family: var(--font-display);
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 600;
-      padding-left: 4px;
-      vertical-align: text-bottom;
+      letter-spacing: -1px;
     }
   }
 }
