@@ -210,6 +210,7 @@ Poche/
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ Shared types and utilities folder
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
+- ✅ Noto Sans font via `@expo-google-fonts/noto-sans` with weight variants
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
@@ -222,6 +223,8 @@ Poche/
 - ✅ Converted to React with TypeScript
 - ✅ Tag input UI for specifying tags before saving
 - ✅ Sign in/sign up mode switch UI
+- ✅ Noto Sans font via Google Fonts
+- ✅ Error status popup for sign-in/sign-up failures
 
 ## Future Enhancements
 

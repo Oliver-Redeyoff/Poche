@@ -208,6 +208,9 @@ Key dependencies:
 - `expo-router` - File-based routing
 - `expo-blur` - Native blur effects
 - `expo-image` - Optimized image component
+- `expo-font` - Custom font loading
+- `expo-splash-screen` - Splash screen management during font loading
+- `@expo-google-fonts/noto-sans` - Noto Sans font with weight variants
 - `@react-native-async-storage/async-storage` - Local storage for articles and session
 - `expo-background-task` - Background task management for article syncing
 - `expo-task-manager` - Task manager for background tasks
@@ -272,6 +275,8 @@ Key dependencies:
 - ✅ Custom Poche color theme (warm tones, coral accent #EF4056)
 - ✅ Tags displayed at top of article detail view
 - ✅ iOS app icon asset catalog with all required sizes
+- ✅ Noto Sans font via `@expo-google-fonts/noto-sans` for consistent typography
+- ✅ Font weight variants: Regular (400), Medium (500), SemiBold (600), Bold (700)
 
 ## Technical Notes
 
