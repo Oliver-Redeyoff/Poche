@@ -29,43 +29,12 @@ export const auth = betterAuth({
   plugins: [
     bearer(), // Enable bearer token authentication for API clients
   ],
-  trustedOrigins: (request) => {
-    // Get origin from request headers
-    const origin = request?.headers?.get('origin');
-    
-    // Mobile apps don't send an Origin header, so allow requests without one
-    if (!origin) {
-      return ['*']; // Allow requests with no origin (mobile apps, Postman, etc.)
-    }
-    
-    const origins: string[] = [
-      'http://localhost:3000',
-      'http://localhost:8081', // Expo
-    ];
-    
-    // Allow chrome extensions
-    if (origin.startsWith('chrome-extension://')) {
-      origins.push(origin);
-    }
-    // Allow firefox extensions
-    if (origin.startsWith('moz-extension://')) {
-      origins.push(origin);
-    }
-    // Allow safari extensions
-    if (origin.startsWith('safari-extension://')) {
-      origins.push(origin);
-    }
-    // Allow any localhost port
-    if (origin.startsWith('http://localhost:')) {
-      origins.push(origin);
-    }
-    // Allow requests from any IP (for mobile development)
-    if (origin.match(/^http:\/\/\d+\.\d+\.\d+\.\d+(:\d+)?$/)) {
-      origins.push(origin);
-    }
-    
-    return origins;
+  advanced: {
+    // Disable CSRF check for API clients (mobile apps, etc.)
+    // Mobile apps don't have CSRF vulnerabilities since they don't use cookies
+    disableCSRFCheck: true,
   },
+  trustedOrigins: ['*'], // Allow all origins - we handle security via bearer tokens
 });
 
 export type Auth = typeof auth;
