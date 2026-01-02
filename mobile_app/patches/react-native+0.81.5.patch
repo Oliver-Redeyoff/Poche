@@ -1,0 +1,19 @@
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm b/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm
+index 216bb23..43ec2ab 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm
++++ b/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm
+@@ -386,9 +386,11 @@ - (TextMeasurement)_measureTextStorage:(NSTextStorage *)textStorage
+     size.height = enumeratedLinesHeight;
+   }
+ 
+-  size = (CGSize){
+-      ceil(size.width * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor,
+-      ceil(size.height * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor};
++  // Workaround for text cut-off issue on iOS with new architecture (Fabric)
++  // See: https://github.com/facebook/react-native/issues/53450
++  CGFloat epsilon = 0.001;
++  size = (CGSize){ceil((size.width + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor,
++                  ceil((size.height + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor};
+ 
+   __block auto attachments = TextMeasurement::Attachments{};
+ 
