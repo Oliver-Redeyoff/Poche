@@ -35,6 +35,7 @@ services:
       BETTER_AUTH_SECRET: dev-secret-key-at-least-32-characters-long
       BETTER_AUTH_URL: http://127.0.0.1:3000
       NODE_ENV: development
+      RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY is required}
     volumes:
       - .:/app
       - /app/node_modules

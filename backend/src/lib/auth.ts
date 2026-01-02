@@ -3,6 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { bearer } from 'better-auth/plugins';
 import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
+import { sendPasswordResetEmail } from './email.js';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -17,6 +18,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Set to true in production with email provider
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordResetEmail({
+        to: user.email,
+        resetUrl: url,
+      });
+    },
+    onPasswordReset: async ({ user }, request) => {
+      // your logic here
+      console.log(`Password for user ${user.email} has been reset.`);
+    },
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
