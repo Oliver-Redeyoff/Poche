@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, Text, Linking } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme } from 'react-native'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
-import Markdown from 'react-native-markdown-display'
+import { Markdown, MarkdownStyles } from '@/components/markdown'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '../../shared/types'
 import { tagToColor } from '../../shared/util'
@@ -99,15 +99,11 @@ export default function ArticleScreen() {
   }
   
   // Markdown styles for premium reading experience
-  const markdownStyles = useMemo(() => StyleSheet.create({
-    body: {
-      color: colors.text,
-      fontSize: 18,
-      fontFamily: 'SourceSans3_400Regular',
-    },
+  const markdownStyles = useMemo((): MarkdownStyles => ({
     paragraph: {
       color: colors.text,
       fontSize: 18,
+      lineHeight: 28,
       marginVertical: 12,
       fontFamily: 'SourceSans3_400Regular',
     },
@@ -154,6 +150,7 @@ export default function ArticleScreen() {
       fontFamily: 'Bitter_600SemiBold',
     },
     link: {
+      color: colors.accent,
       textDecorationLine: 'underline',
       textDecorationColor: colors.accent,
       fontFamily: 'SourceSans3_400Regular',
@@ -173,8 +170,11 @@ export default function ArticleScreen() {
       borderLeftWidth: 4,
       borderLeftColor: colors.accent,
       backgroundColor: colors.blockquoteBg,
-      fontFamily: 'SourceSans3_400Regular',
       borderRadius: 4,
+    },
+    blockquoteText: {
+      fontFamily: 'SourceSans3_400Regular',
+      color: colors.text,
     },
     bullet_list: {
       marginVertical: 16,
@@ -183,9 +183,17 @@ export default function ArticleScreen() {
       marginVertical: 16,
     },
     list_item: {
+      marginBottom: 8,
+    },
+    list_item_text: {
       color: colors.text,
       fontSize: 18,
-      marginBottom: 8,
+      lineHeight: 28,
+      fontFamily: 'SourceSans3_400Regular',
+    },
+    list_bullet: {
+      color: colors.textSecondary,
+      fontSize: 18,
       fontFamily: 'SourceSans3_400Regular',
     },
     code_inline: {
@@ -198,52 +206,58 @@ export default function ArticleScreen() {
       color: colors.text,
     },
     code_block: {
-      fontFamily: 'Menlo',
-      fontSize: 14,
       backgroundColor: colors.codeBg,
       padding: 16,
       borderRadius: 8,
       marginVertical: 16,
-      color: colors.text,
     },
-    fence: {
+    code_block_text: {
       fontFamily: 'Menlo',
       fontSize: 14,
-      backgroundColor: colors.codeBg,
-      padding: 16,
-      borderRadius: 8,
-      marginVertical: 16,
       color: colors.text,
     },
     image: {
-      width: contentWidth,
       borderRadius: 8,
       marginVertical: 16,
     },
     hr: {
+      height: 1,
+      backgroundColor: colors.divider,
       marginVertical: 40,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.divider,
     },
     table: {
       marginVertical: 24,
       borderWidth: 1,
       borderColor: colors.divider,
       borderRadius: 8,
-      fontFamily: 'SourceSans3_400Regular',
+      overflow: 'hidden',
     },
-    th: {
+    tableRow: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    tableHeader: {
       backgroundColor: colors.blockquoteBg,
+    },
+    tableHeaderCell: {
       padding: 12,
+    },
+    tableHeaderCellText: {
       fontFamily: 'SourceSans3_600SemiBold',
+      color: colors.text,
     },
-    td: {
+    tableCell: {
       padding: 12,
-      borderTopWidth: 1,
-      borderTopColor: colors.divider,
-      fontFamily: 'SourceSans3_400Regular',
     },
-  }), [colors, contentWidth])
+    tableCellText: {
+      fontFamily: 'SourceSans3_400Regular',
+      color: colors.text,
+    },
+    strikethrough: {
+      textDecorationLine: 'line-through',
+      color: colors.textSecondary,
+    },
+  }), [colors])
 
   // Track which images have failed to load
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
@@ -314,72 +328,10 @@ export default function ArticleScreen() {
     )
   }, [failedImages, userId, articleId])
 
-  // Helper to resolve relative URLs against article's base URL
-  const resolveUrl = useCallback((href: string): string | null => {
-    if (!href) return null
-    
-    // Already a valid absolute URL
-    if (href.startsWith('http://') || href.startsWith('https://')) {
-      return href
-    }
-    
-    // Skip file:// URLs (these are cached images, not links)
-    if (href.startsWith('file://')) {
-      return null
-    }
-    
-    // Try to resolve relative URLs using article's URL as base
-    if (article?.url) {
-      try {
-        const baseUrl = new URL(article.url)
-        if (href.startsWith('/')) {
-          // Absolute path relative to domain
-          return `${baseUrl.protocol}//${baseUrl.host}${href}`
-        } else {
-          // Relative path
-          const basePath = baseUrl.pathname.substring(0, baseUrl.pathname.lastIndexOf('/') + 1)
-          return `${baseUrl.protocol}//${baseUrl.host}${basePath}${href}`
-        }
-      } catch {
-        return null
-      }
-    }
-    
-    return null
-  }, [article?.url])
-
-  // Custom rules for markdown rendering
-  const markdownRules = useMemo(() => ({
-    // Custom image renderer to fix key prop and sizing issues
-    image: (node: any, children: any, parent: any, styles: any) => {
-      const { src, alt } = node.attributes
-      return <ArticleImage key={node.key} src={src} nodeKey={node.key} />
-    },
-    // Custom link renderer to handle relative URLs and style with accent color
-    link: (node: any, children: any, parent: any, styles: any) => {
-      const { href } = node.attributes
-      const resolvedUrl = resolveUrl(href)
-      
-      return (
-        <Text
-          key={node.key}
-          style={{
-            color: colors.accent,
-            textDecorationLine: 'underline',
-            textDecorationColor: colors.accent,
-            fontFamily: 'SourceSans3_400Regular',
-          }}
-          onPress={() => {
-            if (resolvedUrl) {
-              Linking.openURL(resolvedUrl)
-            }
-          }}
-        >
-          {children}
-        </Text>
-      )
-    },
-  }), [ArticleImage, colors.accent, resolveUrl])
+  // Custom image renderer for the Markdown component
+  const renderArticleImage = useCallback(({ src, alt, nodeKey }: { src: string; alt?: string; nodeKey: string }) => {
+    return <ArticleImage key={nodeKey} src={src} nodeKey={nodeKey} />
+  }, [ArticleImage])
 
   // Conditional returns - must come after all hooks
   if (loading) {
@@ -469,7 +421,10 @@ export default function ArticleScreen() {
         <View style={[styles.contentContainer, { maxWidth: contentWidth }]}>
           <Markdown 
             style={markdownStyles}
-            rules={markdownRules}
+            baseUrl={article.url || undefined}
+            renderImage={renderArticleImage}
+            minImageWidth={MIN_IMAGE_WIDTH}
+            minImageHeight={MIN_IMAGE_HEIGHT}
           >
             {markdownContent}
           </Markdown>
