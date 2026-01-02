@@ -7,15 +7,15 @@ services:
     container_name: poche-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-poche}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-poche_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-poche}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-poche} -d ${POSTGRES_DB:-poche}"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,13 +31,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-poche}:${POSTGRES_PASSWORD:-poche_secret}@db:5432/${POSTGRES_DB:-poche}
-      PORT: 3000
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-this-to-a-secure-secret-at-least-32-characters}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PORT: ${PORT:?PORT is required}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
+      NODE_ENV: ${NODE_ENV:?NODE_ENV is required}
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT}:3000"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
