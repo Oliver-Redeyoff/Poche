@@ -19,7 +19,8 @@ Poche is a "read it later" application that allows users to save articles from t
 - **Web App**: React with TypeScript, Vite, React Router
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
 - **Article Extraction**: Defuddle (server-side Node.js version, markdown output)
-- **Deployment**: Docker & Docker Compose
+- **Deployment**: Docker & Docker Compose with Nginx reverse proxy
+- **SSL/TLS**: Let's Encrypt via Certbot with Cloudflare DNS plugin
 
 ### Database Schema
 
@@ -69,8 +70,9 @@ The project uses a PostgreSQL database with the following main tables:
 Poche/
 ├── backend/             # Self-hosted API server
 │   ├── src/            # Source files (TypeScript)
-│   ├── docker-compose.yml  # Production Docker config
+│   ├── docker-compose.yml  # Production Docker config (API + PostgreSQL + Nginx)
 │   ├── docker-compose.dev.yml  # Development Docker config
+│   ├── nginx.conf      # Nginx reverse proxy config (HTTPS, api.poche.to)
 │   ├── Dockerfile      # Container build
 │   └── ...
 ├── mobile_app/          # React Native mobile application
@@ -97,8 +99,10 @@ Poche/
 - RESTful API for authentication and article management
 - Server-side article extraction (URL → markdown via Defuddle)
 - Bearer token authentication for browser extensions and mobile apps
-- Docker support for easy deployment
+- Docker Compose with Nginx reverse proxy for production deployment
+- HTTPS with Let's Encrypt SSL certificates (Certbot + Cloudflare DNS)
 - PostgreSQL with Drizzle ORM
+- Environment-based configuration via `.env` file
 
 ### Mobile App Features
 - User authentication (email/password login and signup)
@@ -212,6 +216,11 @@ Poche/
 - ✅ Dynamic trustedOrigins in Better Auth for extension origins
 - ✅ CSRF protection disabled for mobile app compatibility
 - ✅ Server binds to 0.0.0.0 for local network access
+- ✅ Nginx reverse proxy with HTTPS support (api.poche.to)
+- ✅ Let's Encrypt SSL via Certbot with Cloudflare DNS plugin
+- ✅ Environment variables loaded from `.env` file with required validation
+- ✅ Default server blocks to reject unknown hostnames
+- ✅ Node.js-based healthcheck (no external dependencies like wget)
 
 ### Mobile App
 - ✅ Migrated from Supabase to self-hosted backend
