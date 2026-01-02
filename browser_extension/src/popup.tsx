@@ -22,11 +22,12 @@ interface StatusMessageProps {
   type: StatusType
 }
 
-type AuthMode = 'signin' | 'signup'
+type AuthMode = 'signin' | 'signup' | 'forgot'
 
 interface LoginSectionProps {
   onSignIn: (email: string, password: string) => Promise<void>
   onSignUp: (email: string, password: string) => Promise<void>
+  onForgotPassword: (email: string) => Promise<void>
   onError: (message: string) => void
   isLoading: boolean
 }
@@ -157,7 +158,7 @@ function AuthModeSwitch({ mode, onModeChange }: { mode: AuthMode, onModeChange: 
   )
 }
 
-function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionProps): JSX.Element {
+function LoginSection({ onSignIn, onSignUp, onForgotPassword, onError, isLoading }: LoginSectionProps): JSX.Element {
   const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
@@ -166,7 +167,16 @@ function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionPr
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     
-    if (!email || !password) {
+    if (!email) {
+      return
+    }
+
+    if (mode === 'forgot') {
+      await onForgotPassword(email)
+      return
+    }
+
+    if (!password) {
       return
     }
 
@@ -181,14 +191,51 @@ function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionPr
     }
   }
 
-  const handleForgotPassword = (): void => {
-    // TODO: Implement forgot password functionality
-    console.log('Forgot password clicked')
-  }
-
   const handleModeChange = (newMode: AuthMode): void => {
     setMode(newMode)
     setConfirmPassword('')
+  }
+
+  // Forgot password view
+  if (mode === 'forgot') {
+    return (
+      <div className="section">
+        <div className="forgot-password-header">
+          <h2>Reset Password</h2>
+          <p>Enter your email and we'll send you a link to reset your password.</p>
+        </div>
+        
+        <form className="form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="your@email.com"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+
+          <button 
+            type="button" 
+            className="btn btn-link" 
+            onClick={() => handleModeChange('signin')}
+            disabled={isLoading}
+          >
+            Back to Sign In
+          </button>
+          
+          <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
+          </button>
+        </form>
+      </div>
+    )
   }
 
   return (
@@ -247,7 +294,7 @@ function LoginSection({ onSignIn, onSignUp, onError, isLoading }: LoginSectionPr
           <button 
             type="button" 
             className="btn btn-link" 
-            onClick={handleForgotPassword}
+            onClick={() => handleModeChange('forgot')}
             disabled={isLoading}
           >
             Forgot password?
@@ -468,6 +515,22 @@ function App(): JSX.Element {
     }
   }
 
+  const forgotPassword = async (email: string): Promise<void> => {
+    try {
+      showStatus('Sending reset link...', 'info')
+      setIsLoading(true)
+      
+      await api.forgotPassword(email)
+      
+      showStatus('Check your email for a reset link!', 'success')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send reset email'
+      showStatus(errorMessage, 'error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const saveCurrentArticle = async (): Promise<void> => {
     if (!session?.user) {
       showStatus('Not authenticated. Please log in.', 'error')
@@ -557,6 +620,7 @@ function App(): JSX.Element {
         <LoginSection
           onSignIn={signIn}
           onSignUp={signUp}
+          onForgotPassword={forgotPassword}
           onError={(message) => showStatus(message, 'error')}
           isLoading={isLoading}
         />

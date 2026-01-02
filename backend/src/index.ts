@@ -103,16 +103,18 @@ serve({
 }, (info) => {
   console.log(`✅ Server is running on http://${hostname}:${info.port}`);
   console.log(`📚 API endpoints:`);
-  console.log(`   GET  /                    - Health check`);
-  console.log(`   POST /api/auth/sign-up    - Create account`);
-  console.log(`   POST /api/auth/sign-in    - Sign in`);
-  console.log(`   POST /api/auth/sign-out   - Sign out`);
-  console.log(`   GET  /api/auth/session    - Get current session`);
-  console.log(`   GET  /api/articles        - List articles`);
-  console.log(`   POST /api/articles        - Save article from URL`);
-  console.log(`   GET  /api/articles/:id    - Get article`);
-  console.log(`   PATCH /api/articles/:id   - Update article`);
-  console.log(`   DELETE /api/articles/:id  - Delete article`);
+  console.log(`   GET  /                              - Health check`);
+  console.log(`   POST /api/auth/sign-up/email        - Create account`);
+  console.log(`   POST /api/auth/sign-in/email        - Sign in`);
+  console.log(`   POST /api/auth/sign-out             - Sign out`);
+  console.log(`   GET  /api/auth/get-session          - Get current session`);
+  console.log(`   POST /api/auth/request-password-reset - Request password reset`);
+  console.log(`   POST /api/auth/reset-password       - Reset password with token`);
+  console.log(`   GET  /api/articles                  - List articles`);
+  console.log(`   POST /api/articles                  - Save article from URL`);
+  console.log(`   GET  /api/articles/:id              - Get article`);
+  console.log(`   PATCH /api/articles/:id             - Update article`);
+  console.log(`   DELETE /api/articles/:id            - Delete article`);
 });
 
 export default app;

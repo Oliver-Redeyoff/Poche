@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Alert, StyleSheet, View, TextInput, TouchableOpacity, Pressable } from 'react-native'
-import { signIn, signUp } from '../lib/api'
+import { signIn, signUp, forgotPassword } from '../lib/api'
 import { ThemedText } from '../components/themed-text'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useHeaderHeight } from '@react-navigation/elements'
@@ -8,7 +8,7 @@ import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useAuth } from './_layout'
 
-type AuthMode = 'signin' | 'signup'
+type AuthMode = 'signin' | 'signup' | 'forgot'
 
 export default function Auth() {
   const headerHeight = useHeaderHeight()
@@ -84,9 +84,86 @@ export default function Auth() {
     }
   }
 
-  function handleForgotPassword() {
-    // TODO: Implement forgot password functionality
-    Alert.alert('Coming Soon', 'Password reset functionality will be added soon.')
+  async function handleForgotPassword() {
+    if (mode !== 'forgot') {
+      // Switch to forgot password mode
+      setMode('forgot')
+      return
+    }
+
+    // Submit forgot password request
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await forgotPassword(email)
+      Alert.alert(
+        'Check Your Email',
+        'If an account exists with this email, you will receive a password reset link.',
+        [{ text: 'OK', onPress: () => setMode('signin') }]
+      )
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message)
+      } else {
+        Alert.alert('Error', 'Failed to send reset email. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Forgot password view
+  if (mode === 'forgot') {
+    return (
+      <View style={[styles.container, { paddingTop: topPadding }]}>
+        {/* Header */}
+        <View style={styles.forgotHeader}>
+          <ThemedText style={styles.forgotTitle}>Reset Password</ThemedText>
+          <ThemedText style={[styles.forgotSubtitle, { color: colors.textSecondary }]}>
+            Enter your email and we'll send you a link to reset your password.
+          </ThemedText>
+        </View>
+
+        {/* Email Input */}
+        <View style={styles.inputGroup}>
+          <ThemedText style={styles.label}>Email</ThemedText>
+          <TextInput
+            onChangeText={setEmail}
+            value={email}
+            placeholder="your@email.com"
+            placeholderTextColor={borderColor}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+          />
+        </View>
+
+        {/* Back to Sign In */}
+        <View style={{ alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => handleModeChange('signin')} style={styles.backToSignIn}>
+            <ThemedText style={[styles.forgotPasswordText, { color: colors.accent }]}>
+              Back to Sign In
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.submitButton, { backgroundColor: colors.accent, opacity: loading ? 0.6 : 1 }]}
+          onPress={handleForgotPassword}
+          disabled={loading}
+        >
+          <ThemedText style={styles.submitButtonText}>
+            {loading ? 'Sending...' : 'Send Reset Link'}
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+    )
   }
 
   return (
@@ -172,11 +249,13 @@ export default function Auth() {
 
       {/* Forgot Password (Sign In only) */}
       {mode === 'signin' && (
-        <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
-          <ThemedText style={[styles.forgotPasswordText, { color: colors.accent }]}>
-            Forgot password?
-          </ThemedText>
-        </TouchableOpacity>
+        <View style={{ alignItems: 'center' }}>
+          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
+            <ThemedText style={[styles.forgotPasswordText, { color: colors.accent }]}>
+              Forgot password?
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Submit Button */}
@@ -239,12 +318,29 @@ const styles = StyleSheet.create({
     fontFamily: 'SourceSans3_400Regular',
   },
   forgotPassword: {
-    alignSelf: 'flex-start',
     marginBottom: 8,
   },
   forgotPasswordText: {
     fontSize: 14,
     fontFamily: 'SourceSans3_500Medium',
+  },
+  forgotHeader: {
+    marginBottom: 24,
+  },
+  forgotTitle: {
+    fontSize: 24,
+    fontFamily: 'Bitter_600SemiBold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  forgotSubtitle: {
+    fontSize: 15,
+    fontFamily: 'SourceSans3_400Regular',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  backToSignIn: {
+    marginTop: 16,
   },
   submitButton: {
     borderRadius: 12,
