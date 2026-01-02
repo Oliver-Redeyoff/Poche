@@ -92,7 +92,7 @@ app.onError((err, c) => {
 
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
-const hostname = '127.0.0.1'; // Bind to all interfaces for external access
+const hostname = '127.0.0.1';
 
 console.log(`🚀 Poche API server starting on port ${port}`);
 
