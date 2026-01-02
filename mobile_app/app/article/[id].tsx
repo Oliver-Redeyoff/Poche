@@ -103,20 +103,17 @@ export default function ArticleScreen() {
     body: {
       color: colors.text,
       fontSize: 18,
-      lineHeight: 30,
       fontFamily: 'SourceSans3_400Regular',
     },
     paragraph: {
       color: colors.text,
       fontSize: 18,
-      lineHeight: 30,
       marginVertical: 12,
       fontFamily: 'SourceSans3_400Regular',
     },
     heading1: {
       color: colors.text,
       fontSize: 32,
-      lineHeight: 40,
       marginBottom: 24,
       marginTop: 48,
       fontFamily: 'Bitter_600SemiBold',
@@ -124,7 +121,6 @@ export default function ArticleScreen() {
     heading2: {
       color: colors.text,
       fontSize: 26,
-      lineHeight: 34,
       marginTop: 32,
       marginBottom: 16,
       fontFamily: 'Bitter_600SemiBold',
@@ -132,7 +128,6 @@ export default function ArticleScreen() {
     heading3: {
       color: colors.text,
       fontSize: 22,
-      lineHeight: 30,
       marginTop: 24,
       marginBottom: 12,
       fontFamily: 'Bitter_600SemiBold',
@@ -140,7 +135,6 @@ export default function ArticleScreen() {
     heading4: {
       color: colors.text,
       fontSize: 19,
-      lineHeight: 26,
       marginTop: 20,
       marginBottom: 8,
       fontFamily: 'Bitter_600SemiBold',
@@ -148,7 +142,6 @@ export default function ArticleScreen() {
     heading5: {
       color: colors.text,
       fontSize: 17,
-      lineHeight: 24,
       marginTop: 16,
       marginBottom: 8,
       fontFamily: 'Bitter_600SemiBold',
@@ -156,7 +149,6 @@ export default function ArticleScreen() {
     heading6: {
       color: colors.textSecondary,
       fontSize: 16,
-      lineHeight: 22,
       marginTop: 16,
       marginBottom: 8,
       fontFamily: 'Bitter_600SemiBold',
@@ -193,7 +185,6 @@ export default function ArticleScreen() {
     list_item: {
       color: colors.text,
       fontSize: 18,
-      lineHeight: 30,
       marginBottom: 8,
       fontFamily: 'SourceSans3_400Regular',
     },
@@ -525,7 +516,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontFamily: 'Bitter_700Bold',
-    lineHeight: 42,
     textDecorationLine: 'underline',
   },
   meta: {
