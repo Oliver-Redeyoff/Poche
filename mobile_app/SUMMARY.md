@@ -34,7 +34,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Storage**: AsyncStorage for session persistence and article caching
 - **Background Tasks**: expo-background-task for periodic article syncing
 - **Animations**: react-native-reanimated for smooth list animations
-- **Markdown Rendering**: react-native-markdown-display for article content
+- **Markdown Rendering**: Custom markdown-to-React-Native component (`components/markdown.tsx`)
 
 ### File Structure
 
@@ -48,6 +48,7 @@ mobile_app/
 │   └── settings.tsx        # Settings screen
 ├── components/            # React components
 │   ├── article-card.tsx   # Article card with tag management, delete, and animations
+│   ├── markdown.tsx       # Custom markdown-to-React-Native renderer
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
 │   └── ...
@@ -64,6 +65,8 @@ mobile_app/
 │   └── use-theme-color.ts
 ├── constants/
 │   └── theme.ts          # Theme colors and fonts
+├── patches/              # React Native patches (applied via patch-package)
+│   └── react-native+0.81.5.patch  # iOS text rendering fix
 └── SUMMARY.md            # This file
 ```
 
@@ -108,7 +111,7 @@ Article card component:
 ### app/article/[id].tsx
 Article detail screen with premium reading experience:
 - Displays full article content with enhanced typography
-- Uses `react-native-markdown-display` for rendering markdown content from backend
+- Uses custom `Markdown` component (`components/markdown.tsx`) for rendering markdown content
 - **Custom image rendering**:
   - Filters out invalid image URLs (empty, #, data URIs)
   - Filters out low-resolution images (< 50x50 pixels) like tracking pixels
@@ -200,6 +203,13 @@ npx expo start
 - `npm run ios` - Run on iOS simulator
 - `npm run android` - Run on Android emulator
 - `npm run web` - Run in web browser
+- `postinstall` - Automatically applies React Native patches via patch-package
+
+### Building iOS with Patches
+The app uses `buildReactNativeFromSource: true` to apply a native code patch for iOS text rendering. This means:
+1. First iOS build will take significantly longer (10-20+ minutes) as React Native compiles from source
+2. Subsequent builds are faster due to caching
+3. To rebuild with a clean slate: `npx expo prebuild --clean && npx expo run:ios`
 
 ### Dependencies
 
@@ -217,7 +227,8 @@ Key dependencies:
 - `expo-task-manager` - Task manager for background tasks
 - `expo-file-system/legacy` - Image downloading and caching for offline access
 - `react-native-reanimated` - Smooth animations for article list
-- `react-native-markdown-display` - Markdown rendering for article content
+- Custom `Markdown` component - In-house markdown-to-React-Native renderer
+- `patch-package` - Dev dependency for patching react-native source code
 
 ## State Management
 
@@ -254,7 +265,7 @@ Key dependencies:
 - ✅ Migrated from Supabase to self-hosted backend
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management
-- ✅ Markdown rendering with `react-native-markdown-display`
+- ✅ Custom markdown renderer (`components/markdown.tsx`) - no external markdown dependencies
 - ✅ Custom image rendering with error handling and size filtering
 - ✅ Link styling with accent color and underline
 - ✅ Offline article reading support
@@ -280,21 +291,51 @@ Key dependencies:
 - ✅ Font weight variants: Regular (400), Medium (500), SemiBold (600), Bold (700)
 - ✅ Improved authentication error messaging with Better Auth error format handling
 - ✅ Session expiry caching - only refreshes session when < 3 days until expiry
+- ✅ React Native iOS text rendering patch for Fabric new architecture (fixes text cut-off issue)
+- ✅ patch-package setup for maintaining React Native patches
+- ✅ buildReactNativeFromSource enabled for applying native code patches
 
 ## Technical Notes
 
-### Markdown Rendering with react-native-markdown-display
-The article detail view uses `react-native-markdown-display` with:
+### Custom Markdown Renderer
+The article detail view uses a custom `Markdown` component (`components/markdown.tsx`) that parses markdown and renders React Native elements:
+
+**Supported Elements:**
+- Block elements: Headings (h1-h6), paragraphs, code blocks (fenced/indented), blockquotes, lists (ordered/unordered), horizontal rules, tables, images
+- Inline elements: Bold, italic, strikethrough, inline code, links, inline images
+
+**Features:**
 - Custom styles for all markdown elements (headings, paragraphs, code, blockquotes, etc.)
-- Custom image rule with `expo-image` for optimized rendering
-- Image filtering: skips invalid URLs and images < 50x50 pixels
+- `renderImage` prop for custom image rendering with `expo-image`
+- Image filtering: skips invalid URLs and images < 50x50 pixels via `minImageWidth`/`minImageHeight` props
 - Error handling: failed images are hidden gracefully
+- `baseUrl` prop for resolving relative URLs in links
 - Link styling: accent color with underline, opens in browser via `Linking.openURL()`
+- Full control over rendering without external dependencies
 
 ### Image Caching Architecture
 - `lib/image-cache.ts` contains utilities for extracting, downloading, and caching images
 - Images are stored in `${FileSystem.documentDirectory}article-images/{userId}/{articleId}/`
 - Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function with `processImages: true`
+
+### React Native iOS Text Rendering Patch
+A patch is applied to React Native to fix a text cut-off issue on iOS with the new architecture (Fabric).
+
+**The Problem**: When using `lineHeight` styles on iOS with React Native's new Fabric renderer, text can get truncated/cut off in certain cases due to floating-point rounding issues in text measurement. See [GitHub Issue #53450](https://github.com/facebook/react-native/issues/53450).
+
+**The Fix**: The patch modifies `RCTTextLayoutManager.mm` to add a small epsilon (0.001) to text size calculations before ceiling, preventing text from being cut off:
+```objc
+CGFloat epsilon = 0.001;
+size = (CGSize){ceil((size.width + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor,
+                ceil((size.height + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor};
+```
+
+**Configuration**:
+- Patch file: `patches/react-native+0.81.5.patch`
+- Applied automatically via `postinstall` script using `patch-package`
+- Requires `buildReactNativeFromSource: true` in `app.json` experiments (Expo uses precompiled RN binaries by default)
+
+**Note**: Building from source increases build times significantly. When React Native officially fixes this bug, the patch and `buildReactNativeFromSource` setting can be removed.
 
 ## Future Enhancements
 

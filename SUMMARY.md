@@ -14,7 +14,7 @@ Poche is a "read it later" application that allows users to save articles from t
 ### Technology Stack
 
 - **Backend**: Hono (Node.js), Better Auth with bearer plugin, Drizzle ORM, PostgreSQL
-- **Mobile App**: React Native with Expo Router, react-native-markdown-display
+- **Mobile App**: React Native with Expo Router, custom markdown renderer
 - **Browser Extension**: React with TypeScript, built with Webpack
 - **Web App**: React with TypeScript, Vite, React Router
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
@@ -105,7 +105,7 @@ Poche/
 - View saved articles linked to user account
 - Tab-based navigation with native iOS blur effects
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
-- **Markdown rendering**: Uses `react-native-markdown-display` for article content
+- **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
 - **Link styling**: Links appear in accent color with underline
 - **Offline article access**: Articles stored locally in AsyncStorage
@@ -169,7 +169,7 @@ Poche/
 - **Image caching**: Uses `expo-file-system/legacy` to download and cache article images locally
 - **Background tasks**: Uses `expo-background-task` for periodic article syncing and image caching
 - **Animations**: Uses `react-native-reanimated` for smooth article list animations
-- **Markdown rendering**: Uses `react-native-markdown-display` with custom image and link handling
+- **Markdown rendering**: Custom `Markdown` component (`components/markdown.tsx`) with custom image and link handling
 - **Custom theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 
 ### Browser Extension
@@ -217,7 +217,7 @@ Poche/
 - ✅ Migrated from Supabase to self-hosted backend
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management and navigation guards
-- ✅ Markdown rendering with `react-native-markdown-display`
+- ✅ Custom markdown renderer (`components/markdown.tsx`) - no external markdown dependencies
 - ✅ Custom image rendering with expo-image
 - ✅ Image filtering (invalid URLs, low-resolution < 50x50)
 - ✅ Image error handling with graceful degradation
