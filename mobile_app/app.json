@@ -50,7 +50,18 @@
       ],
       "expo-sqlite",
       "expo-apple-authentication",
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildReactNativeFromSource": true
+          },
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
