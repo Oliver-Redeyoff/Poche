@@ -22,6 +22,8 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 - **Article Extraction**: Defuddle (Node.js version for markdown output)
 - **Runtime**: Node.js 20
 - **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Nginx with HTTPS
+- **SSL/TLS**: Let's Encrypt via Certbot with Cloudflare DNS plugin
 
 ### File Structure
 
@@ -38,8 +40,9 @@ backend/
 │   │   └── article-extractor.ts  # Defuddle article extraction
 │   └── routes/
 │       └── articles.ts       # Article API routes
-├── docker-compose.yml        # Production Docker config
+├── docker-compose.yml        # Production Docker config (API + PostgreSQL + Nginx)
 ├── docker-compose.dev.yml    # Development Docker config
+├── nginx.conf                # Nginx reverse proxy config (HTTPS for api.poche.to)
 ├── Dockerfile                # Container build
 ├── drizzle.config.ts         # Drizzle Kit configuration
 ├── package.json              # Dependencies and scripts
@@ -154,20 +157,71 @@ docker compose -f docker-compose.dev.yml exec api npm run db:push
 
 ### Production
 
-```bash
-# Build and start
-docker compose up -d
+Production uses Docker Compose with three services:
+- **db**: PostgreSQL 16 (Alpine)
+- **api**: Poche backend API (Node.js 20 Alpine)
+- **nginx**: Reverse proxy with HTTPS (api.poche.to)
 
-# Run database migrations
+#### 1. Create `.env` file
+
+All environment variables are required (no defaults). Create a `.env` file in the backend directory:
+
+```env
+# Database
+POSTGRES_USER=poche
+POSTGRES_PASSWORD=your_secure_password_here
+POSTGRES_DB=poche
+
+# Auth
+BETTER_AUTH_SECRET=your-secret-key-minimum-32-characters-long
+BETTER_AUTH_URL=https://api.poche.to
+
+# Server
+PORT=3000
+```
+
+#### 2. Set up SSL certificates with Certbot
+
+Using Cloudflare DNS plugin for Let's Encrypt:
+
+```bash
+# Install certbot with Cloudflare plugin
+sudo snap install --classic certbot
+sudo snap set certbot trust-plugin-with-root=ok
+sudo snap install certbot-dns-cloudflare
+
+# Create Cloudflare credentials file
+sudo mkdir -p /etc/letsencrypt
+sudo nano /etc/letsencrypt/cloudflare.ini
+# Add: dns_cloudflare_api_token = YOUR_CLOUDFLARE_API_TOKEN
+sudo chmod 600 /etc/letsencrypt/cloudflare.ini
+
+# Get certificate
+sudo certbot certonly \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \
+  -d api.poche.to
+```
+
+#### 3. Start services
+
+```bash
+docker compose up -d --build
+```
+
+#### 4. Run database migrations
+
+```bash
 docker compose exec api npm run db:push
 ```
 
-### Environment Variables
+#### 5. Set up auto-renewal hook
 
-```env
-DATABASE_URL=postgresql://user:password@host:5432/dbname
-AUTH_SECRET=your-secret-key-min-32-chars
-PORT=3000
+```bash
+sudo mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+echo '#!/bin/bash
+docker restart poche-nginx' | sudo tee /etc/letsencrypt/renewal-hooks/deploy/restart-nginx.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/restart-nginx.sh
 ```
 
 ## NPM Scripts
@@ -212,6 +266,22 @@ Located in `src/lib/auth.ts`:
 - **Email Verification**: Currently disabled (`requireEmailVerification: false`)
 - **Browser Extensions**: Require bearer token auth (cookies don't work cross-origin)
 - **CORS**: Extensions have dynamic origins that must be validated at runtime
+- **SSL Certificates**: Let's Encrypt certs expire every 90 days; Certbot auto-renews
+- **Environment Variables**: All required in production (uses `${VAR:?error}` syntax)
+- **DNS**: Ensure `api.poche.to` points to the server before starting services
+- **Cloudflare**: If using Cloudflare proxy, set SSL mode to "Full (strict)"
+
+## Nginx Configuration
+
+The `nginx.conf` file configures the reverse proxy:
+
+- **HTTPS on port 443** with TLSv1.2/1.3
+- **HTTP to HTTPS redirect** on port 80
+- **Default server blocks** to reject requests for unknown hostnames (returns 444)
+- **Proxy headers** for proper client IP forwarding
+- **WebSocket support** for real-time features
+
+SSL certificates are mounted from `/etc/letsencrypt` (Let's Encrypt directory).
 
 ## Recent Fixes
 
@@ -219,6 +289,12 @@ Located in `src/lib/auth.ts`:
 - ✅ Dynamic CORS origin validation for browser extensions
 - ✅ Dynamic trustedOrigins for Better Auth to accept extension origins
 - ✅ Token storage in extension's local storage instead of cookies
+- ✅ Nginx reverse proxy with HTTPS support
+- ✅ Let's Encrypt SSL via Certbot with Cloudflare DNS plugin
+- ✅ Environment variables loaded from `.env` file with required validation
+- ✅ Removed dotenv dependency (not needed in production with Docker)
+- ✅ Node.js-based healthcheck (replaces wget which isn't in Alpine)
+- ✅ Default server blocks to reject unknown hostnames
 
 ## Future Enhancements
 
@@ -227,4 +303,3 @@ Located in `src/lib/auth.ts`:
 - API rate limiting
 - Full-text search for articles
 - Automatic database migration on startup
-- Production deployment documentation

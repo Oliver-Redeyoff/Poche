@@ -33,7 +33,7 @@ services:
       DATABASE_URL: postgresql://poche:poche_dev@db:5432/poche_dev
       PORT: 3000
       BETTER_AUTH_SECRET: dev-secret-key-at-least-32-characters-long
-      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_URL: http://127.0.0.1:3000
       NODE_ENV: development
     volumes:
       - .:/app
