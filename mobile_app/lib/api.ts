@@ -235,7 +235,10 @@ export async function signOut(): Promise<void> {
 export async function forgotPassword(email: string): Promise<void> {
   await apiRequest('/api/auth/request-password-reset', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ 
+      email,
+      redirectTo: 'https://poche.to/reset-password',
+    }),
   }, false)
 }
 
