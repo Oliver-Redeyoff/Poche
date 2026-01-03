@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --port 3001",
     "build": "tsc -b && vite build",
+    "build:deploy": "tsc -b && vite build && rm -rf ../backend/web_app_dist && mv dist ../backend/web_app_dist",
     "preview": "vite preview"
   },
   "dependencies": {
