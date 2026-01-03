@@ -3,8 +3,12 @@
 
 import type { Article, User } from '@poche/shared'
 
-// Backend API URL - change this for production
-const API_URL = 'http://localhost:3000'
+// Backend API URL - loaded from environment variable
+// Set VITE_API_URL in .env file (see .env.example)
+const API_URL = import.meta.env.VITE_API_URL
+if (!API_URL) {
+  throw new Error('VITE_API_URL is not set')
+}
 
 // Storage keys
 const TOKEN_STORAGE_KEY = 'poche_auth_token'
