@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy'
-import { Article } from '../shared/types'
+import { Article } from '@poche/shared'
 
 // Markdown image regex: ![alt text](url) or ![alt text](url "title")
 const MARKDOWN_IMAGE_REGEX = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/gi

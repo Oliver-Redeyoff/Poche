@@ -1,6 +1,6 @@
 import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi } from './api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Article } from '../shared/types'
+import { Article } from '@poche/shared'
 import { processArticlesImages } from './image-cache'
 
 /**

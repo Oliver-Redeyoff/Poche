@@ -7,6 +7,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 ## Features
 
 - **Authentication**: Email/password login and signup via self-hosted backend
+- **Forgot Password**: Request password reset email from auth screen
 - **Article Viewing**: Display all articles saved by the user
 - **Native Navigation**: Tab-based navigation with native iOS blur effects
 - **Dark Mode**: Automatic theme switching based on system preferences with custom Poche color theme
@@ -21,6 +22,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Tag Management**: Add and remove tags from articles directly from article cards with confirmation dialogs
 - **Tag Filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading Time**: Display estimated reading time based on article word count
+- **Shared Types**: Uses `@poche/shared` npm package for common types and utilities
 
 ## Architecture
 
@@ -35,6 +37,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Background Tasks**: expo-background-task for periodic article syncing
 - **Animations**: react-native-reanimated for smooth list animations
 - **Markdown Rendering**: Custom markdown-to-React-Native component (`components/markdown.tsx`)
+- **Shared Types**: `@poche/shared` npm package (local)
 
 ### File Structure
 
@@ -44,7 +47,7 @@ mobile_app/
 │   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext)
 │   ├── index.tsx          # Home screen with article list and tag filtering
 │   ├── article/[id].tsx    # Article detail screen with markdown rendering
-│   ├── auth.tsx            # Authentication screen
+│   ├── auth.tsx            # Authentication screen (login/signup/forgot password)
 │   └── settings.tsx        # Settings screen
 ├── components/            # React components
 │   ├── article-card.tsx   # Article card with tag management, delete, and animations
@@ -52,11 +55,8 @@ mobile_app/
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
 │   └── ...
-├── shared/                # Shared types and utilities
-│   ├── types.tsx          # TypeScript types (Article, AuthResponse, etc.)
-│   └── util.ts            # Utility functions (tagToColor, etc.)
 ├── lib/
-│   ├── api.ts            # API client for self-hosted backend
+│   ├── api.ts            # API client for self-hosted backend (includes forgotPassword)
 │   ├── background-sync.ts # Background task for syncing articles
 │   ├── article-sync.ts   # Centralized article sync logic
 │   └── image-cache.ts    # Image extraction, downloading, and caching utilities
@@ -67,8 +67,11 @@ mobile_app/
 │   └── theme.ts          # Theme colors and fonts
 ├── patches/              # React Native patches (applied via patch-package)
 │   └── react-native+0.81.5.patch  # iOS text rendering fix
+├── package.json          # Dependencies (includes @poche/shared)
 └── SUMMARY.md            # This file
 ```
+
+**Note**: Shared types and utilities are imported from `@poche/shared` (located at `../shared`).
 
 ## Key Components
 
@@ -88,7 +91,8 @@ Home screen that:
 Authentication screen:
 - Email/password login
 - Email/password signup
-- Mode switch between Sign In and Sign Up
+- **Forgot password**: Request password reset email
+- Mode switch between Sign In, Sign Up, and Forgot Password
 - Form validation
 - Error handling
 - Themed UI with dark mode support
@@ -140,6 +144,7 @@ Expo Router uses file-based routing similar to Next.js:
 ### Backend API
 The app communicates with a self-hosted backend via `lib/api.ts`:
 - **Authentication**: `signIn()`, `signUp()`, `signOut()`, `getSession()`
+- **Forgot Password**: `forgotPassword()` - Request password reset email
 - **Articles**: `getArticles()`, `saveArticle()`, `updateArticle()`, `deleteArticle()`
 - **Bearer token auth**: Token stored in AsyncStorage, sent in Authorization header
 - **User-scoped queries**: All article operations filter by authenticated user
@@ -265,6 +270,7 @@ Key dependencies:
 - ✅ Migrated from Supabase to self-hosted backend
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management
+- ✅ **Forgot password flow**: Request password reset from auth screen
 - ✅ Custom markdown renderer (`components/markdown.tsx`) - no external markdown dependencies
 - ✅ Custom image rendering with error handling and size filtering
 - ✅ Link styling with accent color and underline
@@ -283,7 +289,7 @@ Key dependencies:
 - ✅ Tag filtering on homepage with tag chips
 - ✅ Reading time display based on wordCount
 - ✅ Cross-platform tag input modal
-- ✅ Shared types and utilities folder
+- ✅ Uses `@poche/shared` package for types and utilities
 - ✅ Custom Poche color theme (warm tones, coral accent #EF4056)
 - ✅ Tags displayed at top of article detail view
 - ✅ iOS app icon asset catalog with all required sizes

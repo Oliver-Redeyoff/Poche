@@ -6,8 +6,7 @@ import { ThemedView } from '../components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 import { ArticleCard } from '../components/article-card'
-import { Article } from '../shared/types'
-import { tagToColor } from '../shared/util'
+import { Article, tagToColor } from '@poche/shared'
 import { useAuth } from './_layout'
 import { 
   loadArticlesFromStorage, 
