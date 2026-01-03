@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 // Backend API URL - update for production
 const API_URL = 'http://localhost:3000'
@@ -8,7 +8,6 @@ type Status = 'idle' | 'loading' | 'success' | 'error'
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
   
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
