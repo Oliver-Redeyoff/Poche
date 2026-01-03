@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import * as api from './lib/api'
 import { tagToColor } from '@poche/shared'
 
+// Import assets for Vite
+import iconPng from './assets/icon.png'
+
 // Declare browser for Firefox compatibility
 declare const browser: typeof chrome
 
@@ -112,7 +115,7 @@ function Header(): JSX.Element {
   return (
     <div className="header">
       <div className="header-inner">
-        <img src="assets/icon.png" alt="poche" className="logo" />
+        <img src={iconPng} alt="poche" className="logo" />
         <h1>Poche</h1>
       </div>
     </div>

@@ -20,6 +20,7 @@ const Home = () => {
             <a href="#features">Features</a>
             <a href="#download">Download</a>
             <a href="#extensions">Extensions</a>
+            <a href="/app">App</a>
           </div>
         </div>
       </nav>

@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+web_app_dist/
 
 # Environment files
 .env
