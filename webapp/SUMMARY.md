@@ -23,6 +23,7 @@ The Poche web app is a marketing website that showcases the Poche "read it later
 - **Routing**: React Router DOM
 - **Styling**: CSS with CSS variables for theming
 - **Typography**: Bitter (display/headings) + Source Sans 3 (body)
+- **Shared Types**: `@poche/shared` npm package (local)
 
 ### File Structure
 
@@ -170,9 +171,12 @@ The `ResetPassword` page has an `API_URL` constant that should be updated for di
 {
   "react": "^18.x",
   "react-dom": "^18.x",
-  "react-router-dom": "^6.x"
+  "react-router-dom": "^6.x",
+  "@poche/shared": "file:../shared"
 }
 ```
+
+**Note**: Shared types and utilities are imported from `@poche/shared` (located at `../shared`).
 
 ## Recent Enhancements
 
@@ -192,6 +196,7 @@ The `ResetPassword` page has an `API_URL` constant that should be updated for di
 - ✅ Password reset page with full flow
 - ✅ Token validation and error handling
 - ✅ Success and error states for password reset
+- ✅ Uses `@poche/shared` package for types
 
 ## Future Enhancements
 

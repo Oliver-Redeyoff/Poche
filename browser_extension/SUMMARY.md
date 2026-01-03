@@ -7,6 +7,7 @@ The Poche browser extension allows users to save articles from any webpage to th
 ## Features
 
 - **Authentication**: Email/password login and signup within the extension popup
+- **Forgot Password**: Request password reset email from login screen
 - **Token-Based Auth**: Bearer token authentication stored in browser extension storage
 - **Article Saving**: Sends URLs to backend for server-side extraction
 - **Cross-Browser Support**: Works with Chrome (Manifest V3), Firefox, and Safari
@@ -14,6 +15,7 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Smart Button State**: "Save Article" button automatically disables and shows "Already Saved" if the current URL is already saved
 - **Automatic Sync**: Syncs saved article list from backend on popup open to reflect deletions from mobile app
 - **Tag Input**: Specify comma-delimited tags before saving articles
+- **Shared Types**: Uses `@poche/shared` npm package for common types and utilities
 
 ## Architecture
 
@@ -25,6 +27,7 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Bundler**: Webpack with TypeScript and Babel for transpilation
 - **Backend**: Self-hosted Poche API with Better Auth
 - **Storage**: Chrome/Firefox storage API for bearer token and user data persistence
+- **Shared Types**: `@poche/shared` npm package (local)
 
 ### File Structure
 
@@ -36,26 +39,26 @@ browser_extension/
 │   ├── popup.css         # Popup styles with dark mode support
 │   ├── background.ts     # Background service worker (TypeScript)
 │   └── lib/
-│       └── api.ts        # Backend API client (auth, articles)
-├── shared/               # Shared types and utilities
-│   ├── types.tsx         # TypeScript types (Article, Database, etc.)
-│   └── util.ts           # Utility functions (tagToColor, etc.)
+│       └── api.ts        # Backend API client (auth, articles, forgot password)
 ├── icons/                # Extension icons (16x16, 48x48, 128x128)
 ├── dist/                 # Built extension files (generated)
 ├── manifest.json         # Extension manifest (Manifest V3)
-├── package.json          # Dependencies and build scripts
+├── package.json          # Dependencies and build scripts (includes @poche/shared)
 ├── tsconfig.json         # TypeScript configuration
 ├── webpack.config.js     # Webpack configuration
 └── SUMMARY.md            # This file
 ```
 
+**Note**: Shared types and utilities are imported from `@poche/shared` (located at `../shared`).
+
 ## Key Components
 
 ### popup.tsx
 Main extension React component (TypeScript):
-- Authentication (login/signup with mode switch)
+- Authentication (login/signup/forgot password with mode switch)
 - Article saving via backend API
 - Error handling and user feedback
+- **Forgot password form**: Enter email to receive password reset link
 - **Saved article tracking**: Stores list of saved article URLs and IDs in browser storage
 - **Button state management**: Updates save button state based on whether current URL is already saved
 - **Article sync**: Syncs saved articles from backend on popup open to keep local storage in sync
@@ -65,6 +68,7 @@ Main extension React component (TypeScript):
 Backend API client (TypeScript):
 - Token-based authentication (bearer tokens)
 - Sign up, sign in, sign out, get session
+- **Forgot password**: Request password reset via `forgotPassword()` function
 - Article CRUD operations (list, save, update, delete)
 - Token and user data storage in browser extension storage API
 - Automatic bearer token inclusion in `Authorization` header for all API requests
@@ -106,6 +110,7 @@ Background service worker (TypeScript):
 - `POST /api/auth/sign-in/email` - Sign in
 - `POST /api/auth/sign-out` - Sign out
 - `GET /api/auth/get-session` - Validate session
+- `POST /api/auth/request-password-reset` - Request password reset email
 - `GET /api/articles` - List saved articles
 - `POST /api/articles` - Save article from URL
 - `PATCH /api/articles/:id` - Update article
@@ -205,13 +210,14 @@ The extension requires:
 - ✅ Token-based authentication (bearer tokens)
 - ✅ Removed client-side article parsing (now done server-side)
 - ✅ Sign in/sign up mode switch UI
+- ✅ **Forgot password flow**: Request password reset from login screen
 - ✅ Converted to React with TypeScript
 - ✅ Saved article URL tracking in browser storage
 - ✅ Smart save button state management
 - ✅ Automatic sync of saved articles from backend on popup open
 - ✅ Prevention of duplicate article saves
 - ✅ Tag input UI for specifying tags before saving articles
-- ✅ Shared types and utilities folder for code reuse
+- ✅ Uses `@poche/shared` package for types and utilities
 - ✅ Bitter + Source Sans 3 fonts via Google Fonts (Bitter for logo/headers, Source Sans 3 for body)
 - ✅ Error status popup for sign-in/sign-up failures with meaningful messages
 - ✅ Loading spinner while checking auth status (prevents auth UI flash)

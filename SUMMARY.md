@@ -2,12 +2,13 @@
 
 ## Project Overview
 
-Poche is a "read it later" application that allows users to save articles from the web and read them later. The project consists of four main components:
+Poche is a "read it later" application that allows users to save articles from the web and read them later. The project consists of five main components:
 
 1. **Backend** - Self-hosted API server for authentication and article management
 2. **Mobile App** - React Native mobile application (iOS/Android) built with Expo
 3. **Browser Extension** - Cross-browser extension (Chrome, Firefox, Safari) for saving articles
-4. **Web App** - Marketing website with app download links and SEO optimization
+4. **Web App** - Marketing website with app download links, SEO optimization, and password reset page
+5. **Shared** - Shared TypeScript types and utilities used across all projects
 
 ## Architecture
 
@@ -17,7 +18,9 @@ Poche is a "read it later" application that allows users to save articles from t
 - **Mobile App**: React Native with Expo Router, custom markdown renderer
 - **Browser Extension**: React with TypeScript, built with Webpack
 - **Web App**: React with TypeScript, Vite, React Router
+- **Shared Package**: TypeScript types and utilities (`@poche/shared`)
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
+- **Email**: Resend for transactional emails (password reset)
 - **Article Extraction**: Defuddle (server-side Node.js version, markdown output)
 - **Deployment**: Docker & Docker Compose with Nginx reverse proxy
 - **SSL/TLS**: Let's Encrypt via Certbot with Cloudflare DNS plugin
@@ -68,27 +71,35 @@ The project uses a PostgreSQL database with the following main tables:
 
 ```
 Poche/
+├── shared/              # Shared TypeScript package (@poche/shared)
+│   ├── src/            # Source files
+│   │   ├── types.ts    # User, AuthResponse, Article types
+│   │   ├── util.ts     # Utility functions (tagToColor)
+│   │   └── index.ts    # Re-exports
+│   ├── package.json    # npm package config
+│   └── tsconfig.json   # TypeScript config
 ├── backend/             # Self-hosted API server
 │   ├── src/            # Source files (TypeScript)
-│   ├── docker-compose.yml  # Production Docker config (API + PostgreSQL + Nginx)
+│   │   ├── lib/        # Auth config, email service
+│   │   └── routes/     # API routes
+│   ├── docker-compose.yml  # Production Docker config
 │   ├── docker-compose.dev.yml  # Development Docker config
-│   ├── nginx.conf      # Nginx reverse proxy config (HTTPS, api.poche.to)
+│   ├── nginx.conf      # Nginx reverse proxy config
 │   ├── Dockerfile      # Container build
 │   └── ...
 ├── mobile_app/          # React Native mobile application
 │   ├── app/            # Expo Router file-based routing
 │   ├── components/     # React components
-│   ├── lib/            # API client, utilities
-│   ├── shared/         # Shared types and utilities
+│   ├── lib/            # API client, sync utilities
 │   └── ...
 ├── browser_extension/   # Browser extension for saving articles
 │   ├── src/            # Source files (React/TypeScript)
-│   ├── shared/         # Shared types and utilities
 │   ├── dist/           # Built extension files
 │   └── ...
-├── webapp/              # Marketing website
+├── webapp/              # Marketing website + password reset
 │   ├── src/            # React source files
-│   ├── public/         # Static assets (logo, images)
+│   │   └── pages/      # Home, ResetPassword
+│   ├── public/         # Static assets
 │   └── ...
 └── SUMMARY.md          # This file
 ```
@@ -99,6 +110,8 @@ Poche/
 - RESTful API for authentication and article management
 - Server-side article extraction (URL → markdown via Defuddle)
 - Bearer token authentication for browser extensions and mobile apps
+- **Password reset**: Email-based password reset flow via Resend
+- **Email service**: Transactional emails with beautiful HTML templates
 - Docker Compose with Nginx reverse proxy for production deployment
 - HTTPS with Let's Encrypt SSL certificates (Certbot + Cloudflare DNS)
 - PostgreSQL with Drizzle ORM
@@ -106,6 +119,7 @@ Poche/
 
 ### Mobile App Features
 - User authentication (email/password login and signup)
+- **Forgot password**: Request password reset email from login screen
 - View saved articles linked to user account
 - Tab-based navigation with native iOS blur effects
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
@@ -124,6 +138,7 @@ Poche/
 
 ### Browser Extension Features
 - User authentication within extension popup
+- **Forgot password**: Request password reset email from login screen
 - Send URLs to backend for article extraction
 - Cross-browser compatibility (Chrome, Firefox, Safari)
 - **Token-based auth**: Stores bearer token in browser storage
@@ -134,6 +149,7 @@ Poche/
 
 ### Web App Features
 - Marketing landing page at `/` route
+- **Password reset page**: `/reset-password` handles password reset from email links
 - **SEO optimized**: Meta tags, Open Graph, Twitter Cards, JSON-LD structured data
 - **App download links**: iOS App Store, Google Play Store
 - **Browser extension links**: Chrome Web Store, Firefox Add-ons, Safari App Store
@@ -206,10 +222,20 @@ Poche/
 
 ## Recent Enhancements
 
+### Shared Package
+- ✅ Moved shared code to root-level `@poche/shared` npm package
+- ✅ TypeScript types: User, AuthResponse, Article, LegacyArticle
+- ✅ Utility functions: tagToColor
+- ✅ Installed as local dependency in all 4 projects
+- ✅ Proper TypeScript build with declaration files
+
 ### Backend
 - ✅ Self-hosted API server with Hono
 - ✅ Better Auth integration with bearer plugin for token-based auth
 - ✅ Server-side article extraction with Defuddle (markdown output)
+- ✅ **Password reset flow**: `POST /api/auth/request-password-reset`
+- ✅ **Email service**: Resend integration for transactional emails
+- ✅ **Password reset emails**: Beautiful HTML templates with Poche branding
 - ✅ Docker & Docker Compose for easy deployment
 - ✅ PostgreSQL with Drizzle ORM
 - ✅ Dynamic CORS for browser extensions (chrome-extension://, moz-extension://, safari-extension://)
@@ -226,6 +252,7 @@ Poche/
 - ✅ Migrated from Supabase to self-hosted backend
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management and navigation guards
+- ✅ **Forgot password flow**: Request password reset from auth screen
 - ✅ Custom markdown renderer (`components/markdown.tsx`) - no external markdown dependencies
 - ✅ Custom image rendering with expo-image
 - ✅ Image filtering (invalid URLs, low-resolution < 50x50)
@@ -242,7 +269,7 @@ Poche/
 - ✅ Tag filtering on homepage
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
-- ✅ Shared types and utilities folder
+- ✅ Uses `@poche/shared` package for types and utilities
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
 - ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts` (Bitter for headers/logo, Source Sans 3 for body)
 - ✅ Improved authentication error messaging
@@ -252,6 +279,7 @@ Poche/
 - ✅ Migrated from Supabase to self-hosted backend
 - ✅ Token-based authentication (bearer tokens stored in browser storage)
 - ✅ Bearer token included in Authorization header for all API requests
+- ✅ **Forgot password flow**: Request password reset from login screen
 - ✅ Session validation with cached user data fallback
 - ✅ Saved article URL tracking
 - ✅ Smart save button state management
@@ -263,11 +291,13 @@ Poche/
 - ✅ Error status popup for sign-in/sign-up failures
 - ✅ Loading spinner while checking auth status
 - ✅ Session expiry caching (reduces API calls)
+- ✅ Uses `@poche/shared` package for types and utilities
 
 ### Web App
 - ✅ React + TypeScript with Vite
 - ✅ React Router for navigation
 - ✅ Marketing landing page with hero section
+- ✅ **Password reset page**: Complete flow for resetting passwords from email link
 - ✅ SEO optimization (meta tags, Open Graph, Twitter Cards, JSON-LD)
 - ✅ App Store and Google Play download links
 - ✅ Browser extension links (Chrome, Firefox, Safari)
@@ -279,11 +309,12 @@ Poche/
 - ✅ Bitter + Source Sans 3 typography
 - ✅ Animated phone mockup in hero
 - ✅ Floating background shapes for depth
+- ✅ Uses `@poche/shared` package for types
 
 ## Future Enhancements
 
 Potential features to add:
-- Email verification and password reset
+- Email verification
 - Article folders/categories
 - Search functionality
 - Article sharing

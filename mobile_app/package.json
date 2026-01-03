@@ -13,6 +13,7 @@
     "updateDatabaseTypes": "supabase gen types typescript --project-id ixpfqquzduzwktjaumtn > database_types.ts"
   },
   "dependencies": {
+    "@poche/shared": "file:../shared",
     "@expo-google-fonts/bitter": "^0.4.1",
     "@expo-google-fonts/source-sans-3": "^0.4.1",
     "@react-native-async-storage/async-storage": "2.2.0",

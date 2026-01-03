@@ -7,10 +7,13 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 ## Features
 
 - **Authentication**: Email/password authentication with bearer token support
+- **Password Reset**: Email-based password reset flow via Resend
+- **Email Service**: Transactional emails with beautiful HTML templates
 - **Article Extraction**: Server-side article parsing using Defuddle (URL → markdown)
 - **RESTful API**: Full CRUD operations for articles
 - **Docker Support**: Easy deployment with Docker Compose
 - **Type Safety**: Full TypeScript with Drizzle ORM
+- **Shared Types**: Uses `@poche/shared` package for common types
 
 ## Architecture
 
@@ -18,8 +21,10 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 
 - **Framework**: Hono (lightweight Node.js web framework)
 - **Authentication**: Better Auth with bearer plugin
+- **Email**: Resend for transactional emails (password reset)
 - **Database**: PostgreSQL with Drizzle ORM
 - **Article Extraction**: Defuddle (Node.js version for markdown output)
+- **Shared Types**: `@poche/shared` npm package
 - **Runtime**: Node.js 20
 - **Containerization**: Docker & Docker Compose
 - **Reverse Proxy**: Nginx with HTTPS
@@ -37,6 +42,7 @@ backend/
 │   │   └── migrations/       # Database migrations
 │   ├── lib/
 │   │   ├── auth.ts           # Better Auth configuration
+│   │   ├── email.ts          # Email service (Resend)
 │   │   └── article-extractor.ts  # Defuddle article extraction
 │   └── routes/
 │       └── articles.ts       # Article API routes
@@ -109,6 +115,8 @@ backend/
 - `POST /api/auth/sign-in/email` - Sign in (returns session with bearer token)
 - `POST /api/auth/sign-out` - Sign out
 - `GET /api/auth/get-session` - Validate session
+- `POST /api/auth/request-password-reset` - Request password reset email
+- `POST /api/auth/reset-password` - Reset password with token
 
 ### Articles (Protected)
 All article endpoints require `Authorization: Bearer <token>` header.
@@ -295,11 +303,14 @@ SSL certificates are mounted from `/etc/letsencrypt` (Let's Encrypt directory).
 - ✅ Removed dotenv dependency (not needed in production with Docker)
 - ✅ Node.js-based healthcheck (replaces wget which isn't in Alpine)
 - ✅ Default server blocks to reject unknown hostnames
+- ✅ **Password reset flow**: `sendResetPassword` callback in Better Auth
+- ✅ **Email service**: Resend integration (`src/lib/email.ts`)
+- ✅ **Password reset emails**: Beautiful HTML templates with Poche branding
+- ✅ Uses `@poche/shared` package for common types
 
 ## Future Enhancements
 
 - Email verification flow
-- Password reset functionality
 - API rate limiting
 - Full-text search for articles
 - Automatic database migration on startup

@@ -1,4 +1,4 @@
-// Poche types - aligned with new self-hosted backend
+// Poche types - aligned with self-hosted backend (Better Auth + Drizzle)
 
 // User type from Better Auth
 export interface User {
@@ -18,18 +18,18 @@ export interface AuthResponse {
   user: User
 }
 
-// Article type from new backend
+// Article type from backend
 export interface Article {
   id: number
   userId: string
   title: string | null
-          content: string | null
-          excerpt: string | null
+  content: string | null
+  excerpt: string | null
   url: string | null
-          siteName: string | null
+  siteName: string | null
   author: string | null
   wordCount: number | null
-          tags: string | null
+  tags: string | null
   createdAt: string
   updatedAt: string
 }
@@ -39,10 +39,10 @@ export interface Article {
 export interface LegacyArticle {
   id: number
   user_id: string
-          title: string | null
+  title: string | null
   content: string | null
   excerpt: string | null
-          url: string | null
+  url: string | null
   siteName: string | null
   length: number | null
   tags: string | null
@@ -66,3 +66,4 @@ export function convertLegacyArticle(legacy: LegacyArticle): Article {
     updatedAt: legacy.created_time,
   }
 }
+

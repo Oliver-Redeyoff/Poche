@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as api from './lib/api'
-import { tagToColor } from '../shared/util'
+import { tagToColor } from '@poche/shared'
 
 // Declare browser for Firefox compatibility
 declare const browser: typeof chrome
