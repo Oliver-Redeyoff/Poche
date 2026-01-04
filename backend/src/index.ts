@@ -21,7 +21,7 @@ app.use('*', logger());
 app.use('*', cors({
   origin: (origin) => {
     // Allow requests with no origin (like mobile apps)
-    if (!origin) return 'http://localhost:3000';
+    if (!origin) return 'https://poche.to';
     
     // Allow localhost for development
     if (origin.startsWith('http://localhost:')) return origin;
@@ -35,10 +35,12 @@ app.use('*', cors({
     // Allow safari extensions
     if (origin.startsWith('safari-extension://')) return origin;
     
-    // Add your production domains here
-    // if (origin === 'https://your-app.com') return origin;
+    // Allow production domains
+    if (origin === 'https://poche.to') return origin;
+    if (origin === 'https://www.poche.to') return origin;
+    if (origin === 'https://api.poche.to') return origin;
     
-    return 'http://localhost:3000';
+    return 'https://poche.to';
   },
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
