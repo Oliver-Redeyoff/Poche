@@ -5,4 +5,4 @@ firefox/
 safari/
 *.log
 .DS_Store
-
+.env

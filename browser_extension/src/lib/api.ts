@@ -9,7 +9,10 @@ const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : brows
 
 // Backend API URL - loaded from environment variable
 // Set VITE_API_URL in .env file (see .env.example)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) {
+  throw new Error('VITE_API_URL is not set')
+}
 
 // Storage key for auth token
 const TOKEN_STORAGE_KEY = 'poche_auth_token';
