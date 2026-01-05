@@ -14,14 +14,7 @@
     max-width: 1400px;
     margin: 0 auto;
     overflow: hidden;
-    opacity: 0;
-    transform: translateY(20px);
     transition: opacity 0.8s ease, transform 0.8s ease;
-
-    &.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
 
     .hero-background {
         position: absolute;
