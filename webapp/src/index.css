@@ -104,23 +104,8 @@ img {
   justify-content: space-between;
 }
 
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-family: var(--font-display);
-  font-weight: 600;
+.nav-logo-container {
   font-size: 1.25rem;
-}
-
-.nav-logo-img {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-}
-
-.nav-logo-text {
-  color: var(--charcoal);
 }
 
 .nav-links {
@@ -1409,21 +1394,8 @@ img {
   justify-content: space-between;
 }
 
-.app-header-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-family: var(--font-display);
-  font-weight: 600;
+.app-header-logo-container {
   font-size: 1.25rem;
-  color: var(--charcoal);
-  text-decoration: none;
-}
-
-.app-header-logo img {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
 }
 
 .app-header-user {
