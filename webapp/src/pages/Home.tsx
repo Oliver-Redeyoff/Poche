@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Logo from '../components/Logo'
 
 const Home = () => {
   const [isVisible, setIsVisible] = useState(false)
@@ -12,10 +13,9 @@ const Home = () => {
       {/* Navigation */}
       <nav className="nav">
         <div className="nav-content">
-          <a href="/" className="nav-logo">
-            <img src="/logo.png" alt="Poche" className="nav-logo-img" />
-            <span className="nav-logo-text">Poche</span>
-          </a>
+          <div className='nav-logo-container'>
+            <Logo />
+          </div>
           <div className="nav-links">
             <a href="#features">Features</a>
             <a href="#download">Download</a>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { getArticles, deleteArticle, Article } from '../../lib/api'
 import { tagToColor } from '@poche/shared'
+import Logo from '../../components/Logo'
 
 function formatReadingTime(wordCount: number | null): string {
   if (!wordCount) return ''
@@ -81,10 +82,9 @@ export default function Articles() {
   return (
     <div className="app-articles-page">
       <header className="app-header">
-        <Link to="/app" className="app-header-logo">
-          <img src="/logo.png" alt="Poche" />
-          <span>Poche</span>
-        </Link>
+        <div className='app-header-logo-container'>
+          <Logo />
+        </div>
         
         <div className="app-header-user">
           <span className="user-email">{user?.email}</span>
