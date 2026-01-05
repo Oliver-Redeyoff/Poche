@@ -21,10 +21,10 @@ The Poche browser extension allows users to save articles from any webpage to th
 
 ### Technology Stack
 
-- **Build Tool**: Webpack
+- **Build Tool**: Vite (migrated from Webpack)
 - **Language**: TypeScript
 - **UI Framework**: React
-- **Bundler**: Webpack with TypeScript and Babel for transpilation
+- **Bundler**: Vite with `crxjs/vite-plugin` for Manifest V3
 - **Backend**: Self-hosted Poche API with Better Auth
 - **Storage**: Chrome/Firefox storage API for bearer token and user data persistence
 - **Shared Types**: `@poche/shared` npm package (local)
@@ -38,6 +38,8 @@ browser_extension/
 │   ├── popup.html        # Popup HTML structure
 │   ├── popup.css         # Popup styles with dark mode support
 │   ├── background.ts     # Background service worker (TypeScript)
+│   ├── vite-env.d.ts     # Vite environment type declarations
+│   ├── assets/           # Static assets (icons, images)
 │   └── lib/
 │       └── api.ts        # Backend API client (auth, articles, forgot password)
 ├── icons/                # Extension icons (16x16, 48x48, 128x128)
@@ -45,7 +47,7 @@ browser_extension/
 ├── manifest.json         # Extension manifest (Manifest V3)
 ├── package.json          # Dependencies and build scripts (includes @poche/shared)
 ├── tsconfig.json         # TypeScript configuration
-├── webpack.config.js     # Webpack configuration
+├── vite.config.ts        # Vite configuration
 └── SUMMARY.md            # This file
 ```
 
@@ -222,6 +224,8 @@ The extension requires:
 - ✅ Error status popup for sign-in/sign-up failures with meaningful messages
 - ✅ Loading spinner while checking auth status (prevents auth UI flash)
 - ✅ Session expiry caching - only refreshes session when < 3 days until expiry
+- ✅ **Migrated from Webpack to Vite** for faster builds and modern tooling
+- ✅ Asset handling with Vite imports (images bundled correctly)
 
 ## Future Enhancements
 

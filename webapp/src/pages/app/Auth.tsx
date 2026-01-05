@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import Logo from '../../components/Logo'
 
 type AuthMode = 'signin' | 'signup' | 'forgot'
 
@@ -60,10 +61,7 @@ export default function Auth() {
     return (
       <div className="app-auth-page">
         <div className="app-auth-container">
-          <Link to="/" className="app-auth-logo">
-            <img src="/logo.png" alt="Poche" />
-            <span>Poche</span>
-          </Link>
+          <Logo />
           
           <div className="app-auth-success">
             <div className="success-icon">
@@ -91,12 +89,11 @@ export default function Auth() {
   return (
     <div className="app-auth-page">
       <div className="app-auth-container">
-        <Link to="/" className="app-auth-logo">
-          <img src="/logo.png" alt="Poche" />
-          <span>Poche</span>
-        </Link>
+        <div className='app-auth-logo-container'>
+          <Logo />
+        </div>
 
-        <div className="app-auth-header">
+        {/* <div className="app-auth-header">
           <h1>
             {mode === 'signin' && 'Welcome Back'}
             {mode === 'signup' && 'Create Account'}
@@ -107,7 +104,7 @@ export default function Auth() {
             {mode === 'signup' && 'Start saving articles to read later'}
             {mode === 'forgot' && "Enter your email and we'll send you a reset link"}
           </p>
-        </div>
+        </div> */}
 
         <form className="app-auth-form" onSubmit={handleSubmit}>
           {error && <div className="form-error">{error}</div>}

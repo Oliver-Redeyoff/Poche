@@ -143,7 +143,8 @@ All article endpoints require `Authorization: Bearer <token>` header.
 ### CORS Configuration
 
 The backend is configured to accept requests from:
-- `http://localhost:*` (any port for development)
+- `http://localhost:3000`, `http://localhost:3001` (development)
+- `https://poche.to` (production web app)
 - `chrome-extension://*` (Chrome extensions)
 - `moz-extension://*` (Firefox extensions)
 - `safari-extension://*` (Safari extensions)
@@ -184,9 +185,11 @@ POSTGRES_DB=poche
 BETTER_AUTH_SECRET=your-secret-key-minimum-32-characters-long
 BETTER_AUTH_URL=https://api.poche.to
 
-# Server
-PORT=3000
+# Email (for password reset)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
 ```
+
+**Important**: `POSTGRES_PASSWORD` must NOT contain special characters like `@`, `:`, `/`, `#`, `+`, or backticks. These break the DATABASE_URL parsing. Use only letters and numbers (e.g., `PocheDb2024Secure`).
 
 #### 2. Set up SSL certificates with Certbot
 
@@ -219,8 +222,20 @@ docker compose up -d --build
 
 #### 4. Run database migrations
 
+Run Drizzle migrations from the host machine (not from inside the container, as drizzle-kit is a dev dependency not included in the production image):
+
 ```bash
-docker compose exec api npm run db:push
+# Temporarily expose PostgreSQL port (add to docker-compose.yml db service):
+# ports:
+#   - "5432:5432"
+
+# Restart to apply port exposure
+docker compose up -d
+
+# Run migrations from host
+DATABASE_URL=postgresql://poche:YOUR_PASSWORD@localhost:5432/poche npx drizzle-kit push
+
+# Remove port exposure for security after migrations complete
 ```
 
 #### 5. Set up auto-renewal hook
@@ -288,8 +303,18 @@ The `nginx.conf` file configures the reverse proxy:
 - **Default server blocks** to reject requests for unknown hostnames (returns 444)
 - **Proxy headers** for proper client IP forwarding
 - **WebSocket support** for real-time features
+- **Static file serving** for the webapp at `poche.to`
+
+### Server Blocks
+
+1. **api.poche.to** - Proxies to the Poche API container (port 3000)
+2. **poche.to** - Serves the webapp static files from `/var/www/web_app_dist`
 
 SSL certificates are mounted from `/etc/letsencrypt` (Let's Encrypt directory).
+
+### Webapp Serving
+
+The webapp is built and deployed to `backend/web_app_dist/`. Docker Compose mounts this directory to `/var/www/web_app_dist` in the nginx container. The `poche.to` server block serves these files with proper MIME types and SPA routing support (`try_files $uri $uri/ /index.html`).
 
 ## Recent Fixes
 
@@ -307,6 +332,11 @@ SSL certificates are mounted from `/etc/letsencrypt` (Let's Encrypt directory).
 - ✅ **Email service**: Resend integration (`src/lib/email.ts`)
 - ✅ **Password reset emails**: Beautiful HTML templates with Poche branding
 - ✅ Uses `@poche/shared` package for common types
+- ✅ CORS configured for `https://poche.to` (webapp)
+- ✅ Webapp static file serving via nginx at `poche.to`
+- ✅ Docker volume mount for webapp build (`./web_app_dist:/var/www/web_app_dist:ro`)
+- ✅ Removed dotenv dependency from drizzle.config.ts (not needed with env vars)
+- ✅ Database password requirements documented (no special characters)
 
 ## Future Enhancements
 

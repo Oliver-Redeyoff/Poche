@@ -1,0 +1,18 @@
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.1em;
+
+    .logo-img {
+        width: 1em;
+        height: 1em;
+    }
+    
+    .logo-text {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 1em;
+        letter-spacing: -0.5;
+        color: var(--charcoal);
+    }
+}

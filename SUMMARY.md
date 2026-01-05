@@ -193,7 +193,7 @@ Poche/
 - **Custom theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 
 ### Browser Extension
-- Built with Webpack
+- Built with Vite (migrated from Webpack)
 - React with TypeScript for UI components
 - Uses Manifest V3 for Chrome/Firefox
 - Token-based authentication (bearer tokens stored in browser storage)
@@ -292,6 +292,7 @@ Poche/
 - ✅ Loading spinner while checking auth status
 - ✅ Session expiry caching (reduces API calls)
 - ✅ Uses `@poche/shared` package for types and utilities
+- ✅ **Migrated from Webpack to Vite** for faster builds
 
 ### Web App
 - ✅ React + TypeScript with Vite
@@ -310,6 +311,23 @@ Poche/
 - ✅ Animated phone mockup in hero
 - ✅ Floating background shapes for depth
 - ✅ Uses `@poche/shared` package for types
+- ✅ **Full app section** (`/app/*`) with sign in, sign up, forgot password
+- ✅ **Articles list page** with article cards and reading time
+- ✅ **Article detail page** with custom markdown rendering
+- ✅ **AuthContext** for authentication state management
+- ✅ **ProtectedRoute** component for authenticated routes
+- ✅ **API client** with bearer token auth and environment variables
+- ✅ **Build deploy script** (`npm run build:deploy`) to deploy to backend
+- ✅ **Served via Nginx** at `poche.to` in production
+
+## Production Deployment
+
+See `PRODUCTION.md` for a comprehensive guide on deploying Poche to a production server, including:
+- Docker Compose setup
+- SSL certificate generation with Let's Encrypt
+- Nginx reverse proxy configuration
+- Database migrations
+- Troubleshooting guide
 
 ## Future Enhancements
 
