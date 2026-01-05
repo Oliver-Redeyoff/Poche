@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import './ResetPassword.css'
 
 // Backend API URL - update for production
 const API_URL = 'http://localhost:3000'

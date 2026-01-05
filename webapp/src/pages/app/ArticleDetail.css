@@ -1,0 +1,169 @@
+/* ========================================
+   Article Detail Page Styles
+   ======================================== */
+
+.app-article-page {
+    min-height: 100vh;
+    background: var(--warm-white);
+
+    .article-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: var(--space-sm) var(--space-lg);
+        background: rgba(255, 251, 249, 0.9);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(45, 41, 38, 0.05);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        color: var(--charcoal-light);
+        font-weight: 500;
+        transition: color 0.2s ease;
+
+        &:hover {
+            color: var(--poche-coral);
+        }
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    .article-loading,
+    .article-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-md);
+        padding: var(--space-2xl);
+        text-align: center;
+        min-height: 60vh;
+    }
+
+    .article-error {
+        h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--charcoal);
+        }
+
+        p {
+            color: var(--charcoal-light);
+            margin-bottom: var(--space-md);
+        }
+    }
+
+    .article-content {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+            font-size: 0.9375rem;
+        }
+
+        .article-site {
+            color: var(--poche-coral);
+            font-weight: 600;
+        }
+
+        .article-author {
+            color: var(--charcoal-light);
+        }
+
+        .article-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--charcoal);
+            margin-bottom: var(--space-md);
+        }
+
+        .article-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-size: 0.9375rem;
+            color: var(--warm-gray);
+            margin-bottom: var(--space-md);
+        }
+
+        .article-divider {
+            color: var(--warm-gray-light);
+        }
+
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-lg);
+        }
+
+        .article-source-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 10px 20px;
+            background: var(--cream);
+            border-radius: var(--radius-md);
+            color: var(--charcoal);
+            font-weight: 500;
+            font-size: 0.9375rem;
+            margin-bottom: var(--space-xl);
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: var(--cream-dark);
+                color: var(--poche-coral);
+            }
+
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        .article-body {
+            border-top: 1px solid var(--cream-dark);
+            padding-top: var(--space-xl);
+        }
+
+        .article-excerpt {
+            font-size: 1.125rem;
+            color: var(--charcoal-light);
+            line-height: 1.7;
+            font-style: italic;
+        }
+
+        .article-no-content {
+            text-align: center;
+            color: var(--warm-gray);
+            padding: var(--space-xl);
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .app-article-page {
+        .article-content {
+            padding: var(--space-lg) var(--space-sm);
+
+            .article-title {
+                font-size: 1.75rem;
+            }
+        }
+    }
+}
+

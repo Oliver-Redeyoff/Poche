@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import './ArticleDetail.css'
 import { getArticle, Article } from '../../lib/api'
-import { tagToColor } from '@poche/shared'
 import Markdown from '../../components/Markdown'
+import TagChip from '../../components/TagChip'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 function formatReadingTime(wordCount: number | null): string {
   if (!wordCount) return ''
@@ -53,7 +55,7 @@ export default function ArticleDetail() {
     return (
       <div className="app-article-page">
         <div className="article-loading">
-          <div className="loading-spinner" />
+          <LoadingSpinner />
           <p>Loading article...</p>
         </div>
       </div>
@@ -114,13 +116,7 @@ export default function ArticleDetail() {
         {tags.length > 0 && (
           <div className="article-tags">
             {tags.map(tag => (
-              <span 
-                key={tag} 
-                className="tag-chip"
-                style={{ backgroundColor: tagToColor(tag) }}
-              >
-                {tag}
-              </span>
+              <TagChip key={tag} tag={tag} />
             ))}
           </div>
         )}

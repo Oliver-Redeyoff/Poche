@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import Logo from '../components/Logo'
+import './Home.css'
+import AppHeader from '../components/AppHeader'
 
 const Home = () => {
   const [isVisible, setIsVisible] = useState(false)
@@ -11,19 +12,14 @@ const Home = () => {
   return (
     <div className="page">
       {/* Navigation */}
-      <nav className="nav">
-        <div className="nav-content">
-          <div className='nav-logo-container'>
-            <Logo />
-          </div>
-          <div className="nav-links">
-            <a href="#features">Features</a>
-            <a href="#download">Download</a>
-            <a href="#extensions">Extensions</a>
-            <a href="/app">App</a>
-          </div>
+      <AppHeader>
+        <div className="nav-links">
+          <a href="#features">Features</a>
+          <a href="#download">Download</a>
+          <a href="#extensions">Extensions</a>
+          <a href="/app">App</a>
         </div>
-      </nav>
+      </AppHeader>
 
       {/* Hero Section */}
       <header className={`hero ${isVisible ? 'visible' : ''}`}>

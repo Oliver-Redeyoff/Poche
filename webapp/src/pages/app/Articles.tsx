@@ -1,24 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import './Articles.css'
 import { useAuth } from '../../contexts/AuthContext'
 import { getArticles, deleteArticle, Article } from '../../lib/api'
-import { tagToColor } from '@poche/shared'
-import Logo from '../../components/Logo'
-
-function formatReadingTime(wordCount: number | null): string {
-  if (!wordCount) return ''
-  const minutes = Math.ceil(wordCount / 200)
-  return `${minutes} min read`
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-  })
-}
+import AppHeader from '../../components/AppHeader'
+import ArticleCard from '../../components/ArticleCard'
+import TagChip from '../../components/TagChip'
+import EmptyState from '../../components/EmptyState'
 
 export default function Articles() {
   const { user, signOut } = useAuth()
@@ -81,18 +69,7 @@ export default function Articles() {
 
   return (
     <div className="app-articles-page">
-      <header className="app-header">
-        <div className='app-header-logo-container'>
-          <Logo />
-        </div>
-        
-        <div className="app-header-user">
-          <span className="user-email">{user?.email}</span>
-          <button onClick={handleSignOut} className="btn btn-secondary btn-small">
-            Sign Out
-          </button>
-        </div>
-      </header>
+      <AppHeader userEmail={user?.email} onSignOut={handleSignOut} />
 
       <main className="app-main">
         <div className="articles-header">
@@ -102,108 +79,61 @@ export default function Articles() {
 
         {allTags.length > 0 && (
           <div className="tags-filter">
-            <button
-              className={`tag-chip ${!selectedTag ? 'active' : ''}`}
+            <TagChip 
+              tag="All" 
+              active={!selectedTag} 
               onClick={() => setSelectedTag(null)}
-            >
-              All
-            </button>
+              showColor={false}
+            />
             {allTags.map(tag => (
-              <button
+              <TagChip
                 key={tag}
-                className={`tag-chip ${selectedTag === tag ? 'active' : ''}`}
+                tag={tag}
+                active={selectedTag === tag}
                 onClick={() => setSelectedTag(tag)}
-                style={{ 
-                  '--tag-color': tagToColor(tag),
-                  backgroundColor: selectedTag === tag ? tagToColor(tag) : undefined
-                } as React.CSSProperties}
-              >
-                {tag}
-              </button>
+              />
             ))}
           </div>
         )}
 
         {isLoading ? (
-          <div className="articles-loading">
-            <div className="loading-spinner" />
-            <p>Loading your articles...</p>
-          </div>
+          <EmptyState 
+            type="loading" 
+            message="Loading your articles..." 
+          />
         ) : error ? (
-          <div className="articles-error">
-            <p>{error}</p>
+          <EmptyState 
+            type="error" 
+            message={error}
+          >
             <button onClick={loadArticles} className="btn btn-secondary">
               Try Again
             </button>
-          </div>
+          </EmptyState>
         ) : filteredArticles.length === 0 ? (
-          <div className="articles-empty">
-            <div className="empty-icon">📚</div>
-            <h2>No articles yet</h2>
-            <p>
-              {selectedTag 
-                ? `No articles tagged with "${selectedTag}"`
-                : 'Save articles using the browser extension to see them here'
-              }
-            </p>
+          <EmptyState 
+            icon="📚"
+            title="No articles yet"
+            message={selectedTag 
+              ? `No articles tagged with "${selectedTag}"`
+              : 'Save articles using the browser extension to see them here'
+            }
+          >
             {selectedTag && (
               <button onClick={() => setSelectedTag(null)} className="btn btn-secondary">
                 Clear Filter
               </button>
             )}
-          </div>
+          </EmptyState>
         ) : (
           <div className="articles-grid">
             {filteredArticles.map(article => (
-              <Link 
-                to={`/app/article/${article.id}`} 
+              <ArticleCard
                 key={article.id}
-                className={`article-card ${deletingId === article.id ? 'deleting' : ''}`}
-              >
-                <div className="article-card-content">
-                  {/* <span className="article-date">{formatDate(article.createdAt)}</span> */}
-
-                  <h2 className="article-card-title">
-                    {article.title || 'Untitled Article'}
-                  </h2>
-
-                  <div className="article-card-meta">
-                    {article.siteName && (
-                      <span className="article-site">{article.siteName}</span>
-                    )}
-                    {article.wordCount && (
-                      <span className="article-reading-time">
-                        {formatReadingTime(article.wordCount)}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="article-card-footer">
-                      <div className="article-tags">
-                        {(article.tags ?? "").split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 3).map(tag => (
-                          <span 
-                            key={tag} 
-                            className="tag-chip small"
-                            style={{ backgroundColor: tagToColor(tag) }}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-
-                    <button 
-                      className="article-delete-btn"
-                      onClick={(e) => handleDelete(article.id, e)}
-                      disabled={deletingId === article.id}
-                      title="Delete article"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </Link>
+                article={article}
+                isDeleting={deletingId === article.id}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         )}
@@ -211,4 +141,3 @@ export default function Articles() {
     </div>
   )
 }
-

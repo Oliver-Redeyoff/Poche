@@ -1,0 +1,66 @@
+/* ========================================
+   Articles Page Styles
+   ======================================== */
+
+.app-articles-page {
+    min-height: 100vh;
+    background: var(--cream);
+
+    .app-main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-lg);
+    }
+
+    .articles-header {
+        margin-bottom: var(--space-lg);
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: var(--space-xs);
+        }
+
+        p {
+            color: var(--charcoal-light);
+        }
+    }
+
+    .tags-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-md);
+        border-bottom: 1px solid var(--cream-dark);
+    }
+
+    .articles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: var(--space-lg);
+    }
+}
+
+@media (max-width: 768px) {
+    .app-articles-page {
+        .app-main {
+            padding: var(--space-lg) var(--space-sm);
+        }
+
+        .articles-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .app-articles-page {
+        .tags-filter {
+            gap: 6px;
+        }
+    }
+}
+
