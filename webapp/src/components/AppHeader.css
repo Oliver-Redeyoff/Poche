@@ -1,6 +1,8 @@
 .app-header {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
     padding: var(--space-sm) var(--space-xl);
     background: rgba(253, 248, 245, 0.9);

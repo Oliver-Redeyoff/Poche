@@ -3,12 +3,6 @@ import './Home.css'
 import AppHeader from '../components/AppHeader'
 
 const Home = () => {
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    setIsVisible(true)
-  }, [])
-
   return (
     <div className="page">
       {/* Navigation */}
@@ -22,7 +16,7 @@ const Home = () => {
       </AppHeader>
 
       {/* Hero Section */}
-      <header className={`hero ${isVisible ? 'visible' : ''}`}>
+      <header className='hero'>
         <div className="hero-background">
           <div className="hero-shape hero-shape-1"></div>
           <div className="hero-shape hero-shape-2"></div>
