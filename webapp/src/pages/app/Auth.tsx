@@ -66,10 +66,7 @@ export default function Auth() {
           
           <div className="app-auth-success">
             <div className="success-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 12l2 2 4-4" />
-                <circle cx="12" cy="12" r="10" />
-              </svg>
+              <i className="fa-solid fa-circle-check"></i>
             </div>
             <h1>Check Your Email</h1>
             <p>

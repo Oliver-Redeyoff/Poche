@@ -145,12 +145,8 @@
             border-radius: 50%;
             background: linear-gradient(135deg, #10B981, #059669);
             box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-
-            svg {
-                width: 36px;
-                height: 36px;
-                color: white;
-            }
+            font-size: 2.25rem;
+            color: white;
         }
     }
 }

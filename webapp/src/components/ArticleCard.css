@@ -92,16 +92,13 @@
         border: none;
         border-radius: var(--radius-sm);
         cursor: pointer;
+        font-size: 1rem;
+        color: var(--charcoal-light);
         transition: all 0.2s ease;
 
         &:hover {
             background: #FEE2E2;
             color: #DC2626;
-        }
-
-        svg {
-            width: 18px;
-            height: 18px;
         }
     }
 }

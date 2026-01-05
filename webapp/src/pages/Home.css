@@ -135,11 +135,11 @@
         align-items: center;
         justify-content: center;
         color: var(--warm-gray);
+        font-size: 1.25rem;
         transition: color 0.2s ease, transform 0.2s ease;
 
-        svg {
-            width: 20px;
-            height: 20px;
+        .fa-apple {
+            font-size: 1.5rem;
         }
 
         &:hover {
@@ -276,12 +276,8 @@
         border-radius: var(--radius-md);
         margin-bottom: var(--space-md);
         box-shadow: 0 4px 12px rgba(239, 64, 86, 0.2);
-
-        svg {
-            width: 28px;
-            height: 28px;
-            color: white;
-        }
+        font-size: 1.5rem;
+        color: white;
     }
 
     .feature-title {
@@ -390,11 +386,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-
-        svg {
-            width: 40px;
-            height: 40px;
-        }
+        font-size: 2.5rem;
     }
 
     .download-card-content {
@@ -463,35 +455,20 @@
         justify-content: center;
         margin: 0 auto var(--space-md);
         border-radius: var(--radius-md);
-
-        svg {
-            width: 48px;
-            height: 48px;
-        }
+        font-size: 2.5rem;
+        color: white;
 
         &.chrome {
             background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
             background-size: 200% 200%;
-
-            svg {
-                color: white;
-            }
         }
 
         &.firefox {
             background: linear-gradient(135deg, #FF6B2C, #FF3998);
-
-            svg {
-                color: white;
-            }
         }
 
         &.safari {
             background: linear-gradient(135deg, #006CFF, #00C7FF);
-
-            svg {
-                color: white;
-            }
         }
     }
 

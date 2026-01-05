@@ -29,9 +29,8 @@
             color: var(--poche-coral);
         }
 
-        svg {
-            width: 20px;
-            height: 20px;
+        i {
+            font-size: 1rem;
         }
     }
 
@@ -129,9 +128,8 @@
                 color: var(--poche-coral);
             }
 
-            svg {
-                width: 16px;
-                height: 16px;
+            i {
+                font-size: 0.875rem;
             }
         }
 
