@@ -82,9 +82,7 @@ export default function ArticleDetail() {
     <div className="app-article-page">
       <header className="article-header">
         <Link to="/app" className="back-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
+          <i className="fa-solid fa-arrow-left"></i>
           Back to Articles
         </Link>
       </header>
@@ -129,9 +127,7 @@ export default function ArticleDetail() {
             className="article-source-link"
           >
             View Original Article
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-            </svg>
+            <i className="fa-solid fa-up-right-from-square"></i>
           </a>
         )}
 
