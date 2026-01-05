@@ -1,0 +1,71 @@
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: var(--space-sm) var(--space-xl);
+    background: rgba(253, 248, 245, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(45, 41, 38, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .app-header-logo-container {
+        font-size: 1.25rem;
+    }
+
+    .app-header-right {
+        display: flex;
+        align-items: center;
+        gap: var(--space-lg);
+    }
+
+    .app-header-user {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .user-email {
+        font-size: 0.9375rem;
+        color: var(--charcoal-light);
+    }
+
+    .nav-links {
+        display: flex;
+        gap: var(--space-lg);
+
+        a {
+            font-weight: 500;
+            color: var(--charcoal-light);
+            transition: color 0.2s ease;
+
+            &:hover {
+                color: var(--poche-coral);
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .app-header {
+        padding: var(--space-sm);
+
+        .app-header-right {
+            gap: var(--space-sm);
+        }
+
+        .app-header-user {
+            gap: var(--space-sm);
+        }
+
+        .user-email {
+            display: none;
+        }
+
+        .nav-links {
+            display: none;
+        }
+    }
+}

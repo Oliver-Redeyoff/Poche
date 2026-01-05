@@ -1,4 +1,5 @@
 import { useMemo, useCallback, ReactNode, useState } from 'react'
+import './Markdown.css'
 
 // Types for the markdown component
 export interface MarkdownProps {
