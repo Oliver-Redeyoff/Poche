@@ -31,17 +31,29 @@ The Poche web app is a marketing website that showcases the Poche "read it later
 webapp/
 ├── src/
 │   ├── main.tsx           # React entry point
-│   ├── App.tsx            # React Router routes
+│   ├── App.tsx            # React Router routes with ProtectedRoute
 │   ├── index.css          # Global styles with CSS variables
+│   ├── vite-env.d.ts      # Vite environment type declarations
+│   ├── lib/
+│   │   └── api.ts         # API client for backend
+│   ├── contexts/
+│   │   └── AuthContext.tsx  # Authentication state management
+│   ├── components/
+│   │   └── Markdown.tsx   # Custom markdown renderer
 │   └── pages/
 │       ├── Home.tsx       # Marketing landing page
-│       └── ResetPassword.tsx  # Password reset page
+│       ├── ResetPassword.tsx  # Password reset page
+│       └── app/
+│           ├── Auth.tsx   # Sign in/sign up/forgot password
+│           ├── Articles.tsx   # Article list
+│           └── ArticleDetail.tsx  # Article detail view
 ├── public/
 │   └── logo.png           # Poche logo
 ├── index.html             # HTML template
 ├── package.json           # Dependencies
 ├── tsconfig.json          # TypeScript config
 ├── vite.config.ts         # Vite config
+├── .env.example           # Example environment variables
 └── SUMMARY.md             # This file
 ```
 
@@ -51,6 +63,9 @@ webapp/
 |------|-----------|-------------|
 | `/` | `Home` | Marketing landing page |
 | `/reset-password` | `ResetPassword` | Password reset form |
+| `/app/auth` | `AuthPage` | Sign in, sign up, forgot password |
+| `/app` | `ArticlesPage` | List of saved articles (protected) |
+| `/app/article/:id` | `ArticleDetailPage` | Article detail with markdown rendering (protected) |
 
 ## Pages
 
@@ -65,6 +80,30 @@ Marketing landing page with:
 - **How It Works**: 3-step guide (Install, Save, Read)
 - **CTA Section**: Final call-to-action
 - **Footer**: Brand info, product links, resources links
+
+### App Section (`/app/*`)
+
+The webapp includes a full article reading application similar to the mobile app:
+
+#### Auth (`/app/auth`)
+- Email/password sign in and sign up
+- Forgot password flow (sends reset email)
+- Mode switching between forms
+- Redirects to articles list on success
+
+#### Articles (`/app`)
+- Protected route (requires authentication)
+- Lists all saved articles
+- Article cards with title, site name, reading time
+- Click to view article detail
+- Sign out button
+
+#### Article Detail (`/app/article/:id`)
+- Protected route (requires authentication)
+- Full article reading experience
+- Custom markdown renderer
+- Tags displayed as chips
+- Link back to articles list
 
 ### Reset Password (`/reset-password`)
 
@@ -144,9 +183,21 @@ npm run dev
 
 ### Scripts
 
-- `npm run dev` - Start Vite development server
+- `npm run dev` - Start Vite development server (port 3001)
 - `npm run build` - Build for production
+- `npm run build:deploy` - Build and deploy to backend (`../backend/web_app_dist`)
 - `npm run preview` - Preview production build
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```env
+VITE_API_URL=http://localhost:3000  # Development
+# VITE_API_URL=https://api.poche.to  # Production
+```
+
+Environment variables prefixed with `VITE_` are exposed to the client via `import.meta.env`.
 
 ### Configuration
 
@@ -197,6 +248,16 @@ The `ResetPassword` page has an `API_URL` constant that should be updated for di
 - ✅ Token validation and error handling
 - ✅ Success and error states for password reset
 - ✅ Uses `@poche/shared` package for types
+- ✅ **Full app section** with sign in, sign up, forgot password
+- ✅ **Articles list page** with article cards
+- ✅ **Article detail page** with markdown rendering
+- ✅ **AuthContext** for authentication state management
+- ✅ **ProtectedRoute** component for authenticated routes
+- ✅ **API client** (`lib/api.ts`) with bearer token auth
+- ✅ **Custom Markdown component** for article rendering
+- ✅ **Environment variables** via Vite (`VITE_API_URL`)
+- ✅ **Build deploy script** (`npm run build:deploy`)
+- ✅ **Served via nginx** at `poche.to` in production
 
 ## Future Enhancements
 

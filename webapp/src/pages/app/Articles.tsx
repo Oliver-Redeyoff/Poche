@@ -161,6 +161,12 @@ export default function Articles() {
                 className={`article-card ${deletingId === article.id ? 'deleting' : ''}`}
               >
                 <div className="article-card-content">
+                  {/* <span className="article-date">{formatDate(article.createdAt)}</span> */}
+
+                  <h2 className="article-card-title">
+                    {article.title || 'Untitled Article'}
+                  </h2>
+
                   <div className="article-card-meta">
                     {article.siteName && (
                       <span className="article-site">{article.siteName}</span>
@@ -172,20 +178,9 @@ export default function Articles() {
                     )}
                   </div>
                   
-                  <h2 className="article-card-title">
-                    {article.title || 'Untitled Article'}
-                  </h2>
-                  
-                  {article.excerpt && (
-                    <p className="article-card-excerpt">{article.excerpt}</p>
-                  )}
-                  
                   <div className="article-card-footer">
-                    <span className="article-date">{formatDate(article.createdAt)}</span>
-                    
-                    {article.tags && (
                       <div className="article-tags">
-                        {article.tags.split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 3).map(tag => (
+                        {(article.tags ?? "").split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 3).map(tag => (
                           <span 
                             key={tag} 
                             className="tag-chip small"
@@ -195,20 +190,19 @@ export default function Articles() {
                           </span>
                         ))}
                       </div>
-                    )}
+
+                    <button 
+                      className="article-delete-btn"
+                      onClick={(e) => handleDelete(article.id, e)}
+                      disabled={deletingId === article.id}
+                      title="Delete article"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                
-                <button 
-                  className="article-delete-btn"
-                  onClick={(e) => handleDelete(article.id, e)}
-                  disabled={deletingId === article.id}
-                  title="Delete article"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                  </svg>
-                </button>
               </Link>
             ))}
           </div>
