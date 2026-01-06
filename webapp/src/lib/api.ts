@@ -167,6 +167,13 @@ export async function forgotPassword(email: string): Promise<void> {
   }, false)
 }
 
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  await apiRequest(API_ENDPOINTS.RESET_PASSWORD, {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  }, false)
+}
+
 export async function getSession(): Promise<AuthResponse | null> {
   try {
     const token = getStoredToken()

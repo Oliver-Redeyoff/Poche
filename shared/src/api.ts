@@ -80,6 +80,7 @@ export const API_ENDPOINTS = {
   SIGN_OUT: '/api/auth/sign-out',
   GET_SESSION: '/api/auth/get-session',
   REQUEST_PASSWORD_RESET: '/api/auth/request-password-reset',
+  RESET_PASSWORD: '/api/auth/reset-password',
   
   // Articles
   ARTICLES: '/api/articles',
