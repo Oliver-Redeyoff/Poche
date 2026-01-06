@@ -3,6 +3,14 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Constants from 'expo-constants'
+import type { Article, User, AuthResponse } from '@poche/shared'
+import { 
+  shouldRefreshSession, 
+  isSessionExpired,
+  calculateSessionExpiry,
+  parseApiError,
+  API_ENDPOINTS 
+} from '@poche/shared'
 
 // Backend API URL - loaded from environment variable via app.config.js
 // Set API_URL in .env file (see .env.example)
@@ -11,53 +19,10 @@ if (!API_URL) {
   throw new Error('API_URL is not set. Create a .env file with API_URL=http://your-api-url')
 }
 
-// Storage keys
+// Storage keys (React Native convention uses @ prefix)
 const TOKEN_STORAGE_KEY = '@poche_auth_token'
 const USER_STORAGE_KEY = '@poche_user'
 const SESSION_EXPIRY_KEY = '@poche_session_expiry'
-
-// Session refresh threshold (3 days in milliseconds)
-const SESSION_REFRESH_THRESHOLD = 3 * 24 * 60 * 60 * 1000
-
-// Types
-export interface User {
-  id: string
-  email: string
-  name: string
-  emailVerified: boolean
-  image: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface AuthResponse {
-  redirect: boolean
-  token: string
-  user: User
-}
-
-// Session duration matches backend config (7 days)
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000
-
-export interface Article {
-  id: number
-  userId: string
-  title: string | null
-  content: string | null
-  excerpt: string | null
-  url: string | null
-  siteName: string | null
-  author: string | null
-  wordCount: number | null
-  tags: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-interface ApiError {
-  error: string
-  details?: unknown
-}
 
 // ============================================
 // Configuration
@@ -74,7 +39,7 @@ export function getApiUrl(): string {
 }
 
 // ============================================
-// Token Storage
+// Token Storage (AsyncStorage for React Native)
 // ============================================
 
 async function getStoredToken(): Promise<string | null> {
@@ -118,17 +83,6 @@ async function getStoredSessionExpiry(): Promise<string | null> {
   }
 }
 
-function shouldRefreshSession(expiresAt: string | null): boolean {
-  if (!expiresAt) return true
-  
-  const expiryTime = new Date(expiresAt).getTime()
-  const now = Date.now()
-  const timeUntilExpiry = expiryTime - now
-  
-  // Refresh if less than 3 days until expiry or already expired
-  return timeUntilExpiry < SESSION_REFRESH_THRESHOLD
-}
-
 // ============================================
 // API Request Helper
 // ============================================
@@ -163,16 +117,7 @@ async function apiRequest<T>(
   const data = text ? JSON.parse(text) : {}
 
   if (!response.ok) {
-    // Handle various error response formats from Better Auth
-    const errorData = data as Record<string, unknown>
-    const errorMessage = 
-      errorData.error || 
-      errorData.message || 
-      (errorData.body && typeof errorData.body === 'object' && 'message' in errorData.body 
-        ? (errorData.body as Record<string, unknown>).message 
-        : null) ||
-      `Request failed: ${response.status}`
-    throw new Error(String(errorMessage))
+    throw new Error(parseApiError(data as Record<string, unknown>, response.status))
   }
 
   return data as T
@@ -183,7 +128,7 @@ async function apiRequest<T>(
 // ============================================
 
 export async function signUp(email: string, password: string, name?: string): Promise<AuthResponse> {
-  const response = await apiRequest<AuthResponse>('/api/auth/sign-up/email', {
+  const response = await apiRequest<AuthResponse>(API_ENDPOINTS.SIGN_UP, {
     method: 'POST',
     body: JSON.stringify({ email, password, name: name || email.split('@')[0] }),
   }, false)
@@ -192,16 +137,14 @@ export async function signUp(email: string, password: string, name?: string): Pr
   if (response.token) {
     await storeToken(response.token)
     await storeUser(response.user)
-    // Calculate expiry based on backend session duration (7 days)
-    const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString()
-    await storeSessionExpiry(expiresAt)
+    await storeSessionExpiry(calculateSessionExpiry())
   }
 
   return response
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResponse> {
-  const response = await apiRequest<AuthResponse>('/api/auth/sign-in/email', {
+  const response = await apiRequest<AuthResponse>(API_ENDPOINTS.SIGN_IN, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   }, false)
@@ -210,9 +153,7 @@ export async function signIn(email: string, password: string): Promise<AuthRespo
   if (response.token) {
     await storeToken(response.token)
     await storeUser(response.user)
-    // Calculate expiry based on backend session duration (7 days)
-    const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString()
-    await storeSessionExpiry(expiresAt)
+    await storeSessionExpiry(calculateSessionExpiry())
   }
 
   return response
@@ -222,7 +163,7 @@ export async function signOut(): Promise<void> {
   try {
     const token = await getStoredToken()
     if (token) {
-      await apiRequest('/api/auth/sign-out', {
+      await apiRequest(API_ENDPOINTS.SIGN_OUT, {
         method: 'POST',
         body: JSON.stringify({}), // Better Auth expects a JSON body
       }, true)
@@ -235,7 +176,7 @@ export async function signOut(): Promise<void> {
 }
 
 export async function forgotPassword(email: string): Promise<void> {
-  await apiRequest('/api/auth/request-password-reset', {
+  await apiRequest(API_ENDPOINTS.REQUEST_PASSWORD_RESET, {
     method: 'POST',
     body: JSON.stringify({ 
       email,
@@ -255,13 +196,9 @@ export async function getSession(): Promise<AuthResponse | null> {
     }
 
     // Check if session has expired
-    if (expiresAt) {
-      const expiryTime = new Date(expiresAt).getTime()
-      if (Date.now() > expiryTime) {
-        // Session has expired, clear storage
-        await clearAuthStorage()
-        return null
-      }
+    if (isSessionExpired(expiresAt)) {
+      await clearAuthStorage()
+      return null
     }
 
     // Only refresh session if expiry is less than 3 days away
@@ -276,7 +213,7 @@ export async function getSession(): Promise<AuthResponse | null> {
 
     // Verify and refresh the session via API
     try {
-      const response = await fetch(`${apiUrl}/api/auth/get-session`, {
+      const response = await fetch(`${apiUrl}${API_ENDPOINTS.GET_SESSION}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -295,8 +232,7 @@ export async function getSession(): Promise<AuthResponse | null> {
         await storeUser(data.user)
       }
       // Refresh expiry since session was validated by the server
-      const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString()
-      await storeSessionExpiry(expiresAt)
+      await storeSessionExpiry(calculateSessionExpiry())
       
       // Return with stored token
       return {
@@ -322,17 +258,17 @@ export async function getSession(): Promise<AuthResponse | null> {
 // ============================================
 
 export async function getArticles(): Promise<Article[]> {
-  const data = await apiRequest<{ articles: Article[] }>('/api/articles')
+  const data = await apiRequest<{ articles: Article[] }>(API_ENDPOINTS.ARTICLES)
   return data.articles
 }
 
 export async function getArticle(id: number): Promise<Article> {
-  const data = await apiRequest<{ article: Article }>(`/api/articles/${id}`)
+  const data = await apiRequest<{ article: Article }>(API_ENDPOINTS.ARTICLE(id))
   return data.article
 }
 
 export async function saveArticle(url: string, tags?: string): Promise<Article> {
-  const data = await apiRequest<{ article: Article }>('/api/articles', {
+  const data = await apiRequest<{ article: Article }>(API_ENDPOINTS.ARTICLES, {
     method: 'POST',
     body: JSON.stringify({ url, tags }),
   })
@@ -340,7 +276,7 @@ export async function saveArticle(url: string, tags?: string): Promise<Article> 
 }
 
 export async function updateArticle(id: number, updates: { tags?: string | null; title?: string }): Promise<Article> {
-  const data = await apiRequest<{ article: Article }>(`/api/articles/${id}`, {
+  const data = await apiRequest<{ article: Article }>(API_ENDPOINTS.ARTICLE(id), {
     method: 'PATCH',
     body: JSON.stringify(updates),
   })
@@ -348,7 +284,7 @@ export async function updateArticle(id: number, updates: { tags?: string | null;
 }
 
 export async function deleteArticle(id: number): Promise<void> {
-  await apiRequest(`/api/articles/${id}`, {
+  await apiRequest(API_ENDPOINTS.ARTICLE(id), {
     method: 'DELETE',
   })
 }
@@ -356,3 +292,5 @@ export async function deleteArticle(id: number): Promise<void> {
 // Export for configuration
 export { API_URL }
 
+// Re-export types
+export type { Article, User, AuthResponse }
