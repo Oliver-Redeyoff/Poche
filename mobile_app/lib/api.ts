@@ -2,12 +2,14 @@
 // Uses token-based auth with AsyncStorage for React Native
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Constants from 'expo-constants'
 
-// Backend API URL - change this for production
-// For local development on a physical device, use your computer's IP address
-// For iOS simulator, use 'http://localhost:3000'
-// For Android emulator, use 'http://10.0.2.2:3000'
-const API_URL = 'http://192.168.1.234:3000'
+// Backend API URL - loaded from environment variable via app.config.js
+// Set API_URL in .env file (see .env.example)
+const API_URL = Constants.expoConfig?.extra?.apiUrl
+if (!API_URL) {
+  throw new Error('API_URL is not set. Create a .env file with API_URL=http://your-api-url')
+}
 
 // Storage keys
 const TOKEN_STORAGE_KEY = '@poche_auth_token'

@@ -3,6 +3,7 @@ import { StyleSheet, View, Button, ScrollView } from 'react-native'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
 import { signOut } from '../lib/api'
+import { clearArticlesFromStorage } from '../lib/article-sync'
 import { useAuth } from './_layout'
 import { router } from 'expo-router'
 
@@ -14,6 +15,10 @@ export default function SettingsScreen() {
   const topPadding = headerHeight
 
   async function handleLogout() {
+    // Clear locally stored articles before signing out
+    if (session?.user?.id) {
+      await clearArticlesFromStorage(session.user.id)
+    }
     await signOut()
     setSession(null)
     router.replace('/auth')
