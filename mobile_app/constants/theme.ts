@@ -1,38 +1,83 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Poche theme colors - unified with @poche/shared color palette
+ * These colors are used throughout the app for consistent styling.
  */
 
 import { Platform } from 'react-native';
+import { colors } from '@poche/shared';
 
-// Poche brand colors - warm tones that are easy on the eyes
-const accentLight = '#EF4056'; // Poche coral
-const accentDark = '#F06B7E'; // Lighter coral for dark mode
+// Re-export shared colors for convenience
+export const sharedColors = colors;
 
+// App-specific color mappings using the shared palette
 export const Colors = {
   light: {
-    text: '#1A1A1A',
-    textSecondary: '#666666',
-    textMuted: '#999999',
-    background: '#FAFAF8', // Warm off-white
-    tint: accentLight,
-    icon: '#666666',
-    tabIconDefault: '#999999',
-    tabIconSelected: accentLight,
-    divider: '#E8E4E0',
-    accent: accentLight,
+    // Text colors
+    text: colors.light.text.primary,
+    textSecondary: colors.light.text.secondary,
+    textMuted: colors.light.text.tertiary,
+    
+    // Background colors
+    background: colors.light.background.primary,
+    card: colors.light.background.tertiary,
+    surface: colors.light.background.secondary,
+    
+    // Brand/accent colors
+    tint: colors.light.brand.primary,
+    accent: colors.light.brand.primary,
+    accentLight: colors.light.brand.primaryLight,
+    accentDark: colors.light.brand.primaryDark,
+    
+    // UI colors
+    icon: colors.light.text.secondary,
+    tabIconDefault: colors.light.text.tertiary,
+    tabIconSelected: colors.light.brand.primary,
+    divider: colors.light.border.primary,
+    border: colors.light.border.primary,
+    
+    // Semantic colors
+    success: colors.light.semantic.success,
+    successLight: colors.light.semantic.successLight,
+    warning: colors.light.semantic.warning,
+    warningLight: colors.light.semantic.warningLight,
+    error: colors.light.semantic.error,
+    errorLight: colors.light.semantic.errorLight,
+    info: colors.light.semantic.info,
+    infoLight: colors.light.semantic.infoLight,
   },
   dark: {
-    text: '#E8E4DF',
-    textSecondary: '#A8A4A0',
-    textMuted: '#787470',
-    background: '#1C1A18', // Warm dark
-    tint: accentDark,
-    icon: '#A8A4A0',
-    tabIconDefault: '#787470',
-    tabIconSelected: accentDark,
-    divider: '#2E2C2A',
-    accent: accentDark,
+    // Text colors
+    text: colors.dark.text.primary,
+    textSecondary: colors.dark.text.secondary,
+    textMuted: colors.dark.text.tertiary,
+    
+    // Background colors
+    background: colors.dark.background.primary,
+    card: colors.dark.background.tertiary,
+    surface: colors.dark.background.secondary,
+    
+    // Brand/accent colors
+    tint: colors.dark.brand.primary,
+    accent: colors.dark.brand.primary,
+    accentLight: colors.dark.brand.primaryLight,
+    accentDark: colors.dark.brand.primaryDark,
+    
+    // UI colors
+    icon: colors.dark.text.secondary,
+    tabIconDefault: colors.dark.text.tertiary,
+    tabIconSelected: colors.dark.brand.primary,
+    divider: colors.dark.border.primary,
+    border: colors.dark.border.primary,
+    
+    // Semantic colors
+    success: colors.dark.semantic.success,
+    successLight: colors.dark.semantic.successLight,
+    warning: colors.dark.semantic.warning,
+    warningLight: colors.dark.semantic.warningLight,
+    error: colors.dark.semantic.error,
+    errorLight: colors.dark.semantic.errorLight,
+    info: colors.dark.semantic.info,
+    infoLight: colors.dark.semantic.infoLight,
   },
 };
 
