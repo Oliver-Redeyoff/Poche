@@ -119,7 +119,7 @@ const darkColors: Colors = {
   background: {
     primary: '#1A1715',      // Deep warm black - main background
     secondary: '#252220',    // Slightly lighter - cards, sections
-    tertiary: '#2F2B28',     // Elevated surfaces
+    tertiary: '#211E1C',     // Elevated surfaces (subtle lift from primary)
   },
 
   // Text Colors
