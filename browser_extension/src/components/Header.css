@@ -1,7 +1,6 @@
 .header {
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  border-bottom: 1px solid var(--color-border-primary);
 
   .header-inner {
     display: flex;
@@ -19,9 +18,8 @@
     margin: 0;
     font-size: 22px;
     font-weight: 700;
-    font-family: 'Bitter', serif;
-    color: var(--text-primary);
+    font-family: var(--font-display);
+    color: var(--color-text-primary);
     letter-spacing: -0.5px;
   }
 }
-

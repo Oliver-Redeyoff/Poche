@@ -3,4 +3,5 @@ export * from './types.js'
 export * from './util.js'
 export * from './markdown.js'
 export * from './api.js'
+export * from './colors.js'
 

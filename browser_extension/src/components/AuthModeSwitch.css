@@ -1,6 +1,6 @@
 .auth-mode-switch {
   display: flex;
-  background: var(--bg-secondary);
+  background: var(--color-bg-secondary);
   border-radius: 8px;
   padding: 4px;
   margin-bottom: 20px;
@@ -13,19 +13,18 @@
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      color: var(--text-primary);
+      color: var(--color-text-primary);
     }
 
     &.active {
-      background: var(--bg-primary);
-      color: var(--accent-color);
+      background: var(--color-bg-primary);
+      color: var(--color-brand-primary);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
   }
 }
-
