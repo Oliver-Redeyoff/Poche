@@ -9,13 +9,13 @@
       margin: 0 0 8px 0;
       font-size: 18px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: var(--color-text-primary);
     }
 
     p {
       margin: 0;
       font-size: 13px;
-      color: var(--text-secondary);
+      color: var(--color-text-secondary);
       line-height: 1.5;
     }
   }
@@ -34,26 +34,26 @@
     label {
       font-size: 13px;
       font-weight: 500;
-      color: var(--text-secondary);
+      color: var(--color-text-secondary);
     }
 
     input {
       padding: 12px 14px;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--color-border-primary);
       border-radius: 8px;
       font-size: 14px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
       &:focus {
         outline: none;
-        border-color: var(--accent-color);
-        box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+        border-color: var(--color-brand-primary);
+        box-shadow: 0 0 0 3px rgba(239, 64, 86, 0.1);
       }
 
       &::placeholder {
-        color: var(--text-tertiary);
+        color: var(--color-text-tertiary);
       }
 
       &:disabled {
@@ -63,4 +63,3 @@
     }
   }
 }
-

@@ -13,18 +13,17 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
   &.info {
-    background: var(--accent-color);
+    background: var(--color-info);
     color: white;
   }
 
   &.success {
-    background: var(--success-color);
+    background: var(--color-success);
     color: white;
   }
 
   &.error {
-    background: var(--error-color);
+    background: var(--color-error);
     color: white;
   }
 }
-
