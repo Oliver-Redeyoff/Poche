@@ -22,7 +22,8 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Tag Management**: Add and remove tags from articles directly from article cards with confirmation dialogs
 - **Tag Filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading Time**: Display estimated reading time based on article word count
-- **Shared Types**: Uses `@poche/shared` npm package for common types and utilities
+- **Clear Data on Logout**: Locally stored articles are cleared when user signs out
+- **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
 
 ## Architecture
 
@@ -36,8 +37,8 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Storage**: AsyncStorage for session persistence and article caching
 - **Background Tasks**: expo-background-task for periodic article syncing
 - **Animations**: react-native-reanimated for smooth list animations
-- **Markdown Rendering**: Custom markdown-to-React-Native component (`components/markdown.tsx`)
-- **Shared Types**: `@poche/shared` npm package (local)
+- **Markdown Rendering**: Custom markdown-to-React-Native component using `@poche/shared` parsing
+- **Shared Package**: `@poche/shared` npm package for types, utilities, API helpers, markdown parsing
 
 ### File Structure
 
@@ -51,14 +52,14 @@ mobile_app/
 │   └── settings.tsx        # Settings screen
 ├── components/            # React components
 │   ├── article-card.tsx   # Article card with tag management, delete, and animations
-│   ├── markdown.tsx       # Custom markdown-to-React-Native renderer
+│   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
 │   └── ...
 ├── lib/
-│   ├── api.ts            # API client for self-hosted backend (includes forgotPassword)
+│   ├── api.ts            # API client (uses @poche/shared helpers)
 │   ├── background-sync.ts # Background task for syncing articles
-│   ├── article-sync.ts   # Centralized article sync logic
+│   ├── article-sync.ts   # Centralized article sync logic with clear on logout
 │   └── image-cache.ts    # Image extraction, downloading, and caching utilities
 ├── hooks/                # Custom React hooks
 │   ├── use-color-scheme.ts
@@ -67,11 +68,14 @@ mobile_app/
 │   └── theme.ts          # Theme colors and fonts
 ├── patches/              # React Native patches (applied via patch-package)
 │   └── react-native+0.81.5.patch  # iOS text rendering fix
+├── metro.config.js       # Metro bundler config for @poche/shared
+├── app.config.js         # Expo config with environment variables
+├── .env.example          # Example environment variables
 ├── package.json          # Dependencies (includes @poche/shared)
 └── SUMMARY.md            # This file
 ```
 
-**Note**: Shared types and utilities are imported from `@poche/shared` (located at `../shared`).
+**Note**: Shared types, utilities, and markdown parsing are imported from `@poche/shared` (located at `../shared`).
 
 ## Key Components
 
@@ -98,6 +102,12 @@ Authentication screen:
 - Themed UI with dark mode support
 - Redirects to home on successful authentication
 
+### app/settings.tsx
+Settings screen:
+- User information display
+- Sign out functionality
+- **Clears local articles on logout**: Calls `clearArticlesFromStorage(userId)` before signing out
+
 ### components/article-card.tsx
 Article card component:
 - Renders individual article card with title, site name, reading time, and optional image
@@ -112,21 +122,43 @@ Article card component:
 - **Reading time**: Calculates and displays reading time based on article wordCount
 - Updates parent state and storage on deletion and tag changes
 
+### components/markdown.tsx
+Custom markdown-to-React-Native renderer:
+- Uses `tokenize()` and `parseInline()` from `@poche/shared` for parsing
+- Renders React Native elements for all markdown block and inline types
+- Custom styles for headings, paragraphs, code, blockquotes, etc.
+- `renderImage` prop for custom image rendering with `expo-image`
+- Image filtering: skips invalid URLs and images < 50x50 pixels
+- Error handling: failed images are hidden gracefully
+- `baseUrl` prop for resolving relative URLs in links
+- Link styling: accent color with underline, opens in browser
+
 ### app/article/[id].tsx
 Article detail screen with premium reading experience:
 - Displays full article content with enhanced typography
-- Uses custom `Markdown` component (`components/markdown.tsx`) for rendering markdown content
+- Uses custom `Markdown` component for rendering
 - **Custom image rendering**:
   - Filters out invalid image URLs (empty, #, data URIs)
-  - Filters out low-resolution images (< 50x50 pixels) like tracking pixels
+  - Filters out low-resolution images (< 50x50 pixels)
   - Handles image load errors gracefully
-  - 100% width images with preserved aspect ratio using `expo-image`
+  - 100% width images with preserved aspect ratio
 - **Link styling**: Links appear in accent color with underline
 - Tags displayed at top of article with colored chips
 - Loads articles from local storage only (offline-first)
 - Handles navigation back if article not found
-- Shows article title, site name, reading time, and metadata
-- Uses `useWindowDimensions()` for correct responsive width
+
+### lib/api.ts
+API client using `@poche/shared` helpers:
+- Uses shared `API_ENDPOINTS` for endpoint definitions
+- Uses shared `parseApiError()` for error handling
+- Uses shared `shouldRefreshSession()`, `isSessionExpired()`, `calculateSessionExpiry()`
+- Environment variable for API_URL via `app.config.js` and `expo-constants`
+- Token storage in AsyncStorage
+
+### lib/article-sync.ts
+Centralized article sync logic:
+- `syncArticles()` - Sync articles from backend and cache images
+- `clearArticlesFromStorage(userId)` - Clear all locally stored articles for a user (used on logout)
 
 ## Routing Structure
 
@@ -149,6 +181,12 @@ The app communicates with a self-hosted backend via `lib/api.ts`:
 - **Bearer token auth**: Token stored in AsyncStorage, sent in Authorization header
 - **User-scoped queries**: All article operations filter by authenticated user
 
+### Environment Variables
+API URL is configured via environment variable:
+1. Create `.env` file with `API_URL=http://your-api-url`
+2. `app.config.js` reads `.env` and exposes via `extra.apiUrl`
+3. `lib/api.ts` reads via `expo-constants`
+
 ### Article Fields
 - `id` (number) - Unique identifier
 - `title`, `content`, `excerpt` - Article text (content is markdown)
@@ -161,6 +199,7 @@ The app communicates with a self-hosted backend via `lib/api.ts`:
 - Articles cached in AsyncStorage with key `@poche_articles_{userId}`
 - Incremental sync: Only fetches new articles not already in local storage
 - Offline support: Article detail view loads only from local storage
+- **Cleared on logout**: `clearArticlesFromStorage()` removes all articles for user
 
 ## Authentication Flow
 
@@ -172,6 +211,7 @@ The app communicates with a self-hosted backend via `lib/api.ts`:
 6. Background sync registered → Periodic article syncing enabled
 7. Articles loaded → From local storage immediately, then synced from backend
 8. User can view articles → With offline support
+9. **User signs out** → Local articles cleared, session cleared
 
 ## UI/UX Features
 
@@ -197,10 +237,16 @@ npm install
 npx expo start
 ```
 
+### Environment Variables
+Create a `.env` file:
+```env
+API_URL=http://localhost:3000  # or your backend URL
+```
+
 ### Connecting to Local Backend
 1. Start the backend with Docker: `docker compose -f docker-compose.dev.yml up`
 2. Find your computer's local IP address (e.g., `192.168.1.100`)
-3. Update `API_URL` in `lib/api.ts` to `http://YOUR_IP:3000`
+3. Update `.env` with `API_URL=http://YOUR_IP:3000`
 4. Ensure your phone and computer are on the same network
 
 ### Scripts
@@ -225,6 +271,7 @@ Key dependencies:
 - `expo-image` - Optimized image component
 - `expo-font` - Custom font loading
 - `expo-splash-screen` - Splash screen management during font loading
+- `expo-constants` - Access to app config and environment variables
 - `@expo-google-fonts/bitter` - Bitter font for display/headers
 - `@expo-google-fonts/source-sans-3` - Source Sans 3 font for body text
 - `@react-native-async-storage/async-storage` - Local storage for articles and session
@@ -232,7 +279,7 @@ Key dependencies:
 - `expo-task-manager` - Task manager for background tasks
 - `expo-file-system/legacy` - Image downloading and caching for offline access
 - `react-native-reanimated` - Smooth animations for article list
-- Custom `Markdown` component - In-house markdown-to-React-Native renderer
+- `@poche/shared` - Shared types, utilities, API helpers, markdown parsing
 - `patch-package` - Dev dependency for patching react-native source code
 
 ## State Management
@@ -265,13 +312,34 @@ Key dependencies:
 - Android-specific styling
 - Edge-to-edge support
 
+## Metro Configuration
+
+The app uses a custom `metro.config.js` to resolve `@poche/shared` from outside the project directory:
+
+```javascript
+const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
+
+const config = getDefaultConfig(__dirname);
+
+config.watchFolders = [path.resolve(__dirname, '../shared')];
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, './node_modules'),
+];
+config.resolver.extraNodeModules = {
+  '@poche/shared': path.resolve(__dirname, '../shared'),
+};
+
+module.exports = config;
+```
+
 ## Recent Enhancements
 
 - ✅ Migrated from Supabase to self-hosted backend
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management
 - ✅ **Forgot password flow**: Request password reset from auth screen
-- ✅ Custom markdown renderer (`components/markdown.tsx`) - no external markdown dependencies
+- ✅ Custom markdown renderer using shared parsing from `@poche/shared`
 - ✅ Custom image rendering with error handling and size filtering
 - ✅ Link styling with accent color and underline
 - ✅ Offline article reading support
@@ -289,59 +357,61 @@ Key dependencies:
 - ✅ Tag filtering on homepage with tag chips
 - ✅ Reading time display based on wordCount
 - ✅ Cross-platform tag input modal
-- ✅ Uses `@poche/shared` package for types and utilities
+- ✅ Uses `@poche/shared` package for types, utilities, API helpers, markdown parsing
 - ✅ Custom Poche color theme (warm tones, coral accent #EF4056)
 - ✅ Tags displayed at top of article detail view
 - ✅ iOS app icon asset catalog with all required sizes
-- ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts` (Bitter for headers/logo, Source Sans 3 for body)
+- ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts`
 - ✅ Font weight variants: Regular (400), Medium (500), SemiBold (600), Bold (700)
 - ✅ Improved authentication error messaging with Better Auth error format handling
 - ✅ Session expiry caching - only refreshes session when < 3 days until expiry
-- ✅ React Native iOS text rendering patch for Fabric new architecture (fixes text cut-off issue)
+- ✅ React Native iOS text rendering patch for Fabric new architecture
 - ✅ patch-package setup for maintaining React Native patches
 - ✅ buildReactNativeFromSource enabled for applying native code patches
+- ✅ **Environment variables**: API_URL via `.env` and `app.config.js`
+- ✅ **Metro bundler config**: Support for `@poche/shared` outside project directory
+- ✅ **Clear articles on logout**: `clearArticlesFromStorage()` function
+- ✅ **Shared API helpers**: Uses `@poche/shared` for endpoints, error parsing, session management
+- ✅ **Shared markdown parsing**: Uses `@poche/shared` for tokenization and inline parsing
 
 ## Technical Notes
 
 ### Custom Markdown Renderer
-The article detail view uses a custom `Markdown` component (`components/markdown.tsx`) that parses markdown and renders React Native elements:
+The article detail view uses a custom `Markdown` component (`components/markdown.tsx`) that uses parsing from `@poche/shared`:
+
+**Shared Parsing (`@poche/shared`):**
+- `tokenize()` - Parse markdown into block tokens
+- `parseInline()` - Parse inline elements
+- `isValidImageUrl()` - Validate image URLs
+- `resolveUrl()` - Resolve relative URLs
 
 **Supported Elements:**
-- Block elements: Headings (h1-h6), paragraphs, code blocks (fenced/indented), blockquotes, lists (ordered/unordered), horizontal rules, tables, images
+- Block elements: Headings (h1-h6), paragraphs, code blocks, blockquotes, lists, horizontal rules, tables, images
 - Inline elements: Bold, italic, strikethrough, inline code, links, inline images
 
 **Features:**
-- Custom styles for all markdown elements (headings, paragraphs, code, blockquotes, etc.)
-- `renderImage` prop for custom image rendering with `expo-image`
-- Image filtering: skips invalid URLs and images < 50x50 pixels via `minImageWidth`/`minImageHeight` props
+- Custom styles for all markdown elements
+- `renderImage` prop for custom image rendering
+- Image filtering: skips invalid URLs and images < 50x50 pixels
 - Error handling: failed images are hidden gracefully
-- `baseUrl` prop for resolving relative URLs in links
-- Link styling: accent color with underline, opens in browser via `Linking.openURL()`
-- Full control over rendering without external dependencies
+- Link styling: accent color with underline
 
 ### Image Caching Architecture
 - `lib/image-cache.ts` contains utilities for extracting, downloading, and caching images
 - Images are stored in `${FileSystem.documentDirectory}article-images/{userId}/{articleId}/`
-- Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function with `processImages: true`
+- Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function
 
 ### React Native iOS Text Rendering Patch
 A patch is applied to React Native to fix a text cut-off issue on iOS with the new architecture (Fabric).
 
-**The Problem**: When using `lineHeight` styles on iOS with React Native's new Fabric renderer, text can get truncated/cut off in certain cases due to floating-point rounding issues in text measurement. See [GitHub Issue #53450](https://github.com/facebook/react-native/issues/53450).
+**The Problem**: When using `lineHeight` styles on iOS with React Native's new Fabric renderer, text can get truncated/cut off in certain cases due to floating-point rounding issues in text measurement.
 
-**The Fix**: The patch modifies `RCTTextLayoutManager.mm` to add a small epsilon (0.001) to text size calculations before ceiling, preventing text from being cut off:
-```objc
-CGFloat epsilon = 0.001;
-size = (CGSize){ceil((size.width + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor,
-                ceil((size.height + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor};
-```
+**The Fix**: The patch modifies `RCTTextLayoutManager.mm` to add a small epsilon (0.001) to text size calculations.
 
 **Configuration**:
 - Patch file: `patches/react-native+0.81.5.patch`
 - Applied automatically via `postinstall` script using `patch-package`
-- Requires `buildReactNativeFromSource: true` in `app.json` experiments (Expo uses precompiled RN binaries by default)
-
-**Note**: Building from source increases build times significantly. When React Native officially fixes this bug, the patch and `buildReactNativeFromSource` setting can be removed.
+- Requires `buildReactNativeFromSource: true` in `app.json` experiments
 
 ## Future Enhancements
 
