@@ -27,20 +27,21 @@ import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
+import { Colors } from '@/constants/theme'
 
 // Prevent splash screen from hiding until fonts are loaded
 SplashScreen.preventAutoHideAsync()
 
-// Custom Poche theme colors - warm tones that are easy on the eyes
+// Custom Poche theme colors using unified theme constants
 const PocheLightTheme: Theme = {
   dark: false,
   colors: {
-    primary: '#EF4056', // Poche coral accent
-    background: '#f2f2f2', // Warm off-white
-    card: 'white',
-    text: '#1A1A1A',
-    border: '#E8E4E0',
-    notification: '#EF4056',
+    primary: Colors.light.accent,
+    background: Colors.light.background,
+    card: Colors.light.card,
+    text: Colors.light.text,
+    border: Colors.light.border,
+    notification: Colors.light.accent,
   },
   fonts: DefaultTheme.fonts,
 }
@@ -48,12 +49,12 @@ const PocheLightTheme: Theme = {
 const PocheDarkTheme: Theme = {
   dark: true,
   colors: {
-    primary: '#F06B7E', // Lighter coral for dark mode
-    background: '#1C1A18', // Warm dark
-    card: '#151413',
-    text: '#E8E4DF',
-    border: '#2E2C2A',
-    notification: '#F06B7E',
+    primary: Colors.dark.accent,
+    background: Colors.dark.background,
+    card: Colors.dark.card,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+    notification: Colors.dark.accent,
   },
   fonts: DarkTheme.fonts,
 }

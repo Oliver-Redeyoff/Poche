@@ -13,7 +13,7 @@
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
     cursor: pointer;
     transition: all 0.2s ease;
 
@@ -23,7 +23,7 @@
 
     &.active {
       background: var(--color-bg-primary);
-      color: var(--color-brand-primary);
+      color: var(--color-text-primary);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
   }
