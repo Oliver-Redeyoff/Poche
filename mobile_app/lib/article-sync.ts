@@ -11,6 +11,18 @@ export function getArticlesStorageKey(userId: string): string {
 }
 
 /**
+ * Clear articles from AsyncStorage for a user
+ */
+export async function clearArticlesFromStorage(userId: string): Promise<void> {
+  try {
+    const storageKey = getArticlesStorageKey(userId)
+    await AsyncStorage.removeItem(storageKey)
+  } catch (error) {
+    console.error('Error clearing articles from storage:', error)
+  }
+}
+
+/**
  * Load articles from AsyncStorage
  */
 export async function loadArticlesFromStorage(userId: string): Promise<Article[]> {
