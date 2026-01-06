@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { resetPassword } from '../lib/api'
 import './ResetPassword.css'
-
-// Backend API URL - update for production
-const API_URL = 'http://localhost:3000'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -51,23 +49,7 @@ const ResetPassword = () => {
     setErrorMessage('')
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          newPassword: password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to reset password')
-      }
-
+      await resetPassword(token, password)
       setStatus('success')
     } catch (err) {
       setStatus('error')
@@ -192,4 +174,3 @@ const ResetPassword = () => {
 }
 
 export default ResetPassword
-
