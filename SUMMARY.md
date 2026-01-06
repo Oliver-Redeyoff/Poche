@@ -8,7 +8,7 @@ Poche is a "read it later" application that allows users to save articles from t
 2. **Mobile App** - React Native mobile application (iOS/Android) built with Expo
 3. **Browser Extension** - Cross-browser extension (Chrome, Firefox, Safari) for saving articles
 4. **Web App** - Marketing website with app download links, SEO optimization, and password reset page
-5. **Shared** - Shared TypeScript types and utilities used across all projects
+5. **Shared** - Shared TypeScript types, utilities, and styling used across all projects
 
 ## Architecture
 
@@ -16,9 +16,9 @@ Poche is a "read it later" application that allows users to save articles from t
 
 - **Backend**: Hono (Node.js), Better Auth with bearer plugin, Drizzle ORM, PostgreSQL
 - **Mobile App**: React Native with Expo Router, custom markdown renderer
-- **Browser Extension**: React with TypeScript, built with Webpack
+- **Browser Extension**: React with TypeScript, built with Vite
 - **Web App**: React with TypeScript, Vite, React Router
-- **Shared Package**: TypeScript types and utilities (`@poche/shared`)
+- **Shared Package**: TypeScript types, utilities, colors, and markdown parsing (`@poche/shared`)
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
 - **Email**: Resend for transactional emails (password reset)
 - **Article Extraction**: Defuddle (server-side Node.js version, markdown output)
@@ -75,6 +75,10 @@ Poche/
 │   ├── src/            # Source files
 │   │   ├── types.ts    # User, AuthResponse, Article types
 │   │   ├── util.ts     # Utility functions (tagToColor)
+│   │   ├── constants.ts # Session duration, refresh threshold
+│   │   ├── api.ts      # API endpoints, session helpers, error parsing
+│   │   ├── markdown.ts # Markdown tokenization and parsing
+│   │   ├── colors.ts   # Unified light/dark color palette
 │   │   └── index.ts    # Re-exports
 │   ├── package.json    # npm package config
 │   └── tsconfig.json   # TypeScript config
@@ -91,14 +95,23 @@ Poche/
 │   ├── app/            # Expo Router file-based routing
 │   ├── components/     # React components
 │   ├── lib/            # API client, sync utilities
+│   ├── metro.config.js # Metro bundler config for @poche/shared
+│   ├── app.config.js   # Expo config with env variables
 │   └── ...
 ├── browser_extension/   # Browser extension for saving articles
 │   ├── src/            # Source files (React/TypeScript)
+│   │   ├── components/ # Extracted React components
+│   │   ├── lib/        # API client, types, storage utilities
+│   │   ├── App.tsx     # Main app component
+│   │   └── popup.tsx   # Entry point with color scheme setup
 │   ├── dist/           # Built extension files
 │   └── ...
-├── webapp/              # Marketing website + password reset
+├── webapp/              # Marketing website + full app
 │   ├── src/            # React source files
-│   │   └── pages/      # Home, ResetPassword
+│   │   ├── components/ # Reusable UI components with CSS
+│   │   ├── pages/      # Home, ResetPassword, app/*
+│   │   ├── contexts/   # AuthContext
+│   │   └── lib/        # API client
 │   ├── public/         # Static assets
 │   └── ...
 └── SUMMARY.md          # This file
@@ -135,6 +148,7 @@ Poche/
 - **Tag management**: Add and remove tags from articles directly from article cards
 - **Tag filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading time**: Display estimated reading time based on article word count
+- **Clear data on logout**: Locally stored articles are cleared when user signs out
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -146,6 +160,7 @@ Poche/
 - **Smart button state**: "Save Article" button is disabled and shows "Already Saved" if current URL is already saved
 - **Automatic sync**: Syncs saved article list from backend on popup open
 - **Tag input**: UI to specify comma-delimited list of tags before saving an article
+- **Light/dark mode**: Automatic theme switching based on system preferences
 
 ### Web App Features
 - Marketing landing page at `/` route
@@ -158,6 +173,8 @@ Poche/
 - **Responsive design**: Mobile-first with beautiful desktop layout
 - **Poche branding**: Warm color palette with coral accent (#EF4056)
 - **Custom typography**: Bitter serif for headings, Source Sans 3 for body
+- **Light/dark mode**: Automatic theme switching based on system preferences
+- **Font Awesome icons**: Scalable vector icons throughout the app
 
 ## Workflow
 
@@ -189,8 +206,9 @@ Poche/
 - **Image caching**: Uses `expo-file-system/legacy` to download and cache article images locally
 - **Background tasks**: Uses `expo-background-task` for periodic article syncing and image caching
 - **Animations**: Uses `react-native-reanimated` for smooth article list animations
-- **Markdown rendering**: Custom `Markdown` component (`components/markdown.tsx`) with custom image and link handling
+- **Markdown rendering**: Custom `Markdown` component using shared parsing from `@poche/shared`
 - **Custom theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
+- **Environment variables**: API_URL configured via `.env` file and `app.config.js`
 
 ### Browser Extension
 - Built with Vite (migrated from Webpack)
@@ -198,6 +216,9 @@ Poche/
 - Uses Manifest V3 for Chrome/Firefox
 - Token-based authentication (bearer tokens stored in browser storage)
 - Cross-browser API compatibility layer
+- **Component-based architecture**: Extracted reusable components (Header, StatusMessage, LoginSection, MainSection, etc.)
+- **Shared colors**: Uses `@poche/shared` color palette with dynamic CSS variables
+- **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
 
 ### Web App
 - Built with Vite for fast development
@@ -206,6 +227,10 @@ Poche/
 - SEO optimized with meta tags and structured data
 - Custom CSS with CSS variables for theming
 - Responsive design with mobile-first approach
+- **Component-based architecture**: Extracted reusable components (Logo, LoadingSpinner, TagChip, AppHeader, ArticleCard, EmptyState, Markdown)
+- **Shared colors**: Uses `@poche/shared` color palette with dynamic CSS variables
+- **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
+- **Font Awesome**: Scalable vector icons via CDN
 
 ## Configuration
 
@@ -220,12 +245,48 @@ Poche/
 - CORS restrictions for API access
 - Session expiration and refresh
 
+## Shared Package (@poche/shared)
+
+The shared package provides common functionality across all projects:
+
+### Types (`types.ts`)
+- `User`, `AuthResponse`, `Article`, `LegacyArticle`
+
+### Utilities (`util.ts`)
+- `tagToColor()` - Generates consistent colors for tag chips
+
+### Constants (`constants.ts`)
+- `SESSION_DURATION` - 7 days in milliseconds
+- `SESSION_REFRESH_THRESHOLD` - 3 days in milliseconds
+
+### API Helpers (`api.ts`)
+- `API_ENDPOINTS` - Centralized endpoint definitions
+- `parseApiError()` - Consistent error message extraction
+- `shouldRefreshSession()` - Check if session needs refresh
+- `isSessionExpired()` - Check if session has expired
+- `calculateSessionExpiry()` - Calculate new session expiry date
+
+### Markdown Parsing (`markdown.ts`)
+- `tokenize()` - Parse markdown into block tokens
+- `parseInline()` - Parse inline elements (bold, italic, links, etc.)
+- `isValidImageUrl()` - Validate image URLs
+- `resolveUrl()` - Resolve relative URLs against base URL
+
+### Colors (`colors.ts`)
+- Unified light/dark color palette for all projects
+- `colors` object with `light` and `dark` schemes
+- Categories: brand, background, text, border, accent, semantic
+- `getColors(scheme)` and `getColor(scheme, category, key)` helpers
+
 ## Recent Enhancements
 
 ### Shared Package
 - ✅ Moved shared code to root-level `@poche/shared` npm package
 - ✅ TypeScript types: User, AuthResponse, Article, LegacyArticle
 - ✅ Utility functions: tagToColor
+- ✅ **API helpers**: Shared API endpoints, session management, error parsing
+- ✅ **Markdown parsing**: Shared tokenization and inline parsing
+- ✅ **Unified colors**: Light/dark color palette for all projects
 - ✅ Installed as local dependency in all 4 projects
 - ✅ Proper TypeScript build with declaration files
 
@@ -253,7 +314,7 @@ Poche/
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management and navigation guards
 - ✅ **Forgot password flow**: Request password reset from auth screen
-- ✅ Custom markdown renderer (`components/markdown.tsx`) - no external markdown dependencies
+- ✅ Custom markdown renderer using shared parsing from `@poche/shared`
 - ✅ Custom image rendering with expo-image
 - ✅ Image filtering (invalid URLs, low-resolution < 50x50)
 - ✅ Image error handling with graceful degradation
@@ -269,11 +330,14 @@ Poche/
 - ✅ Tag filtering on homepage
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
-- ✅ Uses `@poche/shared` package for types and utilities
+- ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
-- ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts` (Bitter for headers/logo, Source Sans 3 for body)
+- ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts`
 - ✅ Improved authentication error messaging
 - ✅ Session expiry caching (reduces API calls)
+- ✅ **Environment variables**: API_URL via `.env` and `app.config.js`
+- ✅ **Metro bundler config**: Support for `@poche/shared` outside project directory
+- ✅ **Clear articles on logout**: Locally stored articles cleared on sign out
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
@@ -291,8 +355,12 @@ Poche/
 - ✅ Error status popup for sign-in/sign-up failures
 - ✅ Loading spinner while checking auth status
 - ✅ Session expiry caching (reduces API calls)
-- ✅ Uses `@poche/shared` package for types and utilities
+- ✅ Uses `@poche/shared` package for types, utilities, API helpers, and colors
 - ✅ **Migrated from Webpack to Vite** for faster builds
+- ✅ **Component-based refactor**: Extracted Header, StatusMessage, LoadingSpinner, AuthModeSwitch, TagsInput, LoginSection, MainSection, App components
+- ✅ **Scoped CSS**: Each component has its own CSS file with nested styles
+- ✅ **Shared colors**: Uses `@poche/shared` color palette
+- ✅ **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
 
 ### Web App
 - ✅ React + TypeScript with Vite
@@ -310,7 +378,7 @@ Poche/
 - ✅ Bitter + Source Sans 3 typography
 - ✅ Animated phone mockup in hero
 - ✅ Floating background shapes for depth
-- ✅ Uses `@poche/shared` package for types
+- ✅ Uses `@poche/shared` package for types, utilities, and colors
 - ✅ **Full app section** (`/app/*`) with sign in, sign up, forgot password
 - ✅ **Articles list page** with article cards and reading time
 - ✅ **Article detail page** with custom markdown rendering
@@ -319,6 +387,11 @@ Poche/
 - ✅ **API client** with bearer token auth and environment variables
 - ✅ **Build deploy script** (`npm run build:deploy`) to deploy to backend
 - ✅ **Served via Nginx** at `poche.to` in production
+- ✅ **Component-based refactor**: Extracted Logo, LoadingSpinner, TagChip, AppHeader, ArticleCard, EmptyState, Markdown components
+- ✅ **Scoped CSS**: Each component/page has its own CSS file with nested styles
+- ✅ **Font Awesome icons**: Replaced SVG icons with Font Awesome
+- ✅ **Shared colors**: Uses `@poche/shared` color palette
+- ✅ **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
 
 ## Production Deployment
 

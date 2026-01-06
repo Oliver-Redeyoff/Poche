@@ -8,8 +8,8 @@
     border-radius: 100px;
     border: none;
     cursor: pointer;
-    background: var(--cream-dark);
-    color: var(--charcoal);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
     transition: all 0.2s ease;
 
     &:hover {
@@ -17,7 +17,7 @@
     }
 
     &.active {
-        background: var(--poche-coral);
+        background: var(--color-brand-primary);
         color: white;
     }
 
@@ -34,4 +34,3 @@
         }
     }
 }
-

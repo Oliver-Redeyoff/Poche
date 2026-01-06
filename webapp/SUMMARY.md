@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Poche web app is a marketing website that showcases the Poche "read it later" application. It provides information about features, download links for mobile apps, and browser extension installation links. It also handles authentication flows like password reset.
+The Poche web app is a marketing website that showcases the Poche "read it later" application. It provides information about features, download links for mobile apps, and browser extension installation links. It also handles authentication flows like password reset and includes a full article reading application.
 
 ## Features
 
@@ -11,8 +11,11 @@ The Poche web app is a marketing website that showcases the Poche "read it later
 - **App Download Links**: iOS App Store, Google Play Store
 - **Browser Extension Links**: Chrome Web Store, Firefox Add-ons, Safari App Store
 - **Password Reset Page**: Handles password reset flow from email links
+- **Full App Section**: Sign in, sign up, article list, article detail reading
 - **Responsive Design**: Mobile-first with beautiful desktop layout
 - **Poche Branding**: Warm color palette with coral accent (#EF4056)
+- **Light/Dark Mode**: Automatic theme switching based on `prefers-color-scheme`
+- **Font Awesome Icons**: Scalable vector icons throughout the app
 
 ## Architecture
 
@@ -21,41 +24,84 @@ The Poche web app is a marketing website that showcases the Poche "read it later
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
 - **Routing**: React Router DOM
-- **Styling**: CSS with CSS variables for theming
+- **Styling**: CSS with CSS variables for theming (dynamic light/dark mode)
 - **Typography**: Bitter (display/headings) + Source Sans 3 (body)
-- **Shared Types**: `@poche/shared` npm package (local)
+- **Icons**: Font Awesome (free tier via CDN)
+- **Shared Types/Colors**: `@poche/shared` npm package (local)
 
 ### File Structure
 
 ```
 webapp/
 ├── src/
-│   ├── main.tsx           # React entry point
+│   ├── main.tsx           # React entry point with color scheme setup
 │   ├── App.tsx            # React Router routes with ProtectedRoute
-│   ├── index.css          # Global styles with CSS variables
+│   ├── index.css          # Global styles with CSS variables (base only)
 │   ├── vite-env.d.ts      # Vite environment type declarations
 │   ├── lib/
 │   │   └── api.ts         # API client for backend
 │   ├── contexts/
 │   │   └── AuthContext.tsx  # Authentication state management
 │   ├── components/
-│   │   └── Markdown.tsx   # Custom markdown renderer
+│   │   ├── Logo.tsx       # Logo component
+│   │   ├── Logo.css       # Logo styles
+│   │   ├── LoadingSpinner.tsx  # Loading spinner component
+│   │   ├── LoadingSpinner.css  # Loading spinner styles
+│   │   ├── TagChip.tsx    # Tag chip component
+│   │   ├── TagChip.css    # Tag chip styles
+│   │   ├── AppHeader.tsx  # App header component
+│   │   ├── AppHeader.css  # App header styles
+│   │   ├── ArticleCard.tsx  # Article card component
+│   │   ├── ArticleCard.css  # Article card styles
+│   │   ├── EmptyState.tsx # Empty state component
+│   │   ├── EmptyState.css # Empty state styles
+│   │   ├── Markdown.tsx   # Custom markdown renderer
+│   │   └── Markdown.css   # Markdown styles
 │   └── pages/
 │       ├── Home.tsx       # Marketing landing page
+│       ├── Home.css       # Home page styles
 │       ├── ResetPassword.tsx  # Password reset page
+│       ├── ResetPassword.css  # Reset password styles
 │       └── app/
 │           ├── Auth.tsx   # Sign in/sign up/forgot password
+│           ├── Auth.css   # Auth page styles
 │           ├── Articles.tsx   # Article list
-│           └── ArticleDetail.tsx  # Article detail view
+│           ├── Articles.css   # Articles page styles
+│           ├── ArticleDetail.tsx  # Article detail view
+│           └── ArticleDetail.css  # Article detail styles
 ├── public/
 │   └── logo.png           # Poche logo
-├── index.html             # HTML template
+├── index.html             # HTML template with Font Awesome CDN
 ├── package.json           # Dependencies
 ├── tsconfig.json          # TypeScript config
 ├── vite.config.ts         # Vite config
 ├── .env.example           # Example environment variables
 └── SUMMARY.md             # This file
 ```
+
+## Component Architecture
+
+### Reusable Components
+
+Each component has its own TypeScript file and corresponding CSS file with nested styles:
+
+| Component | Description |
+|-----------|-------------|
+| `Logo` | Poche logo with image and text |
+| `LoadingSpinner` | Animated loading spinner (small, default, large sizes) |
+| `TagChip` | Tag display chip (static or button, active state, small size) |
+| `AppHeader` | Fixed header with logo, accepts children for right-side content |
+| `ArticleCard` | Article card with title, meta, tags, delete button |
+| `EmptyState` | Empty/loading/error state display with icon |
+| `Markdown` | Custom markdown renderer using `@poche/shared` parsing |
+
+### CSS Organization
+
+- **`index.css`**: Global CSS variables, reset styles, button styles only
+- **Component CSS**: Each component has scoped styles in its own `.css` file
+- **Page CSS**: Each page has its own `.css` file for page-specific styles
+- **Nested Selectors**: All CSS uses nested selectors for better encapsulation
+- **Dynamic Color Variables**: Colors are set via JavaScript based on `prefers-color-scheme`
 
 ## Routes
 
@@ -74,7 +120,7 @@ webapp/
 Marketing landing page with:
 - **Navigation**: Fixed header with blur effect, logo, and section links
 - **Hero Section**: Animated background shapes, headline, CTA buttons, phone mockup
-- **Features Section**: 6 feature cards (Save from Anywhere, Read Offline, Distraction-Free, Organize with Tags, Cross-Platform, Self-Hosted Option)
+- **Features Section**: 6 feature cards with Font Awesome icons
 - **Download Section**: iOS App Store and Google Play download cards
 - **Extensions Section**: Chrome, Firefox, Safari extension cards
 - **How It Works**: 3-step guide (Install, Save, Read)
@@ -93,17 +139,20 @@ The webapp includes a full article reading application similar to the mobile app
 
 #### Articles (`/app`)
 - Protected route (requires authentication)
-- Lists all saved articles
+- Lists all saved articles using `ArticleCard` component
+- Tag filtering using `TagChip` components
 - Article cards with title, site name, reading time
 - Click to view article detail
-- Sign out button
+- Delete articles with confirmation
+- Sign out button in header
 
 #### Article Detail (`/app/article/:id`)
 - Protected route (requires authentication)
 - Full article reading experience
-- Custom markdown renderer
+- Custom `Markdown` renderer
 - Tags displayed as chips
 - Link back to articles list
+- Loading and error states
 
 ### Reset Password (`/reset-password`)
 
@@ -114,43 +163,47 @@ Password reset page that handles:
 - **API integration**: Calls `POST /api/auth/reset-password` on backend
 - **States**: Idle, loading, success, error
 
-#### URL Parameters
+## Styling
 
-| Parameter | Description |
-|-----------|-------------|
-| `token` | Reset token from Better Auth (required for form) |
-| `error` | Error code from callback (e.g., `INVALID_TOKEN`) |
+### Color System
 
-#### API Call
+Colors are loaded from `@poche/shared` and set as CSS variables dynamically in `main.tsx`:
 
 ```typescript
-POST https://api.poche.to/api/auth/reset-password
-Content-Type: application/json
+import { colors } from '@poche/shared'
 
-{
-  "token": "reset-token-from-url",
-  "newPassword": "user-new-password"
-}
+// Set colors based on system preference
+const scheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+const c = colors[scheme]
+
+document.documentElement.style.setProperty('--color-brand-primary', c.brand.primary)
+// ... etc
 ```
-
-## Styling
 
 ### CSS Variables
 
 ```css
 :root {
-  /* Brand Colors */
-  --poche-coral: #EF4056;
-  --poche-coral-light: #FF6B7A;
-  --poche-coral-dark: #D62E43;
+  /* Brand Colors (set dynamically) */
+  --color-brand-primary: #EF4056;
+  --color-brand-light: #FF6B7A;
+  --color-brand-dark: #D62E43;
   
-  /* Warm Neutrals */
-  --cream: #FDF8F5;
-  --cream-dark: #F5EBE4;
-  --warm-white: #FFFBF9;
-  --charcoal: #2D2926;
-  --charcoal-light: #4A4543;
-  --warm-gray: #8B8280;
+  /* Background Colors */
+  --color-bg-primary: #FDF8F5;
+  --color-bg-secondary: #F5EBE4;
+  --color-bg-tertiary: #FFFBF9;
+  
+  /* Text Colors */
+  --color-text-primary: #2D2926;
+  --color-text-secondary: #4A4543;
+  --color-text-tertiary: #8B8280;
+  --color-text-quaternary: #C4BFBC;
+  
+  /* Border Colors */
+  --color-border-primary: #E8D5C4;
+  --color-border-secondary: #C4BFBC;
+  --color-border-focus: #EF4056;
   
   /* Typography */
   --font-display: 'Bitter', Georgia, serif;
@@ -199,22 +252,29 @@ VITE_API_URL=http://localhost:3000  # Development
 
 Environment variables prefixed with `VITE_` are exposed to the client via `import.meta.env`.
 
-### Configuration
+## Light/Dark Mode
 
-The `ResetPassword` page has an `API_URL` constant that should be updated for different environments:
-- Development: `http://localhost:3000`
-- Production: `https://api.poche.to`
+The webapp implements automatic light/dark mode based on system preferences:
 
-## Password Reset Flow
+1. **`main.tsx`** imports colors from `@poche/shared`
+2. On initial load, checks `prefers-color-scheme` media query
+3. Sets CSS variables on `document.documentElement` based on color scheme
+4. Adds event listener for `change` event to update colors when system theme changes
+5. All CSS uses these CSS variables for colors
 
-1. User requests password reset from browser extension or mobile app
-2. Request includes `redirectTo: 'https://poche.to/reset-password'`
-3. Backend sends email with link to Better Auth callback
-4. User clicks email link → Better Auth validates token
-5. Better Auth redirects to `https://poche.to/reset-password?token={token}`
-6. User enters new password on webapp
-7. Webapp calls `POST /api/auth/reset-password` with token and new password
-8. On success, user can sign in with new password
+```typescript
+// In main.tsx
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+function applyColorScheme(isDark: boolean) {
+  const scheme = isDark ? 'dark' : 'light'
+  const c = colors[scheme]
+  // Set all CSS variables...
+}
+
+applyColorScheme(mediaQuery.matches)
+mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
+```
 
 ## Dependencies
 
@@ -227,7 +287,7 @@ The `ResetPassword` page has an `API_URL` constant that should be updated for di
 }
 ```
 
-**Note**: Shared types and utilities are imported from `@poche/shared` (located at `../shared`).
+**Note**: Shared types, utilities, and colors are imported from `@poche/shared` (located at `../shared`).
 
 ## Recent Enhancements
 
@@ -247,7 +307,7 @@ The `ResetPassword` page has an `API_URL` constant that should be updated for di
 - ✅ Password reset page with full flow
 - ✅ Token validation and error handling
 - ✅ Success and error states for password reset
-- ✅ Uses `@poche/shared` package for types
+- ✅ Uses `@poche/shared` package for types and utilities
 - ✅ **Full app section** with sign in, sign up, forgot password
 - ✅ **Articles list page** with article cards
 - ✅ **Article detail page** with markdown rendering
@@ -258,6 +318,12 @@ The `ResetPassword` page has an `API_URL` constant that should be updated for di
 - ✅ **Environment variables** via Vite (`VITE_API_URL`)
 - ✅ **Build deploy script** (`npm run build:deploy`)
 - ✅ **Served via nginx** at `poche.to` in production
+- ✅ **Component-based refactor**: Extracted Logo, LoadingSpinner, TagChip, AppHeader, ArticleCard, EmptyState, Markdown
+- ✅ **Scoped CSS**: Each component/page has its own CSS file with nested styles
+- ✅ **Font Awesome icons**: Replaced SVG icons with Font Awesome
+- ✅ **Shared colors**: Uses `@poche/shared` color palette
+- ✅ **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
+- ✅ **Shared markdown parsing**: Uses tokenization from `@poche/shared`
 
 ## Future Enhancements
 
@@ -270,4 +336,3 @@ Potential features:
 - Pricing page (if applicable)
 - Analytics integration
 - Contact form
-

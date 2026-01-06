@@ -15,7 +15,8 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Smart Button State**: "Save Article" button automatically disables and shows "Already Saved" if the current URL is already saved
 - **Automatic Sync**: Syncs saved article list from backend on popup open to reflect deletions from mobile app
 - **Tag Input**: Specify comma-delimited tags before saving articles
-- **Shared Types**: Uses `@poche/shared` npm package for common types and utilities
+- **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, and colors
+- **Light/Dark Mode**: Automatic theme switching based on system preferences
 
 ## Architecture
 
@@ -27,73 +28,177 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Bundler**: Vite with `crxjs/vite-plugin` for Manifest V3
 - **Backend**: Self-hosted Poche API with Better Auth
 - **Storage**: Chrome/Firefox storage API for bearer token and user data persistence
-- **Shared Types**: `@poche/shared` npm package (local)
+- **Shared Package**: `@poche/shared` npm package for types, API helpers, and colors
 
 ### File Structure
 
 ```
 browser_extension/
 ├── src/
-│   ├── popup.tsx         # Main popup React component (TypeScript)
+│   ├── popup.tsx         # Entry point with color scheme setup
 │   ├── popup.html        # Popup HTML structure
-│   ├── popup.css         # Popup styles with dark mode support
+│   ├── popup.css         # Global popup styles (reset, body, buttons)
+│   ├── App.tsx           # Main app component with state management
+│   ├── App.css           # App wrapper styles
 │   ├── background.ts     # Background service worker (TypeScript)
 │   ├── vite-env.d.ts     # Vite environment type declarations
 │   ├── assets/           # Static assets (icons, images)
+│   ├── components/       # Extracted React components
+│   │   ├── index.ts      # Barrel file for exports
+│   │   ├── Header.tsx    # Header component
+│   │   ├── Header.css    # Header styles
+│   │   ├── StatusMessage.tsx  # Status message component
+│   │   ├── StatusMessage.css  # Status message styles
+│   │   ├── LoadingSpinner.tsx  # Loading spinner component
+│   │   ├── LoadingSpinner.css  # Loading spinner styles
+│   │   ├── AuthModeSwitch.tsx  # Auth mode switch component
+│   │   ├── AuthModeSwitch.css  # Auth mode switch styles
+│   │   ├── TagsInput.tsx  # Tags input component
+│   │   ├── TagsInput.css  # Tags input styles
+│   │   ├── LoginSection.tsx  # Login/signup/forgot password forms
+│   │   ├── LoginSection.css  # Login section styles
+│   │   ├── MainSection.tsx  # Main logged-in view
+│   │   ├── MainSection.css  # Main section styles
+│   │   ├── Logo.tsx      # Logo component
+│   │   └── Logo.css      # Logo styles
 │   └── lib/
-│       └── api.ts        # Backend API client (auth, articles, forgot password)
+│       ├── api.ts        # Backend API client (uses @poche/shared)
+│       ├── types.ts      # Extension-specific types
+│       └── storage.ts    # Browser storage utilities for saved articles
 ├── icons/                # Extension icons (16x16, 48x48, 128x128)
 ├── dist/                 # Built extension files (generated)
 ├── manifest.json         # Extension manifest (Manifest V3)
-├── package.json          # Dependencies and build scripts (includes @poche/shared)
+├── package.json          # Dependencies and build scripts
 ├── tsconfig.json         # TypeScript configuration
 ├── vite.config.ts        # Vite configuration
 └── SUMMARY.md            # This file
 ```
 
-**Note**: Shared types and utilities are imported from `@poche/shared` (located at `../shared`).
+**Note**: Shared types, utilities, and colors are imported from `@poche/shared` (located at `../shared`).
+
+## Component Architecture
+
+### Extracted Components
+
+Each component has its own TypeScript file and corresponding CSS file with nested styles:
+
+| Component | Description |
+|-----------|-------------|
+| `Logo` | Poche logo with image and text |
+| `Header` | Extension header with logo |
+| `StatusMessage` | Success/error/info status messages |
+| `LoadingSpinner` | Animated loading spinner |
+| `AuthModeSwitch` | Toggle between sign in/sign up/forgot password |
+| `TagsInput` | Tag input with chips display |
+| `LoginSection` | Complete auth forms (login, signup, forgot password) |
+| `MainSection` | Logged-in view with URL display and save button |
+
+### CSS Organization
+
+- **`popup.css`**: Global reset, body, and button styles only
+- **`App.css`**: App wrapper styles
+- **Component CSS**: Each component has scoped styles in its own `.css` file
+- **Nested Selectors**: All CSS uses nested selectors for better encapsulation
+- **Dynamic Color Variables**: Colors are set via JavaScript based on `prefers-color-scheme`
+
+### Entry Point (`popup.tsx`)
+
+The entry point handles:
+1. Importing colors from `@poche/shared`
+2. Detecting system color scheme via `prefers-color-scheme`
+3. Setting CSS variables on `document.documentElement`
+4. Listening for color scheme changes
+5. Rendering the `App` component
 
 ## Key Components
 
-### popup.tsx
-Main extension React component (TypeScript):
-- Authentication (login/signup/forgot password with mode switch)
-- Article saving via backend API
-- Error handling and user feedback
-- **Forgot password form**: Enter email to receive password reset link
-- **Saved article tracking**: Stores list of saved article URLs and IDs in browser storage
-- **Button state management**: Updates save button state based on whether current URL is already saved
-- **Article sync**: Syncs saved articles from backend on popup open to keep local storage in sync
-- **Tag input UI**: Text input field for specifying comma-delimited list of tags before saving
+### App.tsx
+Main application component:
+- Session state management (user, token, loading)
+- Status message handling
+- Authentication flow coordination
+- Conditionally renders `LoginSection` or `MainSection`
 
-### api.ts
-Backend API client (TypeScript):
-- Token-based authentication (bearer tokens)
-- Sign up, sign in, sign out, get session
-- **Forgot password**: Request password reset via `forgotPassword()` function
-- Article CRUD operations (list, save, update, delete)
+### LoginSection.tsx
+Handles all authentication forms:
+- Sign in form
+- Sign up form
+- Forgot password form
+- Mode switching via `AuthModeSwitch`
+- Form validation and error handling
+
+### MainSection.tsx
+Logged-in user view:
+- Displays current page URL
+- Save article button with state management
+- Tags input for specifying article tags
+- Shows "Already Saved" when URL is in saved list
+- Sign out button
+
+### lib/api.ts
+Backend API client using `@poche/shared`:
+- Uses shared `API_ENDPOINTS` for endpoint definitions
+- Uses shared `parseApiError()` for error handling
+- Uses shared `shouldRefreshSession()`, `isSessionExpired()`, `calculateSessionExpiry()`
 - Token and user data storage in browser extension storage API
-- Automatic bearer token inclusion in `Authorization` header for all API requests
-- Session validation with fallback to cached user data for offline scenarios
 
-### background.ts
-Background service worker (TypeScript):
-- Handles extension lifecycle events
-- Manages cross-tab communication
+### lib/storage.ts
+Browser storage utilities:
+- `getSavedArticlesStorageKey(userId)` - Generate storage key
+- `getSavedArticles(userId)` - Get saved articles from storage
+- `saveArticleToStorage(userId, url, id)` - Save article to storage
+- `syncSavedArticlesFromBackend(userId, articles)` - Sync from backend
+- `checkIfUrlIsSaved(userId, url)` - Check if URL is already saved
+
+### lib/types.ts
+Extension-specific TypeScript types:
+- `SavedArticles` - Map of URL to article ID
+- `StatusType` - 'success' | 'error' | 'info' | 'loading'
+- `AuthMode` - 'signin' | 'signup' | 'forgot'
+- Component props interfaces
 
 ## How It Works
 
 1. **User clicks extension icon** → Opens popup
-2. **If not logged in** → Shows login/signup form with mode switch
-3. **User authenticates** → Bearer token stored in browser storage
-4. **On popup open** → Syncs saved articles from backend to local storage
-5. **Button state checked** → If current URL is already saved, button is disabled
-6. **User navigates to article** → Clicks "Save Article" button (if not already saved)
-7. **URL sent to backend** → Backend extracts article using Defuddle
-8. **Article saved** → Backend stores in PostgreSQL
-9. **Article tracked locally** → URL and ID added to local storage
-10. **Success feedback** → User sees confirmation message
-11. **Button updates** → Button state updated to show "Already Saved"
+2. **popup.tsx initializes** → Sets up color scheme, renders App
+3. **App checks auth** → Validates session via API
+4. **If not logged in** → Shows LoginSection
+5. **User authenticates** → Bearer token stored in browser storage
+6. **On popup open** → Syncs saved articles from backend to local storage
+7. **Button state checked** → If current URL is already saved, button is disabled
+8. **User navigates to article** → Clicks "Save Article" button (if not already saved)
+9. **URL sent to backend** → Backend extracts article using Defuddle
+10. **Article saved** → Backend stores in PostgreSQL
+11. **Article tracked locally** → URL and ID added to local storage
+12. **Success feedback** → User sees confirmation message
+13. **Button updates** → Button state updated to show "Already Saved"
+
+## Light/Dark Mode
+
+The extension implements automatic light/dark mode based on system preferences:
+
+1. **`popup.tsx`** imports colors from `@poche/shared`
+2. On initial load, checks `prefers-color-scheme` media query
+3. Sets CSS variables on `document.documentElement` based on color scheme
+4. Adds event listener for `change` event to update colors when system theme changes
+5. All CSS uses these CSS variables for colors
+
+```typescript
+// In popup.tsx
+import { colors } from '@poche/shared'
+
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+function applyColorScheme(isDark: boolean) {
+  const scheme = isDark ? 'dark' : 'light'
+  const c = colors[scheme]
+  document.documentElement.style.setProperty('--color-brand-primary', c.brand.primary)
+  // ... set all color variables
+}
+
+applyColorScheme(mediaQuery.matches)
+mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
+```
 
 ## Backend Integration
 
@@ -220,12 +325,18 @@ The extension requires:
 - ✅ Prevention of duplicate article saves
 - ✅ Tag input UI for specifying tags before saving articles
 - ✅ Uses `@poche/shared` package for types and utilities
-- ✅ Bitter + Source Sans 3 fonts via Google Fonts (Bitter for logo/headers, Source Sans 3 for body)
+- ✅ Bitter + Source Sans 3 fonts via Google Fonts
 - ✅ Error status popup for sign-in/sign-up failures with meaningful messages
 - ✅ Loading spinner while checking auth status (prevents auth UI flash)
 - ✅ Session expiry caching - only refreshes session when < 3 days until expiry
 - ✅ **Migrated from Webpack to Vite** for faster builds and modern tooling
 - ✅ Asset handling with Vite imports (images bundled correctly)
+- ✅ **Component-based refactor**: Extracted Header, StatusMessage, LoadingSpinner, AuthModeSwitch, TagsInput, LoginSection, MainSection, Logo, App components
+- ✅ **Scoped CSS**: Each component has its own CSS file with nested styles
+- ✅ **Lib organization**: Separated types and storage utilities into `lib/` folder
+- ✅ **Shared API helpers**: Uses `@poche/shared` for API endpoints, error parsing, session management
+- ✅ **Shared colors**: Uses `@poche/shared` color palette
+- ✅ **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
 
 ## Future Enhancements
 
