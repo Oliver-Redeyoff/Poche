@@ -4,105 +4,108 @@ import AppHeader from '../components/AppHeader'
 const Home = () => {
   return (
     <div className="page">
-      {/* Navigation */}
-      <AppHeader>
-        <div className="nav-links">
-          <a href="#features">Features</a>
-          <a href="#download">Download</a>
-          <a href="#extensions">Extensions</a>
-          <a href="/app" className='btn btn-secondary btn-small'>
-            App
-            <i className="fa-solid fa-up-right-from-square btn-icon"></i>
-          </a>
-        </div>
-      </AppHeader>
 
-      {/* Hero Section */}
-      <header className='hero'>
-        <div className="hero-background">
-          <div className="hero-shape hero-shape-1"></div>
-          <div className="hero-shape hero-shape-2"></div>
-          <div className="hero-shape hero-shape-3"></div>
-        </div>
-        
-        <div className="hero-content">
-          <div className="hero-badge">
-            <span className="badge-icon">📚</span>
-            <span>Your personal reading companion</span>
-          </div>
-          
-          <h1 className="hero-title">
-            Save it now.<br />
-            <span className="hero-title-accent">Read it later.</span>
-          </h1>
-          
-          <p className="hero-subtitle">
-            Poche is the distraction-free read-it-later app that works everywhere. 
-            Save articles from any browser, read them offline on any device. 
-            No clutter, no ads—just your content.
-          </p>
-          
-          <div className="hero-cta">
-            <a href="#download" className="btn btn-primary">
-              <i className="fa-solid fa-download btn-icon"></i>
-              Get Poche Free
-            </a>
-            <a href="#features" className="btn btn-secondary">
-              Learn More
+      <div className='above-folder-container'>
+        {/* Navigation */}
+        <AppHeader>
+          <div className="nav-links">
+            <a href="#features">Features</a>
+            <a href="#download">Download</a>
+            <a href="#extensions">Extensions</a>
+            <a href="/app" className='btn btn-secondary btn-small'>
+              App
+              <i className="fa-solid fa-up-right-from-square btn-icon"></i>
             </a>
           </div>
+        </AppHeader>
+
+        {/* Hero Section */}
+        <header className='hero'>
+          <div className="hero-background">
+            <div className="hero-shape hero-shape-1"></div>
+            <div className="hero-shape hero-shape-2"></div>
+            <div className="hero-shape hero-shape-3"></div>
+          </div>
           
-          <div className="hero-platforms">
-            <span className="platform-label">Available on</span>
-            <div className="platform-icons">
-              <span className="platform-icon" title="iOS">
-                <i className="fa-brands fa-apple"></i>
-              </span>
-              <span className="platform-icon" title="Android">
-                <i className="fa-brands fa-google-play"></i>
-              </span>
-              <span className="platform-icon" title="Chrome">
-                <i className="fa-brands fa-chrome"></i>
-              </span>
-              <span className="platform-icon" title="Firefox">
-                <i className="fa-brands fa-firefox-browser"></i>
-              </span>
-              <span className="platform-icon" title="Safari">
-                <i className="fa-brands fa-safari"></i>
-              </span>
+          <div className="hero-content">
+            <div className="hero-badge">
+              <span className="badge-icon">📚</span>
+              <span>Your personal reading companion</span>
             </div>
-          </div>
-        </div>
-        
-        <div className="hero-mockup">
-          <div className="mockup-phone">
-            <div className="mockup-screen">
-              <div className="mockup-header">
-                <div className="mockup-logo"></div>
-                <span>Poche</span>
-              </div>
-              <div className="mockup-article">
-                <div className="mockup-article-title"></div>
-                <div className="mockup-article-meta"></div>
-                <div className="mockup-article-line"></div>
-                <div className="mockup-article-line short"></div>
-              </div>
-              <div className="mockup-article">
-                <div className="mockup-article-title"></div>
-                <div className="mockup-article-meta"></div>
-                <div className="mockup-article-line"></div>
-                <div className="mockup-article-line short"></div>
-              </div>
-              <div className="mockup-article">
-                <div className="mockup-article-title"></div>
-                <div className="mockup-article-meta"></div>
-                <div className="mockup-article-line"></div>
-                <div className="mockup-article-line short"></div>
+            
+            <h1 className="hero-title">
+              Save it now.<br />
+              <span className="hero-title-accent">Read it later.</span>
+            </h1>
+            
+            <p className="hero-subtitle">
+              Poche is the distraction-free read-it-later app that works everywhere. 
+              Save articles from any browser, read them offline on any device. 
+              No clutter, no ads—just your content.
+            </p>
+            
+            <div className="hero-cta">
+              <a href="#download" className="btn btn-primary">
+                <i className="fa-solid fa-download btn-icon"></i>
+                Get Poche Free
+              </a>
+              <a href="#features" className="btn btn-secondary">
+                Learn More
+              </a>
+            </div>
+            
+            <div className="hero-platforms">
+              <span className="platform-label">Available on</span>
+              <div className="platform-icons">
+                <span className="platform-icon" title="iOS">
+                  <i className="fa-brands fa-apple"></i>
+                </span>
+                <span className="platform-icon" title="Android">
+                  <i className="fa-brands fa-google-play"></i>
+                </span>
+                <span className="platform-icon" title="Chrome">
+                  <i className="fa-brands fa-chrome"></i>
+                </span>
+                <span className="platform-icon" title="Firefox">
+                  <i className="fa-brands fa-firefox-browser"></i>
+                </span>
+                <span className="platform-icon" title="Safari">
+                  <i className="fa-brands fa-safari"></i>
+                </span>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+          
+          <div className="hero-mockup">
+            <div className="mockup-phone">
+              <div className="mockup-screen">
+                <div className="mockup-header">
+                  <div className="mockup-logo"></div>
+                  <span>Poche</span>
+                </div>
+                <div className="mockup-article">
+                  <div className="mockup-article-title"></div>
+                  <div className="mockup-article-meta"></div>
+                  <div className="mockup-article-line"></div>
+                  <div className="mockup-article-line short"></div>
+                </div>
+                <div className="mockup-article">
+                  <div className="mockup-article-title"></div>
+                  <div className="mockup-article-meta"></div>
+                  <div className="mockup-article-line"></div>
+                  <div className="mockup-article-line short"></div>
+                </div>
+                <div className="mockup-article">
+                  <div className="mockup-article-title"></div>
+                  <div className="mockup-article-meta"></div>
+                  <div className="mockup-article-line"></div>
+                  <div className="mockup-article-line short"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+      </div>
 
       {/* Features Section */}
       <section id="features" className="features">
