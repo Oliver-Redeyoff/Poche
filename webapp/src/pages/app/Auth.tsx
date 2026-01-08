@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './Auth.css'
 import { useAuth } from '../../contexts/AuthContext'
 import Logo from '../../components/Logo'
+import AuthModeSwitch from '../../components/AuthModeSwitch'
 
 type AuthMode = 'signin' | 'signup' | 'forgot'
 
@@ -91,18 +92,20 @@ export default function Auth() {
           <Logo />
         </div>
 
-        {/* <div className="app-auth-header">
-          <h1>
-            {mode === 'signin' && 'Welcome Back'}
-            {mode === 'signup' && 'Create Account'}
-            {mode === 'forgot' && 'Reset Password'}
-          </h1>
-          <p>
-            {mode === 'signin' && 'Sign in to access your saved articles'}
-            {mode === 'signup' && 'Start saving articles to read later'}
-            {mode === 'forgot' && "Enter your email and we'll send you a reset link"}
-          </p>
-        </div> */}
+        {mode !== 'forgot' && (
+          <AuthModeSwitch 
+            mode={mode as 'signin' | 'signup'} 
+            onModeChange={switchMode}
+            disabled={isLoading}
+          />
+        )}
+
+        {mode === 'forgot' && (
+          <div className="app-auth-header">
+            <h2>Reset Password</h2>
+            <p>Enter your email and we'll send you a reset link</p>
+          </div>
+        )}
 
         <form className="app-auth-form" onSubmit={handleSubmit}>
           {error && <div className="form-error">{error}</div>}
@@ -181,26 +184,13 @@ export default function Auth() {
 
         <div className="app-auth-footer">
           {mode === 'signin' && (
-            <>
-              <p>
-                Don't have an account?{' '}
-                <button onClick={() => switchMode('signup')}>Sign up</button>
-              </p>
-              <p>
-                <button onClick={() => switchMode('forgot')}>Forgot password?</button>
-              </p>
-            </>
-          )}
-          {mode === 'signup' && (
             <p>
-              Already have an account?{' '}
-              <button onClick={() => switchMode('signin')}>Sign in</button>
+              <button onClick={() => switchMode('forgot')}>Forgot password?</button>
             </p>
           )}
           {mode === 'forgot' && (
             <p>
-              Remember your password?{' '}
-              <button onClick={() => switchMode('signin')}>Sign in</button>
+              <button onClick={() => switchMode('signin')}>← Back to Sign In</button>
             </p>
           )}
         </div>
@@ -208,4 +198,3 @@ export default function Auth() {
     </div>
   )
 }
-
