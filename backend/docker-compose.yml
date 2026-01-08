@@ -5,7 +5,7 @@ services:
     container_name: poche-db
     restart: unless-stopped
     ports:
-      - "5432:5432"  # Expose for migrations
+      - "54321:5432"  # Expose for migrations
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       # Note: POSTGRES_PASSWORD can't contains special characters (@, :, /, #, etc.)
