@@ -9,6 +9,7 @@
     }
     
     .logo-text {
+        padding-top: 0.05em;
         font-family: var(--font-display);
         font-weight: 600;
         font-size: 1em;

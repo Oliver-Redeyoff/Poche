@@ -73,6 +73,10 @@ export function LoginSection({ onSignIn, onSignUp, onForgotPassword, onError, is
               disabled={isLoading}
             />
           </div>
+          
+          <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
+          </button>
 
           <button 
             type="button" 
@@ -81,10 +85,6 @@ export function LoginSection({ onSignIn, onSignUp, onForgotPassword, onError, is
             disabled={isLoading}
           >
             Back to Sign In
-          </button>
-          
-          <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
-            {isLoading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
       </div>
@@ -142,6 +142,10 @@ export function LoginSection({ onSignIn, onSignUp, onForgotPassword, onError, is
             />
           </div>
         )}
+        
+        <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+          {mode === 'signin' ? 'Sign In' : 'Create Account'}
+        </button>
 
         {mode === 'signin' && (
           <button 
@@ -153,10 +157,6 @@ export function LoginSection({ onSignIn, onSignUp, onForgotPassword, onError, is
             Forgot password?
           </button>
         )}
-        
-        <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
-          {mode === 'signin' ? 'Sign In' : 'Create Account'}
-        </button>
       </form>
     </div>
   )

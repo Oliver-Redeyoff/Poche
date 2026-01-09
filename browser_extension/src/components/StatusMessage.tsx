@@ -2,15 +2,14 @@ import './StatusMessage.css'
 import type { StatusType } from '../lib/types'
 
 interface StatusMessageProps {
+  show: boolean
   message: string
   type: StatusType
 }
 
-export function StatusMessage({ message, type }: StatusMessageProps): JSX.Element | null {
-  if (!message) return null
-  
+export function StatusMessage({ show, message, type }: StatusMessageProps): JSX.Element | null {
   return (
-    <div className={`status-message ${type}`} style={{ opacity: message ? '1' : '0' }}>
+    <div className={`status-message ${type} ${show ? 'visible' : 'hidden'}`}>
       {message}
     </div>
   )
