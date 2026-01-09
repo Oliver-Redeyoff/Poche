@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { resetPassword } from '../lib/api'
+import Logo from '../components/Logo'
 import './ResetPassword.css'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
@@ -63,8 +64,7 @@ const ResetPassword = () => {
       <div className="reset-password-page">
         <div className="reset-password-container">
           <div className="reset-password-logo">
-            <img src="/logo.png" alt="Poche" />
-            <span>Poche</span>
+            <Logo />
           </div>
           
           <div className="reset-password-success">
@@ -88,8 +88,7 @@ const ResetPassword = () => {
       <div className="reset-password-page">
         <div className="reset-password-container">
           <div className="reset-password-logo">
-            <img src="/logo.png" alt="Poche" />
-            <span>Poche</span>
+            <Logo />
           </div>
           
           <div className="reset-password-error">
@@ -112,8 +111,7 @@ const ResetPassword = () => {
     <div className="reset-password-page">
       <div className="reset-password-container">
         <div className="reset-password-logo">
-          <img src="/logo.png" alt="Poche" />
-          <span>Poche</span>
+          <Logo />
         </div>
         
         <div className="reset-password-header">

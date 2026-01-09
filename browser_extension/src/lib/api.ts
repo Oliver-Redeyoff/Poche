@@ -23,6 +23,10 @@ const API_URL = import.meta.env.VITE_API_URL;
 if (!API_URL) {
   throw new Error('VITE_API_URL is not set')
 }
+const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL;
+if (!WEB_APP_URL) {
+  throw new Error('VITE_WEB_APP_URL is not set')
+}
 
 // For compatibility with existing code
 export type Session = AuthResponse;
@@ -176,7 +180,7 @@ export async function forgotPassword(email: string): Promise<void> {
     method: 'POST',
     body: JSON.stringify({ 
       email,
-      redirectTo: 'http://localhost:3001/reset-password',
+      redirectTo: `${WEB_APP_URL}/reset-password`,
     }),
   }, false);
 }
