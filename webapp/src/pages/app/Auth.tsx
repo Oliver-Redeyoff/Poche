@@ -63,7 +63,9 @@ export default function Auth() {
     return (
       <div className="app-auth-page">
         <div className="app-auth-container">
-          <Logo />
+          <div className='app-auth-logo-container'>
+            <Logo />
+          </div>
           
           <div className="app-auth-success">
             <div className="success-icon">
