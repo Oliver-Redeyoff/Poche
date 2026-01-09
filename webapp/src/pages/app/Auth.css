@@ -120,7 +120,6 @@
 
     .app-auth-success {
         text-align: center;
-        padding: var(--space-md) 0;
 
         h1 {
             font-family: var(--font-display);
