@@ -58,9 +58,16 @@ RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
 
 ### Important Notes:
 
+- **Syntax**: Use `=` (equals sign), NOT `:` (colon) for all variables
 - **POSTGRES_PASSWORD**: Must NOT contain special characters (`@`, `:`, `/`, `#`, `+`, backticks). Use only letters and numbers.
 - **BETTER_AUTH_SECRET**: Generate with `openssl rand -base64 32`
 - **RESEND_API_KEY**: Get from [Resend Dashboard](https://resend.com/api-keys)
+
+Verify your `.env` is correctly formatted:
+```bash
+docker compose config
+```
+This will show the resolved configuration with all environment variables expanded.
 
 ## Step 3: Configure DNS
 
@@ -172,10 +179,13 @@ docker compose up -d
 cd backend
 DATABASE_URL=postgresql://poche:YourSecurePassword123@localhost:5432/poche npx drizzle-kit push
 
-# Remove port exposure from docker-compose.yml for security
+# IMPORTANT: Remove port exposure from docker-compose.yml after migrations
+# Leaving 5432 exposed can cause connection spam from local database tools
 # Then restart again
 docker compose up -d
 ```
+
+> ⚠️ **Important**: Remove the port 5432 exposure after running migrations. Local database management tools (pgAdmin, DBeaver, etc.) may continuously try to connect using default "postgres" credentials, causing log spam and potential security issues.
 
 ## Step 8: Verify Deployment
 
@@ -243,6 +253,42 @@ If you see `Cannot read properties of undefined (reading 'searchParams')`:
 - Your `POSTGRES_PASSWORD` contains special characters
 - Change to a simple password (letters and numbers only)
 - Update the password in PostgreSQL if already initialized
+
+#### "Role postgres does not exist" Errors
+
+If you see repeated errors like:
+```
+FATAL: password authentication failed for user "postgres"
+DETAIL: Role "postgres" does not exist.
+```
+
+This happens when `POSTGRES_USER` is set to something other than "postgres" (e.g., "poche"). PostgreSQL creates only the specified user as superuser and does NOT create a default "postgres" role.
+
+**Common causes:**
+1. **Local database tools** (pgAdmin, DBeaver, TablePlus, DataGrip, VS Code extensions) trying to connect to `localhost:5432` with default "postgres" credentials
+2. **Exposed port 5432** allowing external connection attempts
+
+**Solutions:**
+- Comment out or remove the `ports: "5432:5432"` mapping in docker-compose.yml if you don't need local access
+- If you need local access, use a non-standard port: `ports: "54321:5432"`
+- Check and reconfigure any database management tools with saved connections to localhost:5432
+
+#### .env File Syntax Errors
+
+Ensure your `.env` file uses `=` (equals sign), not `:` (colon):
+
+```env
+# ✅ Correct
+PORT=3000
+
+# ❌ Wrong - will cause silent failures
+PORT:3000
+```
+
+Verify your environment variables are loading correctly:
+```bash
+docker compose config
+```
 
 #### SSL Certificate Errors
 
@@ -327,10 +373,12 @@ VITE_API_URL=https://api.poche.to
 
 - [ ] Strong POSTGRES_PASSWORD (no special characters, 20+ characters)
 - [ ] Strong BETTER_AUTH_SECRET (32+ characters, randomly generated)
-- [ ] PostgreSQL port (5432) NOT exposed externally
+- [ ] PostgreSQL port (5432) NOT exposed in docker-compose.yml (remove after migrations)
+- [ ] No local database tools configured to auto-connect to localhost:5432
 - [ ] SSL certificates valid and auto-renewing
 - [ ] Cloudflare API token has minimal permissions
 - [ ] `.env` file not committed to git
+- [ ] `.env` file uses correct syntax (`KEY=value`, not `KEY:value`)
 - [ ] Firewall allows only ports 80, 443, and 22 (SSH)
 
 ## Monitoring

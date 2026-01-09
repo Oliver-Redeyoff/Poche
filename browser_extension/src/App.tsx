@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import './App.css'
 import * as api from './lib/api'
 import { syncSavedArticlesFromBackend, checkIfUrlIsSaved, saveArticleToStorage } from './lib/storage'
@@ -14,12 +14,16 @@ const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : brows
 export function App(): JSX.Element {
   const [session, setSession] = useState<api.Session | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true)
-  const [statusMessage, setStatusMessage] = useState<string>('')
-  const [statusType, setStatusType] = useState<StatusType>('info')
+
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false)
   const [saveButtonText, setSaveButtonText] = useState<string>('Save Article')
   const [tags, setTags] = useState<string[]>([])
+
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [showStatusMessage, setShowStatusMessage] = useState<boolean>(false)
+  const [statusMessage, setStatusMessage] = useState<string>('')
+  const [statusType, setStatusType] = useState<StatusType>('info')
 
   // Update save button state based on current URL
   const updateSaveButtonState = async (): Promise<void> => {
@@ -68,10 +72,12 @@ export function App(): JSX.Element {
   const showStatus = (message: string, type: StatusType = 'info'): void => {
     setStatusMessage(message)
     setStatusType(type)
-    
-    // Auto-hide after 2.5 seconds
-    setTimeout(() => {
-      setStatusMessage('')
+    setShowStatusMessage(true)
+
+    // Cancel old timeout and set new one to auto-hide after 2.5 seconds
+    clearTimeout(hideTimeoutRef.current)
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowStatusMessage(false)
     }, 2500)
   }
 
@@ -217,7 +223,7 @@ export function App(): JSX.Element {
   return (
     <div className="app">
       <Header />
-      <StatusMessage message={statusMessage} type={statusType} />
+      <StatusMessage show={showStatusMessage} message={statusMessage} type={statusType} />
       {isCheckingAuth ? (
         <LoadingSpinner />
       ) : session?.user ? (
