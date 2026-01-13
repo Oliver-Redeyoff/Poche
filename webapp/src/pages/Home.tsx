@@ -332,7 +332,7 @@ const Home = () => {
             
             <div className="footer-column">
               <h4>Resources</h4>
-              <a href="/privacy">Privacy Policy</a>
+              <a href="/privacy-policy">Privacy Policy</a>
               <a href="/terms">Terms of Service</a>
               <a href="https://github.com/poche" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
