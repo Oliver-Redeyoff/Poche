@@ -26,20 +26,6 @@ const USER_STORAGE_KEY = '@poche_user'
 const SESSION_EXPIRY_KEY = '@poche_session_expiry'
 
 // ============================================
-// Configuration
-// ============================================
-
-let apiUrl = API_URL
-
-export function setApiUrl(url: string): void {
-  apiUrl = url
-}
-
-export function getApiUrl(): string {
-  return apiUrl
-}
-
-// ============================================
 // Token Storage (AsyncStorage for React Native)
 // ============================================
 
@@ -105,7 +91,7 @@ async function apiRequest<T>(
     }
   }
 
-  const response = await fetch(`${apiUrl}${endpoint}`, {
+  const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
       ...headers,
@@ -214,7 +200,7 @@ export async function getSession(): Promise<AuthResponse | null> {
 
     // Verify and refresh the session via API
     try {
-      const response = await fetch(`${apiUrl}${API_ENDPOINTS.GET_SESSION}`, {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.GET_SESSION}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
