@@ -231,7 +231,7 @@ const Home = () => {
         </div>
         
         <div className="extensions-grid">
-          <a href="https://chrome.google.com/webstore/detail/poche" className="extension-card" target="_blank" rel="noopener noreferrer">
+          <a href="https://chromewebstore.google.com/detail/gjecgbldlcdjkhfkhflddhbfhgdikmic" className="extension-card" target="_blank" rel="noopener noreferrer">
             <div className="extension-icon chrome">
               <i className="fa-brands fa-chrome"></i>
             </div>
