@@ -1,7 +1,7 @@
 // Main entry point - re-export all types and utilities
-export * from './types.js'
-export * from './util.js'
-export * from './markdown.js'
-export * from './api.js'
-export * from './colors.js'
+export * from './types'
+export * from './util'
+export * from './markdown'
+export * from './api'
+export * from './colors'
 

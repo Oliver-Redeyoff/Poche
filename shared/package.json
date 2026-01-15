@@ -2,32 +2,33 @@
   "name": "@poche/shared",
   "version": "1.0.0",
   "description": "Shared types and utilities for Poche applications",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "typecheck": "tsc --noEmit"
   },
   "files": [
-    "dist",
     "src"
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "require": "./dist/types.js"
+      "types": "./src/types.ts",
+      "import": "./src/types.ts",
+      "require": "./src/types.ts",
+      "default": "./src/types.ts"
     },
     "./util": {
-      "types": "./dist/util.d.ts",
-      "import": "./dist/util.js",
-      "require": "./dist/util.js"
+      "types": "./src/util.ts",
+      "import": "./src/util.ts",
+      "require": "./src/util.ts",
+      "default": "./src/util.ts"
     }
   },
   "devDependencies": {
