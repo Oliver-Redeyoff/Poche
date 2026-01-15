@@ -14,10 +14,11 @@ import {
 
 // Backend API URL - loaded from environment variable via app.config.js
 // Set API_URL in .env file (see .env.example)
-const API_URL = Constants.expoConfig?.extra?.apiUrl
-if (!API_URL) {
-  throw new Error('API_URL is not set. Create a .env file with API_URL=http://your-api-url')
-}
+// const API_URL = Constants.expoConfig?.extra?.apiUrl
+// if (!API_URL) {
+//   throw new Error('API_URL is not set. Create a .env file with API_URL=http://your-api-url')
+// }
+const API_URL = "https://api.poche.to"
 
 // Storage keys (React Native convention uses @ prefix)
 const TOKEN_STORAGE_KEY = '@poche_auth_token'
