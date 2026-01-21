@@ -112,20 +112,6 @@ export default function Auth() {
         <form className="app-auth-form" onSubmit={handleSubmit}>
           {error && <div className="form-error">{error}</div>}
 
-          {mode === 'signup' && (
-            <div className="form-group">
-              <label htmlFor="name">Name (optional)</label>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                disabled={isLoading}
-              />
-            </div>
-          )}
-
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input

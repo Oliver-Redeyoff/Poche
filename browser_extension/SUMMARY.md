@@ -29,6 +29,7 @@ The Poche browser extension allows users to save articles from any webpage to th
 - **Backend**: Self-hosted Poche API with Better Auth
 - **Storage**: Chrome/Firefox storage API for bearer token and user data persistence
 - **Shared Package**: `@poche/shared` npm package for types, API helpers, and colors
+- **Cross-browser**: Separate manifests for Chrome and Firefox
 
 ### File Structure
 
@@ -67,10 +68,12 @@ browser_extension/
 │       └── storage.ts    # Browser storage utilities for saved articles
 ├── icons/                # Extension icons (16x16, 48x48, 128x128)
 ├── dist/                 # Built extension files (generated)
-├── manifest.json         # Extension manifest (Manifest V3)
+├── manifest.json         # Chrome extension manifest (Manifest V3)
+├── manifest.firefox.json # Firefox extension manifest (Manifest V3 with gecko settings)
 ├── package.json          # Dependencies and build scripts
 ├── tsconfig.json         # TypeScript configuration
-├── vite.config.ts        # Vite configuration
+├── vite.config.ts        # Vite configuration (Chrome)
+├── vite.firefox.config.ts # Vite configuration (Firefox)
 └── SUMMARY.md            # This file
 ```
 
@@ -248,15 +251,23 @@ The backend stores articles with the following fields:
 ```bash
 npm install          # Install dependencies
 npm run dev          # Watch mode for development
-npm run build        # Production build
+npm run build        # Production build (Chrome)
+npm run build:firefox # Production build (Firefox)
 ```
 
 ### Browser-Specific Builds
 ```bash
-npm run build:chrome   # Build for Chrome
-npm run build:firefox   # Build for Firefox
-npm run build:safari    # Build for Safari
+npm run build        # Build for Chrome (uses manifest.json)
+npm run build:firefox # Build for Firefox (uses manifest.firefox.json)
 ```
+
+### Firefox Manifest Differences
+
+Firefox requires a separate manifest (`manifest.firefox.json`) with:
+- `browser_specific_settings.gecko.id` - Extension ID (e.g., `extension@poche.to`)
+- `browser_specific_settings.gecko.strict_min_version` - Minimum Firefox version
+- `browser_specific_settings.gecko.data_collection_permissions` - Required for MV3 extensions
+- `background.scripts` instead of `background.service_worker` (Firefox doesn't support service workers in MV3 yet)
 
 ### Icon Generation
 ```bash
@@ -337,6 +348,9 @@ The extension requires:
 - ✅ **Shared API helpers**: Uses `@poche/shared` for API endpoints, error parsing, session management
 - ✅ **Shared colors**: Uses `@poche/shared` color palette
 - ✅ **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
+- ✅ **Firefox support**: Separate manifest with `gecko.id` and `data_collection_permissions`
+- ✅ **Firefox build config**: `vite.firefox.config.ts` for Firefox-specific builds
+- ✅ **Store submissions**: Chrome Web Store and Firefox Add-ons
 
 ## Future Enhancements
 

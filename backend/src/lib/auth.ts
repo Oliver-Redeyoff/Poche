@@ -15,6 +15,11 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Set to true in production with email provider

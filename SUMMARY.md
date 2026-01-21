@@ -165,6 +165,7 @@ Poche/
 ### Web App Features
 - Marketing landing page at `/` route
 - **Password reset page**: `/reset-password` handles password reset from email links
+- **Privacy policy page**: `/privacy-policy` for app store compliance
 - **SEO optimized**: Meta tags, Open Graph, Twitter Cards, JSON-LD structured data
 - **App download links**: iOS App Store, Google Play Store
 - **Browser extension links**: Chrome Web Store, Firefox Add-ons, Safari App Store
@@ -208,12 +209,14 @@ Poche/
 - **Animations**: Uses `react-native-reanimated` for smooth article list animations
 - **Markdown rendering**: Custom `Markdown` component using shared parsing from `@poche/shared`
 - **Custom theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
-- **Environment variables**: API_URL configured via `.env` file and `app.config.js`
+- **Environment variables**: API_URL configured via `.env` (local) and `eas.json` (EAS builds)
+- **EAS Build**: Configured for iOS and Android production builds with environment secrets
 
 ### Browser Extension
 - Built with Vite (migrated from Webpack)
 - React with TypeScript for UI components
-- Uses Manifest V3 for Chrome/Firefox
+- Uses Manifest V3 for Chrome and Firefox
+- **Firefox-specific manifest**: Separate `manifest.firefox.json` with `gecko.id` and `data_collection_permissions`
 - Token-based authentication (bearer tokens stored in browser storage)
 - Cross-browser API compatibility layer
 - **Component-based architecture**: Extracted reusable components (Header, StatusMessage, LoginSection, MainSection, etc.)
@@ -288,7 +291,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Markdown parsing**: Shared tokenization and inline parsing
 - ✅ **Unified colors**: Light/dark color palette for all projects
 - ✅ Installed as local dependency in all 4 projects
-- ✅ Proper TypeScript build with declaration files
+- ✅ **No build step required**: Uses TypeScript source directly (compatible with Metro, Vite, and EAS)
 
 ### Backend
 - ✅ Self-hosted API server with Hono
@@ -335,9 +338,10 @@ The shared package provides common functionality across all projects:
 - ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts`
 - ✅ Improved authentication error messaging
 - ✅ Session expiry caching (reduces API calls)
-- ✅ **Environment variables**: API_URL via `.env` and `app.config.js`
+- ✅ **Environment variables**: API_URL via `.env` (local) and `eas.json` (EAS builds)
 - ✅ **Metro bundler config**: Support for `@poche/shared` outside project directory
 - ✅ **Clear articles on logout**: Locally stored articles cleared on sign out
+- ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
@@ -361,12 +365,15 @@ The shared package provides common functionality across all projects:
 - ✅ **Scoped CSS**: Each component has its own CSS file with nested styles
 - ✅ **Shared colors**: Uses `@poche/shared` color palette
 - ✅ **Light/dark mode**: Automatic switching based on `prefers-color-scheme`
+- ✅ **Firefox support**: Separate manifest with `gecko.id` and `data_collection_permissions`
+- ✅ **Firefox build config**: `vite.firefox.config.ts` for Firefox-specific builds
 
 ### Web App
 - ✅ React + TypeScript with Vite
 - ✅ React Router for navigation
 - ✅ Marketing landing page with hero section
 - ✅ **Password reset page**: Complete flow for resetting passwords from email link
+- ✅ **Privacy policy page**: `/privacy-policy` for app store compliance
 - ✅ SEO optimization (meta tags, Open Graph, Twitter Cards, JSON-LD)
 - ✅ App Store and Google Play download links
 - ✅ Browser extension links (Chrome, Firefox, Safari)

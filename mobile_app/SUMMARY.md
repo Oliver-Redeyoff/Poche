@@ -70,6 +70,7 @@ mobile_app/
 │   └── react-native+0.81.5.patch  # iOS text rendering fix
 ├── metro.config.js       # Metro bundler config for @poche/shared
 ├── app.config.js         # Expo config with environment variables
+├── eas.json              # EAS Build configuration with env vars
 ├── .env.example          # Example environment variables
 ├── package.json          # Dependencies (includes @poche/shared)
 └── SUMMARY.md            # This file
@@ -183,9 +184,16 @@ The app communicates with a self-hosted backend via `lib/api.ts`:
 
 ### Environment Variables
 API URL is configured via environment variable:
+
+**Local Development:**
 1. Create `.env` file with `API_URL=http://your-api-url`
 2. `app.config.js` reads `.env` and exposes via `extra.apiUrl`
 3. `lib/api.ts` reads via `expo-constants`
+
+**EAS Builds:**
+1. Set `API_URL` in `eas.json` under `build.<profile>.env`
+2. EAS injects env vars during build
+3. `app.config.js` reads `process.env.API_URL`
 
 ### Article Fields
 - `id` (number) - Unique identifier
@@ -368,11 +376,13 @@ module.exports = config;
 - ✅ React Native iOS text rendering patch for Fabric new architecture
 - ✅ patch-package setup for maintaining React Native patches
 - ✅ buildReactNativeFromSource enabled for applying native code patches
-- ✅ **Environment variables**: API_URL via `.env` and `app.config.js`
+- ✅ **Environment variables**: API_URL via `.env` (local) and `eas.json` (EAS builds)
 - ✅ **Metro bundler config**: Support for `@poche/shared` outside project directory
 - ✅ **Clear articles on logout**: `clearArticlesFromStorage()` function
 - ✅ **Shared API helpers**: Uses `@poche/shared` for endpoints, error parsing, session management
 - ✅ **Shared markdown parsing**: Uses `@poche/shared` for tokenization and inline parsing
+- ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
+- ✅ **Store submissions**: iOS App Store and Google Play
 
 ## Technical Notes
 
