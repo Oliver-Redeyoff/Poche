@@ -287,7 +287,7 @@ The shared package provides common functionality across all projects:
 - ✅ Moved shared code to root-level `@poche/shared` npm package
 - ✅ TypeScript types: User, AuthResponse, Article, LegacyArticle
 - ✅ Utility functions: tagToColor
-- ✅ **API helpers**: Shared API endpoints, session management, error parsing
+- ✅ **API helpers**: Shared API endpoints (including DELETE_ACCOUNT), session management, error parsing
 - ✅ **Markdown parsing**: Shared tokenization and inline parsing
 - ✅ **Unified colors**: Light/dark color palette for all projects
 - ✅ Installed as local dependency in all 4 projects
@@ -298,6 +298,7 @@ The shared package provides common functionality across all projects:
 - ✅ Better Auth integration with bearer plugin for token-based auth
 - ✅ Server-side article extraction with Defuddle (markdown output)
 - ✅ **Password reset flow**: `POST /api/auth/request-password-reset`
+- ✅ **Account deletion**: `POST /api/auth/delete-user` with password confirmation
 - ✅ **Email service**: Resend integration for transactional emails
 - ✅ **Password reset emails**: Beautiful HTML templates with Poche branding
 - ✅ Docker & Docker Compose for easy deployment
@@ -317,6 +318,7 @@ The shared package provides common functionality across all projects:
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management and navigation guards
 - ✅ **Forgot password flow**: Request password reset from auth screen
+- ✅ **Account deletion**: Delete account from settings with password confirmation (iOS)
 - ✅ Custom markdown renderer using shared parsing from `@poche/shared`
 - ✅ Custom image rendering with expo-image
 - ✅ Image filtering (invalid URLs, low-resolution < 50x50)
@@ -374,6 +376,8 @@ The shared package provides common functionality across all projects:
 - ✅ Marketing landing page with hero section
 - ✅ **Password reset page**: Complete flow for resetting passwords from email link
 - ✅ **Privacy policy page**: `/privacy-policy` for app store compliance
+- ✅ **Account popover**: User menu with sign out and account deletion options
+- ✅ **Account deletion**: Delete account with password confirmation modal
 - ✅ SEO optimization (meta tags, Open Graph, Twitter Cards, JSON-LD)
 - ✅ App Store and Google Play download links
 - ✅ Browser extension links (Chrome, Firefox, Safari)

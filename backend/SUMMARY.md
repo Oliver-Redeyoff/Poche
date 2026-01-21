@@ -117,6 +117,7 @@ backend/
 - `GET /api/auth/get-session` - Validate session
 - `POST /api/auth/request-password-reset` - Request password reset email
 - `POST /api/auth/reset-password` - Reset password with token
+- `POST /api/auth/delete-user` - Delete user account (requires password confirmation)
 
 ### Articles (Protected)
 All article endpoints require `Authorization: Bearer <token>` header.
@@ -330,6 +331,7 @@ The webapp is built and deployed to `backend/web_app_dist/`. Docker Compose moun
 - ✅ Node.js-based healthcheck (replaces wget which isn't in Alpine)
 - ✅ Default server blocks to reject unknown hostnames
 - ✅ **Password reset flow**: `sendResetPassword` callback in Better Auth
+- ✅ **Account deletion**: `deleteUser` enabled in Better Auth config
 - ✅ **Email service**: Resend integration (`src/lib/email.ts`)
 - ✅ **Password reset emails**: Beautiful HTML templates with Poche branding
 - ✅ Uses `@poche/shared` package for common types
