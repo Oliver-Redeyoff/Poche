@@ -1,15 +1,29 @@
+import { useState } from 'react'
 import { useHeaderHeight } from '@react-navigation/elements'
-import { StyleSheet, View, Button, ScrollView } from 'react-native'
+import { 
+  StyleSheet, 
+  View, 
+  ScrollView, 
+  TouchableOpacity, 
+  Alert,
+  Platform,
+  useColorScheme,
+} from 'react-native'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
-import { signOut } from '../lib/api'
+import { signOut, deleteAccount } from '../lib/api'
 import { clearArticlesFromStorage } from '../lib/article-sync'
 import { useAuth } from './_layout'
 import { router } from 'expo-router'
+import { Colors } from '../constants/theme'
 
 export default function SettingsScreen() {
   const headerHeight = useHeaderHeight()
   const { session, setSession } = useAuth()
+  const colorScheme = useColorScheme() ?? 'light'
+  const colors = Colors[colorScheme]
+
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Calculate padding to account for header and safe area
   const topPadding = headerHeight
@@ -23,6 +37,74 @@ export default function SettingsScreen() {
     setSession(null)
     router.replace('/auth')
   }
+
+  async function performDeleteAccount(password: string) {
+    setIsDeleting(true)
+    try {
+      // Clear locally stored articles before deleting account
+      if (session?.user?.id) {
+        await clearArticlesFromStorage(session.user.id)
+      }
+      await deleteAccount(password)
+      setSession(null)
+      router.replace('/auth')
+    } catch (err) {
+      Alert.alert(
+        'Error',
+        err instanceof Error ? err.message : 'Failed to delete account'
+      )
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  function promptForPassword() {
+    if (Platform.OS === 'ios') {
+      // iOS supports Alert.prompt with secure text input
+      Alert.prompt(
+        'Enter Password',
+        'Please enter your password to confirm account deletion.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete', 
+            style: 'destructive',
+            onPress: (password?: string) => {
+              if (password) {
+                performDeleteAccount(password)
+              }
+            }
+          },
+        ],
+        'secure-text',
+        '',
+        'default'
+      )
+    } else {
+      // Android doesn't support Alert.prompt, use a simple prompt
+      // We'll ask for password in the initial alert message
+      Alert.alert(
+        'Contact Support',
+        'To delete your account on Android, please contact support or use the web app at poche.to',
+        [{ text: 'OK' }]
+      )
+    }
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone. All your articles and data will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: promptForPassword
+        },
+      ]
+    )
+  }
   
   if (!session) {
     return null // Auth is handled in _layout.tsx
@@ -31,23 +113,30 @@ export default function SettingsScreen() {
   return (
     <ThemedView style={{...styles.container, paddingTop: topPadding}}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.userInfoContainer}>
-          <View style={styles.userInfoTextContainer}>
-            <ThemedText style={styles.userInfoText}>
-              Logged in as
-            </ThemedText>
-            <ThemedText style={[styles.userInfoText, { fontFamily: 'SourceSans3_600SemiBold' }]}>
-              {session.user.email}
-            </ThemedText>
-          </View>
+        {/* Account Section */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Account</ThemedText>
+          
+          <ThemedText style={[styles.signedInText, { color: colors.textSecondary }]}>
+            Signed in as {session.user.email}
+          </ThemedText>
 
-          <View style={[styles.button, styles.buttonSecondary]}>
-            <Button 
-              title="Logout" 
-              onPress={handleLogout} 
-              color="white"
-            />
-          </View>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: colors.surface }]}
+            onPress={handleLogout}
+          >
+            <ThemedText style={styles.actionButtonText}>Sign Out</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: colors.errorLight }]}
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+          >
+            <ThemedText style={[styles.actionButtonText, { color: colors.error }]}>
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </ThemedText>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ThemedView>
@@ -58,38 +147,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  userInfoContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 18,
-    backgroundColor: 'rgba(120, 120, 120, 0.1)',
-  },
-  userInfoTextContainer: {
-    flexGrow: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    height: '100%',
-  },
-  userInfoText: {
-    fontSize: 14,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
+    gap: 24,
   },
-  button: {
-    paddingHorizontal: 12,
-    borderRadius: 14,
+  section: {
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
     fontFamily: 'SourceSans3_600SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.6,
+    marginLeft: 4,
   },
-  buttonSecondary: {
-    backgroundColor: "#aaaaaa",
+  signedInText: {
+    fontSize: 15,
+    fontFamily: 'SourceSans3_400Regular',
+    marginBottom: 4,
+  },
+  actionButton: {
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontFamily: 'SourceSans3_600SemiBold',
   },
 })

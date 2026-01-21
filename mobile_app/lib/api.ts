@@ -172,6 +172,15 @@ export async function forgotPassword(email: string): Promise<void> {
   }, false)
 }
 
+export async function deleteAccount(password: string): Promise<void> {
+  await apiRequest(API_ENDPOINTS.DELETE_ACCOUNT, {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  }, true)
+  // Clear local storage after successful deletion
+  await clearAuthStorage()
+}
+
 export async function getSession(): Promise<AuthResponse | null> {
   try {
     const token = await getStoredToken()
