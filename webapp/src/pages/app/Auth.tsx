@@ -15,7 +15,6 @@ export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false)
@@ -40,7 +39,7 @@ export default function Auth() {
           setIsLoading(false)
           return
         }
-        await signUp(email, password, name || undefined)
+        await signUp(email, password)
         navigate('/app')
       } else {
         await signIn(email, password)
