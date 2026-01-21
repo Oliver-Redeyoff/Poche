@@ -271,7 +271,7 @@ The package uses TypeScript source files directly (no build step required). This
 - ✅ Moved types from individual project `shared/` folders
 - ✅ TypeScript interfaces: User, AuthResponse, Article, LegacyArticle
 - ✅ Utility functions: tagToColor
-- ✅ **API helpers**: Shared API endpoints, session management, error parsing
+- ✅ **API helpers**: Shared API endpoints (including DELETE_ACCOUNT), session management, error parsing
 - ✅ **Markdown parsing**: Shared tokenization and inline parsing
 - ✅ **Unified colors**: Light/dark color palette for all projects
 - ✅ Configured as local npm package (`file:../shared`)

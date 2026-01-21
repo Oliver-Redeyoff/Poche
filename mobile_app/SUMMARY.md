@@ -8,6 +8,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 
 - **Authentication**: Email/password login and signup via self-hosted backend
 - **Forgot Password**: Request password reset email from auth screen
+- **Account Deletion**: Delete account from settings with password confirmation (iOS Alert.prompt)
 - **Article Viewing**: Display all articles saved by the user
 - **Native Navigation**: Tab-based navigation with native iOS blur effects
 - **Dark Mode**: Automatic theme switching based on system preferences with custom Poche color theme
@@ -383,6 +384,7 @@ module.exports = config;
 - ✅ **Shared markdown parsing**: Uses `@poche/shared` for tokenization and inline parsing
 - ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
 - ✅ **Store submissions**: iOS App Store and Google Play
+- ✅ **Account deletion**: Delete account from settings screen with Alert.prompt (iOS)
 
 ## Technical Notes
 

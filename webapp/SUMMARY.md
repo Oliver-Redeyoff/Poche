@@ -323,6 +323,8 @@ mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
 - ✅ **Full app section** with sign in, sign up, forgot password
 - ✅ **Articles list page** with article cards
 - ✅ **Article detail page** with markdown rendering
+- ✅ **Account popover**: User menu in header with sign out and account deletion
+- ✅ **Account deletion**: Delete account with password confirmation modal
 - ✅ **AuthContext** for authentication state management
 - ✅ **ProtectedRoute** component for authenticated routes
 - ✅ **API client** (`lib/api.ts`) with bearer token auth
