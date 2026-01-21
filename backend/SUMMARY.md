@@ -276,6 +276,7 @@ Located in `src/lib/auth.ts`:
 - Bearer plugin for token-based auth (critical for extensions)
 - 7-day session expiration
 - Dynamic trusted origins for browser extensions
+- `baseURL` configured from `BETTER_AUTH_URL` env var (required for password reset email links)
 
 ### Middleware Stack
 

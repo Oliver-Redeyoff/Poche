@@ -81,6 +81,7 @@ export const API_ENDPOINTS = {
   GET_SESSION: '/api/auth/get-session',
   REQUEST_PASSWORD_RESET: '/api/auth/request-password-reset',
   RESET_PASSWORD: '/api/auth/reset-password',
+  DELETE_ACCOUNT: '/api/auth/delete-user',
   
   // Articles
   ARTICLES: '/api/articles',

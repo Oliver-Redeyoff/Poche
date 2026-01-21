@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import { getSession, signIn as apiSignIn, signUp as apiSignUp, signOut as apiSignOut, forgotPassword as apiForgotPassword, User } from '../lib/api'
+import { getSession, signIn as apiSignIn, signUp as apiSignUp, signOut as apiSignOut, forgotPassword as apiForgotPassword, deleteAccount as apiDeleteAccount, User } from '../lib/api'
 
 interface AuthContextType {
   user: User | null
@@ -8,6 +8,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<void>
   signOut: () => Promise<void>
   forgotPassword: (email: string) => Promise<void>
+  deleteAccount: (password: string) => Promise<void>
   refreshSession: () => Promise<void>
 }
 
@@ -55,6 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiForgotPassword(email)
   }
 
+  const deleteAccount = async (password: string) => {
+    await apiDeleteAccount(password)
+    setUser(null)
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -63,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       forgotPassword,
+      deleteAccount,
       refreshSession,
     }}>
       {children}

@@ -109,6 +109,7 @@ Each component has its own TypeScript file and corresponding CSS file with neste
 |------|-----------|-------------|
 | `/` | `Home` | Marketing landing page |
 | `/reset-password` | `ResetPassword` | Password reset form |
+| `/privacy-policy` | `PrivacyPolicy` | Privacy policy for app store compliance |
 | `/app/auth` | `AuthPage` | Sign in, sign up, forgot password |
 | `/app` | `ArticlesPage` | List of saved articles (protected) |
 | `/app/article/:id` | `ArticleDetailPage` | Article detail with markdown rendering (protected) |
@@ -162,6 +163,16 @@ Password reset page that handles:
 - **Form validation**: Minimum 8 characters, password confirmation
 - **API integration**: Calls `POST /api/auth/reset-password` on backend
 - **States**: Idle, loading, success, error
+
+### Privacy Policy (`/privacy-policy`)
+
+Privacy policy page for app store compliance:
+- **Data collection disclosure**: What data is collected (email, saved articles)
+- **Data usage**: How the data is used
+- **Third-party sharing**: No sharing with third parties
+- **Data retention**: How long data is stored
+- **User rights**: How to request data deletion
+- **Contact information**: How to reach support
 
 ## Styling
 
@@ -305,6 +316,7 @@ mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
 - ✅ Animated phone mockup in hero
 - ✅ Floating background shapes for depth
 - ✅ Password reset page with full flow
+- ✅ **Privacy policy page**: `/privacy-policy` for app store compliance
 - ✅ Token validation and error handling
 - ✅ Success and error states for password reset
 - ✅ Uses `@poche/shared` package for types and utilities
@@ -328,7 +340,6 @@ mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
 ## Future Enhancements
 
 Potential features:
-- Privacy Policy page
 - Terms of Service page
 - Blog section
 - Documentation/Help pages

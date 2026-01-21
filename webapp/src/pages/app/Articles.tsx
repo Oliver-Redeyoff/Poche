@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Articles.css'
 import { useAuth } from '../../contexts/AuthContext'
@@ -9,14 +9,37 @@ import TagChip from '../../components/TagChip'
 import EmptyState from '../../components/EmptyState'
 
 export default function Articles() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, deleteAccount } = useAuth()
   const navigate = useNavigate()
+  const accountMenuRef = useRef<HTMLDivElement>(null)
   
   const [articles, setArticles] = useState<Article[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [showAccountMenu, setShowAccountMenu] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Close account menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setShowAccountMenu(false)
+      }
+    }
+
+    if (showAccountMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showAccountMenu])
 
   useEffect(() => {
     loadArticles()
@@ -56,6 +79,39 @@ export default function Articles() {
     navigate('/app/auth')
   }
 
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!deletePassword) {
+      setDeleteError('Please enter your password')
+      return
+    }
+    
+    setIsDeleting(true)
+    setDeleteError('')
+    
+    try {
+      await deleteAccount(deletePassword)
+      navigate('/app/auth')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const openDeleteModal = () => {
+    setShowAccountMenu(false)
+    setShowDeleteModal(true)
+    setDeletePassword('')
+    setDeleteError('')
+  }
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+    setDeletePassword('')
+    setDeleteError('')
+  }
+
   // Get all unique tags
   const allTags = [...new Set(
     articles
@@ -69,7 +125,84 @@ export default function Articles() {
 
   return (
     <div className="app-articles-page">
-      <AppHeader userEmail={user?.email} onSignOut={handleSignOut} />
+      <AppHeader>
+        <div className="account-menu-container" ref={accountMenuRef}>
+          <button 
+            className="account-button"
+            onClick={() => setShowAccountMenu(!showAccountMenu)}
+            aria-label="Account menu"
+          >
+            <i className="fa-solid fa-user"></i>
+          </button>
+          
+          {showAccountMenu && (
+            <div className="account-popover">
+              <div className="account-popover-header">
+                <span className="account-email">{user?.email}</span>
+              </div>
+              <div className="account-popover-divider"></div>
+              <button 
+                className="account-popover-item"
+                onClick={handleSignOut}
+              >
+                <i className="fa-solid fa-right-from-bracket"></i>
+                Sign Out
+              </button>
+              <button 
+                className="account-popover-item account-popover-item-danger"
+                onClick={openDeleteModal}
+              >
+                <i className="fa-solid fa-trash"></i>
+                Delete Account
+              </button>
+            </div>
+          )}
+        </div>
+      </AppHeader>
+
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Delete Account</h2>
+            <p className="modal-warning">
+              This action cannot be undone. All your articles and data will be permanently deleted.
+            </p>
+            <form onSubmit={handleDeleteAccount}>
+              <div className="form-group">
+                <label htmlFor="delete-password">Enter your password to confirm:</label>
+                <input
+                  type="password"
+                  id="delete-password"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  placeholder="Your password"
+                  autoFocus
+                />
+              </div>
+              {deleteError && (
+                <p className="error-message">{deleteError}</p>
+              )}
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  onClick={closeDeleteModal} 
+                  className="btn btn-secondary"
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-danger"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete My Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <main className="app-main">
         <div className="articles-header">

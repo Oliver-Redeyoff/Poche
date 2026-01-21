@@ -31,8 +31,11 @@ After adding the dependency, run `npm install` in each project directory.
 shared/
 ├── src/
 │   ├── index.ts      # Re-exports all types and utilities
-│   ├── types.ts      # TypeScript interfaces
-│   └── util.ts       # Utility functions
+│   ├── types.ts      # TypeScript interfaces (User, AuthResponse, Article)
+│   ├── util.ts       # Utility functions (tagToColor)
+│   ├── api.ts        # API endpoints, session helpers, error parsing
+│   ├── markdown.ts   # Markdown tokenization and parsing
+│   └── colors.ts     # Unified light/dark color palette
 ├── package.json      # npm package configuration
 ├── tsconfig.json     # TypeScript configuration
 ├── README.md         # Package documentation
@@ -194,13 +197,19 @@ const [user, setUser] = useState<User | null>(null);
 
 ## Development
 
-### Building
+### No Build Step Required
 
-The package doesn't require a build step for local development - TypeScript is resolved directly from source files. However, for production deployment, you can compile TypeScript:
+The package uses TypeScript source files directly - **no build step is required**. All consuming projects (webapp, mobile app, browser extension, backend) resolve TypeScript directly from `src/index.ts`. This approach:
 
+- Simplifies development (no need to rebuild shared package after changes)
+- Works with Metro bundler (React Native/Expo)
+- Works with Vite (webapp, browser extension)
+- Works with EAS builds (no `dist/` folder needed)
+
+To type-check the package:
 ```bash
 cd shared
-npx tsc
+npm run typecheck
 ```
 
 ### Adding New Types
@@ -219,12 +228,23 @@ npx tsc
 
 ### package.json
 
+The package uses TypeScript source files directly (no build step required). This works with Metro (React Native), Vite (web/extension), and EAS builds:
+
 ```json
 {
   "name": "@poche/shared",
   "version": "1.0.0",
   "main": "src/index.ts",
-  "types": "src/index.ts"
+  "types": "src/index.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": ["src"]
 }
 ```
 
@@ -251,17 +271,20 @@ npx tsc
 - ✅ Moved types from individual project `shared/` folders
 - ✅ TypeScript interfaces: User, AuthResponse, Article, LegacyArticle
 - ✅ Utility functions: tagToColor
+- ✅ **API helpers**: Shared API endpoints, session management, error parsing
+- ✅ **Markdown parsing**: Shared tokenization and inline parsing
+- ✅ **Unified colors**: Light/dark color palette for all projects
 - ✅ Configured as local npm package (`file:../shared`)
 - ✅ Installed in all 4 projects (mobile app, browser extension, backend, web app)
 - ✅ Updated imports across all projects to use `@poche/shared`
+- ✅ **No build step**: Uses TypeScript source directly (works with Metro, Vite, EAS)
 
 ## Future Enhancements
 
 Potential additions:
-- API error types
 - Validation utilities
 - Date formatting utilities
 - Reading time calculation utility
 - Article serialization/deserialization helpers
-- Shared constants (API endpoints, storage keys)
+- Tag autocomplete utilities
 
