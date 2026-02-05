@@ -11,6 +11,7 @@ The Poche web app is a marketing website that showcases the Poche "read it later
 - **App Download Links**: iOS App Store, Google Play Store
 - **Browser Extension Links**: Chrome Web Store, Firefox Add-ons, Safari App Store
 - **Password Reset Page**: Handles password reset flow from email links
+- **Support Page**: Contact form that opens mailto link to support email
 - **Full App Section**: Sign in, sign up, article list, article detail reading
 - **Responsive Design**: Mobile-first with beautiful desktop layout
 - **Poche Branding**: Warm color palette with coral accent (#EF4056)
@@ -62,6 +63,8 @@ webapp/
 │       ├── Home.css       # Home page styles
 │       ├── ResetPassword.tsx  # Password reset page
 │       ├── ResetPassword.css  # Reset password styles
+│       ├── Support.tsx        # Support contact page
+│       ├── Support.css        # Support page styles
 │       └── app/
 │           ├── Auth.tsx   # Sign in/sign up/forgot password
 │           ├── Auth.css   # Auth page styles
@@ -110,6 +113,7 @@ Each component has its own TypeScript file and corresponding CSS file with neste
 | `/` | `Home` | Marketing landing page |
 | `/reset-password` | `ResetPassword` | Password reset form |
 | `/privacy-policy` | `PrivacyPolicy` | Privacy policy for app store compliance |
+| `/support` | `Support` | Contact support form (mailto) |
 | `/app/auth` | `AuthPage` | Sign in, sign up, forgot password |
 | `/app` | `ArticlesPage` | List of saved articles (protected) |
 | `/app/article/:id` | `ArticleDetailPage` | Article detail with markdown rendering (protected) |
@@ -173,6 +177,15 @@ Privacy policy page for app store compliance:
 - **Data retention**: How long data is stored
 - **User rights**: How to request data deletion
 - **Contact information**: How to reach support
+
+### Support (`/support`)
+
+Contact support page with a form:
+- **Form fields**: Name, email, subject, message
+- **Mailto integration**: On submit, opens mailto link with form data pre-filled
+- **Support email**: support@bloxd.io
+- **Alternative contact**: Direct email link displayed below form
+- **Responsive design**: Mobile-friendly layout matching other pages
 
 ## Styling
 
@@ -317,6 +330,7 @@ mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
 - ✅ Floating background shapes for depth
 - ✅ Password reset page with full flow
 - ✅ **Privacy policy page**: `/privacy-policy` for app store compliance
+- ✅ **Support page**: `/support` with contact form (mailto to support@bloxd.io)
 - ✅ Token validation and error handling
 - ✅ Success and error states for password reset
 - ✅ Uses `@poche/shared` package for types and utilities
@@ -348,4 +362,3 @@ Potential features:
 - User testimonials
 - Pricing page (if applicable)
 - Analytics integration
-- Contact form
