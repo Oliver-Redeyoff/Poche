@@ -5,6 +5,7 @@ import 'react-native-reanimated'
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { View, Image, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Header } from '@/components/header'
 import {
   useFonts as useBitterFonts,
   Bitter_400Regular,
@@ -22,7 +23,6 @@ import {
 import * as SplashScreen from 'expo-splash-screen'
 import { getSession, AuthResponse } from '@/lib/api'
 import { useColorScheme } from '@/hooks/use-color-scheme'
-import { ThemedText } from '@/components/themed-text'
 // Import background sync to ensure task is defined
 import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
@@ -219,10 +219,10 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
     >
       {/* Onboarding - shown first if not completed */}
       <Stack.Protected guard={!hasCompletedOnboarding}>
-        <Stack.Screen 
+        <Stack.Screen
           name="onboarding" 
           options={{
-            headerShown: false,
+            header: () => <Header showLogo />,
             animation: 'fade',
           }}
         />
@@ -233,7 +233,7 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         <Stack.Screen 
           name="auth" 
           options={{
-            headerTitle: () => <HeaderLogo />,
+            header: () => <Header showLogo />,
           }}
         />
       </Stack.Protected>
@@ -243,50 +243,38 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         <Stack.Screen
           name="index" 
           options={{
-            headerTitle: () => <HeaderLogo />,
-            headerRight: () => (
-              <Pressable 
-                onPress={() => router.push('/settings')}
-                style={({ pressed }) => [
-                  {
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: 4,
-                  },
-                  pressed && { opacity: 0.6 }
-                ]}
-              >
-                <IconSymbol name="gear" size={26} color={textColor} />
-              </Pressable>
+            header: () => (
+              <Header 
+                showLogo 
+                rightElement={
+                  <Pressable 
+                    onPress={() => router.push('/settings')}
+                    style={({ pressed }) => [
+                      { padding: 4 },
+                      pressed && { opacity: 0.6 }
+                    ]}
+                  >
+                    <IconSymbol name="gear" size={26} color={textColor} />
+                  </Pressable>
+                }
+              />
             ),
           }}
         />
         <Stack.Screen 
           name="settings" 
           options={{ 
-            headerTitle: () => <HeaderLogo />,
+            header: () => <Header showBack title="Settings" />,
           }} 
         />
         <Stack.Screen 
           name="article/[id]" 
-          options={{ title: "" }} 
+          options={{ 
+            header: () => <Header showBack />,
+          }} 
         />
       </Stack.Protected>
     </Stack>
   )
 }
 
-function HeaderLogo() {
-  const colorScheme = useColorScheme()
-
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-      <Image 
-        source={ require('@/assets/images/icon.png') } 
-        style={{ width: 24, height: 24 }} 
-      />
-      <ThemedText style={{ fontSize: 26, letterSpacing: -1, fontFamily: 'Bitter_600SemiBold' }}>Poche</ThemedText>
-    </View>
-  )
-}
