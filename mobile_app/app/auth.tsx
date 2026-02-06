@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, TextInput, TouchableOpacity, Pressable } from 'react-native'
+import { Alert, StyleSheet, View, TextInput } from 'react-native'
 import { signIn, signUp, forgotPassword } from '../lib/api'
 import { ThemedText } from '../components/themed-text'
+import { Button } from '../components/button'
+import { SegmentedControl } from '../components/segmented-control'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { Colors } from '@/constants/theme'
@@ -9,6 +11,11 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 import { useAuth } from './_layout'
 
 type AuthMode = 'signin' | 'signup' | 'forgot'
+
+const AUTH_MODE_OPTIONS: { value: 'signin' | 'signup'; label: string }[] = [
+  { value: 'signin', label: 'Sign In' },
+  { value: 'signup', label: 'Sign Up' },
+]
 
 export default function Auth() {
   const headerHeight = useHeaderHeight()
@@ -145,23 +152,24 @@ export default function Auth() {
 
         {/* Back to Sign In */}
         <View style={{ alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => handleModeChange('signin')} style={styles.backToSignIn}>
-            <ThemedText style={[styles.forgotPasswordText, { color: colors.accent }]}>
-              Back to Sign In
-            </ThemedText>
-          </TouchableOpacity>
+          <Button
+            title="Back to Sign In"
+            variant="ghost"
+            onPress={() => handleModeChange('signin')}
+            fullWidth={false}
+            style={styles.backToSignIn}
+          />
         </View>
 
         {/* Submit Button */}
-        <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: colors.accent, opacity: loading ? 0.6 : 1 }]}
+        <Button
+          title="Send Reset Link"
+          variant="primary"
           onPress={handleForgotPassword}
-          disabled={loading}
-        >
-          <ThemedText style={styles.submitButtonText}>
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </ThemedText>
-        </TouchableOpacity>
+          loading={loading}
+          loadingText="Sending..."
+          style={styles.submitButton}
+        />
       </View>
     )
   }
@@ -169,36 +177,12 @@ export default function Auth() {
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
       {/* Mode Switch */}
-      <View style={[styles.modeSwitch, { backgroundColor: colors.divider }]}>
-        <Pressable
-          style={[
-            styles.modeOption,
-            mode === 'signin' && [styles.modeOptionActive, { backgroundColor }]
-          ]}
-          onPress={() => handleModeChange('signin')}
-        >
-          <ThemedText style={[
-            styles.modeOptionText,
-            { color: mode === 'signin' ? textColor : colors.textMuted }
-          ]}>
-            Sign In
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.modeOption,
-            mode === 'signup' && [styles.modeOptionActive, { backgroundColor }]
-          ]}
-          onPress={() => handleModeChange('signup')}
-        >
-          <ThemedText style={[
-            styles.modeOptionText,
-            { color: mode === 'signup' ? textColor : colors.textMuted }
-          ]}>
-            Sign Up
-          </ThemedText>
-        </Pressable>
-      </View>
+      <SegmentedControl
+        options={AUTH_MODE_OPTIONS}
+        selectedValue={mode}
+        onValueChange={(value) => handleModeChange(value)}
+        style={styles.modeSwitch}
+      />
 
       {/* Email Input */}
       <View style={styles.inputGroup}>
@@ -250,24 +234,25 @@ export default function Auth() {
       {/* Forgot Password (Sign In only) */}
       {mode === 'signin' && (
         <View style={{ alignItems: 'center' }}>
-          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
-            <ThemedText style={[styles.forgotPasswordText, { color: colors.accent }]}>
-              Forgot password?
-            </ThemedText>
-          </TouchableOpacity>
+          <Button
+            title="Forgot password?"
+            variant="ghost"
+            onPress={handleForgotPassword}
+            fullWidth={false}
+            style={styles.forgotPassword}
+          />
         </View>
       )}
 
       {/* Submit Button */}
-      <TouchableOpacity
-        style={[styles.submitButton, { backgroundColor: colors.accent, opacity: loading ? 0.6 : 1 }]}
+      <Button
+        title={mode === 'signin' ? 'Sign In' : 'Create Account'}
+        variant="primary"
         onPress={handleSubmit}
-        disabled={loading}
-      >
-        <ThemedText style={styles.submitButtonText}>
-          {loading ? 'Please wait...' : (mode === 'signin' ? 'Sign In' : 'Create Account')}
-        </ThemedText>
-      </TouchableOpacity>
+        loading={loading}
+        loadingText="Please wait..."
+        style={styles.submitButton}
+      />
     </View>
   )
 }
@@ -277,29 +262,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modeSwitch: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 4,
     marginBottom: 24,
-    gap: 4,
-  },
-  modeOption: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  modeOptionActive: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  modeOptionText: {
-    fontSize: 15,
-    fontFamily: 'SourceSans3_600SemiBold',
   },
   inputGroup: {
     marginBottom: 16,
@@ -320,10 +283,6 @@ const styles = StyleSheet.create({
   forgotPassword: {
     marginBottom: 8,
   },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontFamily: 'SourceSans3_500Medium',
-  },
   forgotHeader: {
     marginBottom: 24,
   },
@@ -343,14 +302,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   submitButton: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
     marginTop: 16,
-  },
-  submitButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontFamily: 'SourceSans3_600SemiBold',
   },
 })
