@@ -6,11 +6,13 @@ import {
   TouchableOpacity, 
   ScrollView,
   NativeSyntheticEvent,
-  NativeScrollEvent
+  NativeScrollEvent,
+  Pressable,
 } from 'react-native'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
 import { Button } from '../components/button'
+import { Header } from '../components/header'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
@@ -94,18 +96,23 @@ export default function Onboarding() {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Skip Button */}
-      {!isLastSlide && (
-        <View style={styles.skipButton}>
-          <Button
-            title="Skip"
-            variant="ghost"
+      {/* Header with Skip Button */}
+      <Header 
+        showLogo
+        rightElement={
+          <Pressable
             onPress={handleSkip}
-            fullWidth={false}
-            textStyle={[styles.skipText, { color: textSecondary }]}
-          />
-        </View>
-      )}
+            style={({ pressed }) => [
+              styles.skipButton,
+              pressed && styles.skipButtonPressed,
+            ]}
+          >
+            <ThemedText style={[styles.skipText, { color: textSecondary }]}>
+              Skip
+            </ThemedText>
+          </Pressable>
+        }
+      />
 
       {/* Slides */}
       <ScrollView
@@ -177,10 +184,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   skipButton: {
-    position: 'absolute',
-    top: 60,
-    right: 24,
-    zIndex: 10,
+    padding: 4,
+  },
+  skipButtonPressed: {
+    opacity: 0.6,
   },
   skipText: {
     fontSize: 16,

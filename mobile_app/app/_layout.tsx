@@ -222,7 +222,7 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         <Stack.Screen
           name="onboarding" 
           options={{
-            header: () => <Header showLogo />,
+            headerShown: false,
             animation: 'fade',
           }}
         />
