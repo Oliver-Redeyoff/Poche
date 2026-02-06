@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { View, Image, Pressable } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   useFonts as useBitterFonts,
   Bitter_400Regular,
@@ -28,6 +29,8 @@ import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/backgrou
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors } from '@/constants/theme'
+
+const ONBOARDING_COMPLETE_KEY = '@poche_onboarding_complete'
 
 // Prevent splash screen from hiding until fonts are loaded
 SplashScreen.preventAutoHideAsync()
@@ -64,16 +67,40 @@ interface AuthContextType {
   session: AuthResponse | null
   setSession: (session: AuthResponse | null) => void
   isLoading: boolean
+  hasCompletedOnboarding: boolean
+  completeOnboarding: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   setSession: () => {},
   isLoading: true,
+  hasCompletedOnboarding: true,
+  completeOnboarding: async () => {},
 })
 
 export function useAuth() {
   return useContext(AuthContext)
+}
+
+// Check if onboarding has been completed
+async function checkOnboardingComplete(): Promise<boolean> {
+  return false
+  try {
+    const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY)
+    return value === 'true'
+  } catch {
+    return false
+  }
+}
+
+// Mark onboarding as complete
+async function markOnboardingComplete(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true')
+  } catch (error) {
+    console.error('Error saving onboarding state:', error)
+  }
 }
 
 export default function RootLayout() {
@@ -81,6 +108,7 @@ export default function RootLayout() {
 
   const [session, setSession] = useState<AuthResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
 
   // Load custom fonts - Bitter for display/headers, Source Sans 3 for body
   const [bitterLoaded] = useBitterFonts({
@@ -100,9 +128,14 @@ export default function RootLayout() {
   const fontsLoaded = bitterLoaded && sourceSansLoaded
 
   useEffect(() => {
-    // Check for existing session on app start
-    async function checkSession() {
+    // Check for existing session and onboarding state on app start
+    async function initialize() {
       try {
+        // Check onboarding first
+        const onboardingComplete = await checkOnboardingComplete()
+        setHasCompletedOnboarding(onboardingComplete)
+
+        // Then check session
         const existingSession = await getSession()
         setSession(existingSession)
         
@@ -111,14 +144,15 @@ export default function RootLayout() {
           registerBackgroundSync()
         }
       } catch (error) {
-        console.error('Error checking session:', error)
+        console.error('Error during initialization:', error)
         setSession(null)
+        setHasCompletedOnboarding(true)
       } finally {
         setIsLoading(false)
       }
     }
     
-    checkSession()
+    initialize()
   }, [])
 
   // Hide splash screen once fonts are loaded
@@ -137,22 +171,28 @@ export default function RootLayout() {
     }
   }, [session])
 
+  // Handle onboarding completion
+  const completeOnboarding = async () => {
+    await markOnboardingComplete()
+    setHasCompletedOnboarding(true)
+  }
+
   // Don't render until fonts are loaded
   if (!fontsLoaded) {
     return null
   }
 
   return (
-    <AuthContext.Provider value={{ session, setSession, isLoading }}>
+    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding }}>
       <ThemeProvider value={colorScheme === 'dark' ? PocheDarkTheme : PocheLightTheme}>
-        <RootStack session={session} isLoading={isLoading} />
+        <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
         <StatusBar style="auto" />
       </ThemeProvider>
     </AuthContext.Provider>
   )
 }
 
-function RootStack({ session, isLoading }: { session: AuthResponse | null, isLoading: boolean }) {
+function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: AuthResponse | null, isLoading: boolean, hasCompletedOnboarding: boolean }) {
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
   
@@ -177,16 +217,29 @@ function RootStack({ session, isLoading }: { session: AuthResponse | null, isLoa
         animation: 'default',
       }}
     >
-      <Stack.Protected guard={!session}>
+      {/* Onboarding - shown first if not completed */}
+      <Stack.Protected guard={!hasCompletedOnboarding}>
         <Stack.Screen 
-        name="auth" 
-        options={{
-          headerTitle: () => <HeaderLogo />,
-        }}
+          name="onboarding" 
+          options={{
+            headerShown: false,
+            animation: 'fade',
+          }}
         />
       </Stack.Protected>
 
-      <Stack.Protected guard={!!session}>
+      {/* Auth - shown after onboarding if not logged in */}
+      <Stack.Protected guard={hasCompletedOnboarding && !session}>
+        <Stack.Screen 
+          name="auth" 
+          options={{
+            headerTitle: () => <HeaderLogo />,
+          }}
+        />
+      </Stack.Protected>
+
+      {/* Main app - shown when logged in */}
+      <Stack.Protected guard={hasCompletedOnboarding && !!session}>
         <Stack.Screen
           name="index" 
           options={{

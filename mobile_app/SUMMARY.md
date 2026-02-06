@@ -6,6 +6,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 
 ## Features
 
+- **Onboarding**: First-time users see a swipeable onboarding experience explaining how to use Poche
 - **Authentication**: Email/password login and signup via self-hosted backend
 - **Forgot Password**: Request password reset email from auth screen
 - **Account Deletion**: Delete account from settings with password confirmation (iOS Alert.prompt)
@@ -46,10 +47,11 @@ The Poche mobile app is a React Native application built with Expo that allows u
 ```
 mobile_app/
 ├── app/                    # Expo Router file-based routes
-│   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext)
+│   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext, onboarding check)
 │   ├── index.tsx          # Home screen with article list and tag filtering
 │   ├── article/[id].tsx    # Article detail screen with markdown rendering
 │   ├── auth.tsx            # Authentication screen (login/signup/forgot password)
+│   ├── onboarding.tsx      # First-time user onboarding experience
 │   └── settings.tsx        # Settings screen
 ├── components/            # React components
 │   ├── article-card.tsx   # Article card with tag management, delete, and animations
@@ -80,6 +82,16 @@ mobile_app/
 **Note**: Shared types, utilities, and markdown parsing are imported from `@poche/shared` (located at `../shared`).
 
 ## Key Components
+
+### app/onboarding.tsx
+First-time user onboarding experience:
+- Swipeable carousel with 4 slides
+- Explains what Poche is, how to save articles, offline reading, and organization
+- Skip button to bypass onboarding
+- Pagination dots for navigation
+- "Get Started" button on final slide
+- Completion state saved to AsyncStorage (`@poche_onboarding_complete`)
+- Beautiful iconography and typography matching app theme
 
 ### app/index.tsx
 Home screen that:
@@ -210,10 +222,19 @@ API URL is configured via environment variable:
 - Offline support: Article detail view loads only from local storage
 - **Cleared on logout**: `clearArticlesFromStorage()` removes all articles for user
 
+## Onboarding Flow
+
+1. App starts → Check `@poche_onboarding_complete` in AsyncStorage
+2. If not complete → Show onboarding screens
+3. User can skip or complete all slides
+4. On completion → Mark as complete in AsyncStorage
+5. Proceed to auth/main app flow
+
 ## Authentication Flow
 
 1. App starts → AuthContext checks for existing session via `getSession()`
-2. If no session → Shows Auth screen
+2. If onboarding incomplete → Show onboarding first
+3. If no session → Shows Auth screen
 3. User logs in/signs up → Backend authenticates, returns bearer token
 4. Session stored → Token persisted in AsyncStorage
 5. AuthContext updated → Navigation redirects to home
@@ -385,6 +406,7 @@ module.exports = config;
 - ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
 - ✅ **Store submissions**: iOS App Store and Google Play
 - ✅ **Account deletion**: Delete account from settings screen with Alert.prompt (iOS)
+- ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
 
 ## Technical Notes
 

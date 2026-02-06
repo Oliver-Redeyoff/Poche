@@ -20,6 +20,11 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'trash': 'delete-outline',
   'gear': 'settings',
+  // Onboarding icons
+  'books.vertical': 'library-books',
+  'square.and.arrow.down': 'download',
+  'icloud.and.arrow.down': 'cloud-download',
+  'tag': 'label-outline',
 } as IconMapping;
 
 /**

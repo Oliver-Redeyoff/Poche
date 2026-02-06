@@ -131,6 +131,7 @@ Poche/
 - Environment-based configuration via `.env` file
 
 ### Mobile App Features
+- **Onboarding experience**: First-time users see swipeable onboarding screens explaining how to use Poche
 - User authentication (email/password login and signup)
 - **Forgot password**: Request password reset email from login screen
 - View saved articles linked to user account
@@ -345,6 +346,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Metro bundler config**: Support for `@poche/shared` outside project directory
 - ✅ **Clear articles on logout**: Locally stored articles cleared on sign out
 - ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
+- ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
