@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
+import { Button } from '../components/button'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors } from '@/constants/theme'
 import { useColorScheme } from '@/hooks/use-color-scheme'
@@ -95,11 +96,15 @@ export default function Onboarding() {
     <ThemedView style={styles.container}>
       {/* Skip Button */}
       {!isLastSlide && (
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <ThemedText style={[styles.skipText, { color: textSecondary }]}>
-            Skip
-          </ThemedText>
-        </TouchableOpacity>
+        <View style={styles.skipButton}>
+          <Button
+            title="Skip"
+            variant="ghost"
+            onPress={handleSkip}
+            fullWidth={false}
+            textStyle={[styles.skipText, { color: textSecondary }]}
+          />
+        </View>
       )}
 
       {/* Slides */}
@@ -153,17 +158,15 @@ export default function Onboarding() {
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.accent }]}
+        <Button
+          title={isLastSlide ? 'Get Started' : 'Next'}
+          variant="primary"
           onPress={handleNext}
-        >
-          <ThemedText style={styles.actionButtonText}>
-            {isLastSlide ? 'Get Started' : 'Next'}
-          </ThemedText>
-          {!isLastSlide && (
-            <IconSymbol name="chevron.right" size={18} color="white" style={{ marginLeft: 4 }} />
-          )}
-        </TouchableOpacity>
+          iconRight={!isLastSlide ? (
+            <IconSymbol name="chevron.right" size={18} color="white" />
+          ) : undefined}
+          textStyle={styles.actionButtonText}
+        />
       </View>
     </ThemedView>
   )
@@ -178,7 +181,6 @@ const styles = StyleSheet.create({
     top: 60,
     right: 24,
     zIndex: 10,
-    padding: 8,
   },
   skipText: {
     fontSize: 16,
@@ -234,17 +236,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-  },
   actionButtonText: {
-    color: 'white',
     fontSize: 18,
-    fontFamily: 'SourceSans3_600SemiBold',
   },
 })

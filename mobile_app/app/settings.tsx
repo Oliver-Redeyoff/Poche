@@ -4,13 +4,13 @@ import {
   StyleSheet, 
   View, 
   ScrollView, 
-  TouchableOpacity, 
   Alert,
   Platform,
   useColorScheme,
 } from 'react-native'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
+import { Button } from '../components/button'
 import { signOut, deleteAccount } from '../lib/api'
 import { clearArticlesFromStorage } from '../lib/article-sync'
 import { useAuth } from './_layout'
@@ -121,22 +121,19 @@ export default function SettingsScreen() {
             Signed in as {session.user.email}
           </ThemedText>
 
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: colors.surface }]}
+          <Button
+            title="Sign Out"
+            variant="secondary"
             onPress={handleLogout}
-          >
-            <ThemedText style={styles.actionButtonText}>Sign Out</ThemedText>
-          </TouchableOpacity>
+          />
 
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: colors.errorLight }]}
+          <Button
+            title="Delete Account"
+            variant="danger"
             onPress={handleDeleteAccount}
-            disabled={isDeleting}
-          >
-            <ThemedText style={[styles.actionButtonText, { color: colors.error }]}>
-              {isDeleting ? 'Deleting...' : 'Delete Account'}
-            </ThemedText>
-          </TouchableOpacity>
+            loading={isDeleting}
+            loadingText="Deleting..."
+          />
         </View>
       </ScrollView>
     </ThemedView>
@@ -169,14 +166,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'SourceSans3_400Regular',
     marginBottom: 4,
-  },
-  actionButton: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontFamily: 'SourceSans3_600SemiBold',
   },
 })

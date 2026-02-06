@@ -54,6 +54,8 @@ mobile_app/
 │   ├── onboarding.tsx      # First-time user onboarding experience
 │   └── settings.tsx        # Settings screen
 ├── components/            # React components
+│   ├── button.tsx         # Unified Button component (primary, secondary, danger, ghost variants)
+│   ├── segmented-control.tsx # Segmented control for mode switching
 │   ├── article-card.tsx   # Article card with tag management, delete, and animations
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
@@ -407,6 +409,8 @@ module.exports = config;
 - ✅ **Store submissions**: iOS App Store and Google Play
 - ✅ **Account deletion**: Delete account from settings screen with Alert.prompt (iOS)
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
+- ✅ **Unified Button component**: Reusable button with primary, secondary, danger, ghost variants
+- ✅ **SegmentedControl component**: Reusable mode switcher for auth screens
 
 ## Technical Notes
 
