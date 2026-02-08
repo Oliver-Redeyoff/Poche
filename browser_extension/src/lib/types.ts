@@ -9,6 +9,7 @@ export type StatusType = 'info' | 'success' | 'error'
 
 export type AuthMode = 'signin' | 'signup' | 'forgot'
 
-// Re-export types from shared
-export type { Article, User, AuthResponse } from '@poche/shared'
+// Re-export types and helpers from shared
+export type { Article, User, AuthResponse, ArticleUpdates, ArticleStatus } from '@poche/shared'
+export { getArticleStatus } from '@poche/shared'
 

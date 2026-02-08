@@ -71,12 +71,11 @@ export const articles = pgTable('articles', {
   author: text('author'),
   wordCount: integer('word_count'),
   tags: text('tags'),
-  // Reading status and progress
-  status: text('status').notNull().default('new'), // 'new' | 'reading' | 'finished'
+  // Reading progress and favorites
   readingProgress: integer('reading_progress').notNull().default(0), // 0-100 percentage
   isFavorite: boolean('is_favorite').notNull().default(false),
-  startedAt: timestamp('started_at'), // When first opened
-  finishedAt: timestamp('finished_at'), // When marked as finished
+  startedAt: timestamp('started_at'), // When first opened (readingProgress > 0)
+  finishedAt: timestamp('finished_at'), // When finished (readingProgress = 100)
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
