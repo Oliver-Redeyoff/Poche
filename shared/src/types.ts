@@ -18,6 +18,9 @@ export interface AuthResponse {
   user: User
 }
 
+// Article reading status
+export type ArticleStatus = 'new' | 'reading' | 'finished'
+
 // Article type from backend
 export interface Article {
   id: number
@@ -30,6 +33,12 @@ export interface Article {
   author: string | null
   wordCount: number | null
   tags: string | null
+  // Reading status and progress
+  status: ArticleStatus
+  readingProgress: number // 0-100 percentage
+  isFavorite: boolean
+  startedAt: string | null
+  finishedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -62,6 +71,11 @@ export function convertLegacyArticle(legacy: LegacyArticle): Article {
     author: null,
     wordCount: legacy.length,
     tags: legacy.tags,
+    status: 'new',
+    readingProgress: 0,
+    isFavorite: false,
+    startedAt: null,
+    finishedAt: null,
     createdAt: legacy.created_time,
     updatedAt: legacy.created_time,
   }
