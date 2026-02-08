@@ -25,6 +25,9 @@ const createArticleSchema = z.object({
 const updateArticleSchema = z.object({
   tags: z.string().optional().nullable(),
   title: z.string().optional(),
+  // Reading progress and favorites
+  readingProgress: z.number().min(0).max(100).optional(),
+  isFavorite: z.boolean().optional(),
 });
 
 // GET /articles - List all articles for the authenticated user
@@ -121,7 +124,7 @@ app.post('/', async (c) => {
   }
 });
 
-// PATCH /articles/:id - Update an article (e.g., tags)
+// PATCH /articles/:id - Update an article (e.g., tags, progress, favorite)
 app.patch('/:id', async (c) => {
   const user = c.get('user');
   const id = parseInt(c.req.param('id'), 10);
@@ -134,12 +137,36 @@ app.patch('/:id', async (c) => {
     const body = await c.req.json();
     const updates = updateArticleSchema.parse(body);
 
+    // Build the update object with automatic timestamp handling
+    const updateData: Record<string, unknown> = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    // Handle reading progress timestamps
+    if (updates.readingProgress !== undefined) {
+      // Set startedAt when progress goes above 0 (first time reading)
+      if (updates.readingProgress > 0) {
+        const [existing] = await db
+          .select({ startedAt: articles.startedAt })
+          .from(articles)
+          .where(and(eq(articles.id, id), eq(articles.userId, user.id)))
+          .limit(1);
+        
+        if (existing && !existing.startedAt) {
+          updateData.startedAt = new Date();
+        }
+      }
+
+      // Set finishedAt when progress reaches 100
+      if (updates.readingProgress === 100) {
+        updateData.finishedAt = new Date();
+      }
+    }
+
     const [updated] = await db
       .update(articles)
-      .set({
-        ...updates,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(and(eq(articles.id, id), eq(articles.userId, user.id)))
       .returning();
 

@@ -1,7 +1,7 @@
 // API client for Poche backend
 // Uses token-based auth for browser extension compatibility
 
-import type { Article, User, AuthResponse } from '@poche/shared'
+import type { Article, User, AuthResponse, ArticleUpdates } from '@poche/shared'
 import { 
   STORAGE_KEYS, 
   shouldRefreshSession, 
@@ -275,7 +275,7 @@ export async function saveArticle(url: string, tags?: string): Promise<Article> 
   return data.article;
 }
 
-export async function updateArticle(id: number, updates: { tags?: string | null; title?: string }): Promise<Article> {
+export async function updateArticle(id: number, updates: ArticleUpdates): Promise<Article> {
   const data = await apiRequest<{ article: Article }>(API_ENDPOINTS.ARTICLE(id), {
     method: 'PATCH',
     body: JSON.stringify(updates),

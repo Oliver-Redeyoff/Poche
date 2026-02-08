@@ -3,7 +3,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Constants from 'expo-constants'
-import type { Article, User, AuthResponse } from '@poche/shared'
+import type { Article, User, AuthResponse, ArticleUpdates } from '@poche/shared'
 import { 
   shouldRefreshSession, 
   isSessionExpired,
@@ -271,7 +271,7 @@ export async function saveArticle(url: string, tags?: string): Promise<Article> 
   return data.article
 }
 
-export async function updateArticle(id: number, updates: { tags?: string | null; title?: string }): Promise<Article> {
+export async function updateArticle(id: number, updates: ArticleUpdates): Promise<Article> {
   const data = await apiRequest<{ article: Article }>(API_ENDPOINTS.ARTICLE(id), {
     method: 'PATCH',
     body: JSON.stringify(updates),
@@ -289,4 +289,4 @@ export async function deleteArticle(id: number): Promise<void> {
 export { API_URL }
 
 // Re-export types
-export type { Article, User, AuthResponse }
+export type { Article, User, AuthResponse, ArticleUpdates }

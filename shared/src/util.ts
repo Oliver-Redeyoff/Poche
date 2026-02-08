@@ -1,5 +1,19 @@
 // Shared utilities for Poche applications
 
+import type { ArticleStatus } from './types'
+
+/**
+ * Derives the reading status from the reading progress percentage.
+ * 
+ * @param readingProgress - Reading progress 0-100
+ * @returns 'new' if 0, 'finished' if 100, 'reading' otherwise
+ */
+export function getArticleStatus(readingProgress: number): ArticleStatus {
+  if (readingProgress === 0) return 'new'
+  if (readingProgress === 100) return 'finished'
+  return 'reading'
+}
+
 const uniqueColors = [
   [230, 25, 75],
   [60, 180, 75],

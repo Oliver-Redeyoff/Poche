@@ -18,8 +18,17 @@ export interface AuthResponse {
   user: User
 }
 
-// Article reading status
+// Article reading status - derived from readingProgress
+// 0 = new, 1-99 = reading, 100 = finished
 export type ArticleStatus = 'new' | 'reading' | 'finished'
+
+// Article update payload for PATCH requests
+export interface ArticleUpdates {
+  tags?: string | null
+  title?: string
+  readingProgress?: number
+  isFavorite?: boolean
+}
 
 // Article type from backend
 export interface Article {
@@ -33,12 +42,11 @@ export interface Article {
   author: string | null
   wordCount: number | null
   tags: string | null
-  // Reading status and progress
-  status: ArticleStatus
-  readingProgress: number // 0-100 percentage
+  // Reading progress and favorites
+  readingProgress: number // 0-100 percentage (0=new, 1-99=reading, 100=finished)
   isFavorite: boolean
-  startedAt: string | null
-  finishedAt: string | null
+  startedAt: string | null // When first opened (readingProgress > 0)
+  finishedAt: string | null // When finished (readingProgress = 100)
   createdAt: string
   updatedAt: string
 }
@@ -71,7 +79,6 @@ export function convertLegacyArticle(legacy: LegacyArticle): Article {
     author: null,
     wordCount: legacy.length,
     tags: legacy.tags,
-    status: 'new',
     readingProgress: 0,
     isFavorite: false,
     startedAt: null,
