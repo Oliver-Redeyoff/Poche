@@ -282,6 +282,14 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
             header: () => <Header showBack />,
           }} 
         />
+        <Stack.Screen 
+          name="search" 
+          options={{ 
+            headerShown: false,
+            presentation: 'fullScreenModal',
+            animation: 'fade',
+          }} 
+        />
       </Stack.Protected>
     </Stack>
   )

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { StyleSheet, View, ScrollView, RefreshControl, Pressable } from 'react-native'
+import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { useFocusEffect } from '@react-navigation/native'
 import { ThemedText } from '@/components/themed-text'
@@ -18,6 +19,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 
 export default function HomeScreen() {
   const { session } = useAuth()
+  const router = useRouter()
   const headerHeight = useHeaderHeight()
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
@@ -144,10 +146,10 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Search Bar Placeholder */}
+        {/* Search Bar */}
         <Pressable 
           style={[styles.searchBar, { backgroundColor: cardColor }]}
-          onPress={() => {/* TODO: Implement search */}}
+          onPress={() => router.push('/search')}
         >
           <IconSymbol name="magnifyingglass" size={20} color={textSecondary} />
           <ThemedText style={[styles.searchPlaceholder, { color: textSecondary }]}>
