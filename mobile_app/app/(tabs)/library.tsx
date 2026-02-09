@@ -167,10 +167,10 @@ export default function LibraryScreen() {
           />
         }
       >
-        {/* Search Bar Placeholder */}
+        {/* Search Bar */}
         <Pressable 
           style={[styles.searchBar, { backgroundColor: cardColor }]}
-          onPress={() => {/* TODO: Implement search */}}
+          onPress={() => router.push('/search')}
         >
           <IconSymbol name="magnifyingglass" size={20} color={textSecondary} />
           <ThemedText style={[styles.searchPlaceholder, { color: textSecondary }]}>
