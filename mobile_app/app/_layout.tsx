@@ -241,7 +241,7 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
       {/* Main app - shown when logged in */}
       <Stack.Protected guard={hasCompletedOnboarding && !!session}>
         <Stack.Screen
-          name="index" 
+          name="(tabs)" 
           options={{
             header: () => (
               <Header 
@@ -260,6 +260,15 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
               />
             ),
           }}
+        />
+        <Stack.Screen 
+          name="articles/index" 
+          options={({ route }) => {
+            const params = route.params as { title?: string } | undefined
+            return {
+              header: () => <Header showBack title={params?.title || 'Articles'} />,
+            }
+          }} 
         />
         <Stack.Screen 
           name="settings" 

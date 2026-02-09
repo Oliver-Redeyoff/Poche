@@ -14,6 +14,7 @@ interface ArticleCardProps {
   article: Article
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
+  showProgress?: boolean // Show reading progress bar
 }
 
 // Calculate reading time in minutes based on word count
@@ -37,6 +38,7 @@ export function ArticleCard({
   article,
   onDelete,
   onUpdateTags,
+  showProgress = false,
 }: ArticleCardProps) {
   const router = useRouter()
   const imageUrl = extractFirstImageUrl(article.content || null)
@@ -44,6 +46,13 @@ export function ArticleCard({
   const [showAddTagModal, setShowAddTagModal] = useState(false)
   const [newTagInput, setNewTagInput] = useState('')
   const theme = useTheme()
+  const tintColor = useThemeColor({}, 'tint')
+  
+  // Calculate remaining reading time based on progress
+  const readingProgress = article.readingProgress || 0
+  const remainingTime = readingProgress > 0 && article.wordCount
+    ? Math.max(1, Math.ceil((article.wordCount * (100 - readingProgress) / 100) / 200))
+    : null
 
   const currentTags = article.tags 
     ? article.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
@@ -186,7 +195,9 @@ export function ArticleCard({
             )}
             {article.siteName && (
               <ThemedText style={styles.articleUrlAndDate}>
-                {article.siteName} • {readingTime}
+                {article.siteName} • {showProgress && remainingTime 
+                  ? `${remainingTime} min left` 
+                  : readingTime}
               </ThemedText>
             )}
           </View>
@@ -259,6 +270,23 @@ export function ArticleCard({
           </Pressable>
         </View>
       </View>
+
+      {/* Progress bar */}
+      {showProgress && readingProgress > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressBar, { backgroundColor: theme.colors.border }]}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${readingProgress}%`, backgroundColor: tintColor }
+              ]} 
+            />
+          </View>
+          <ThemedText style={styles.progressText}>
+            {readingProgress}%
+          </ThemedText>
+        </View>
+      )}
 
       {/* Add Tag Modal for Android/Web */}
       <Modal
@@ -340,6 +368,30 @@ const styles = StyleSheet.create({
   articleTitle: {
     fontSize: 16,
     fontFamily: 'Bitter_700Bold',
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    marginTop: 8,
+  },
+  progressBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 12,
+    fontFamily: 'SourceSans3_500Medium',
+    color: 'rgba(120, 120, 120, 0.75)',
+    minWidth: 32,
+    textAlign: 'right',
   },
   articleUrlAndDate: {
     marginBottom: 4,
