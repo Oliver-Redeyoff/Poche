@@ -4,7 +4,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 
 export default function TabLayout() {
   const backgroundColor = useThemeColor({}, 'background')
-  const textColor = useThemeColor({}, 'text')
   const tintColor = useThemeColor({}, 'tint')
   const iconColor = useThemeColor({}, 'icon')
 

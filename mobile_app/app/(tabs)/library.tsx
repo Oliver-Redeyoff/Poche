@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { StyleSheet, View, ScrollView, RefreshControl, Pressable } from 'react-native'
+import { StyleSheet, View, ScrollView, RefreshControl, Pressable, useWindowDimensions } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/themed-text'
@@ -19,20 +19,24 @@ interface LibraryTile {
   filter: { type: 'all' | 'favorites' | 'tag'; value?: string }
 }
 
+const TILE_GAP = 12
+const GRID_PADDING = 16
+
 export default function LibraryScreen() {
   const { session } = useAuth()
   const router = useRouter()
   const headerHeight = useHeaderHeight()
+  const { width: screenWidth } = useWindowDimensions()
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
 
-  const backgroundColor = useThemeColor({}, 'background')
-  const textColor = useThemeColor({}, 'text')
   const textSecondary = useThemeColor({}, 'icon')
   const tintColor = useThemeColor({}, 'tint')
   const cardColor = useThemeColor({}, 'card')
 
   const topPadding = headerHeight
+  // Calculate tile width: (screen - padding*2 - gap) / 2
+  const tileWidth = (screenWidth - (GRID_PADDING * 2) - TILE_GAP) / 2
 
   useEffect(() => {
     if (session?.user) {
@@ -121,13 +125,14 @@ export default function LibraryScreen() {
 
   function handleTilePress(tile: LibraryTile) {
     // Navigate to articles list with filter
-    const params = new URLSearchParams()
-    params.set('filterType', tile.filter.type)
-    if (tile.filter.value) {
-      params.set('filterValue', tile.filter.value)
-    }
-    params.set('title', tile.title)
-    router.push(`/articles?${params.toString()}`)
+    router.push({
+      pathname: '/articles',
+      params: {
+        filterType: tile.filter.type,
+        filterValue: tile.filter.value || '',
+        title: tile.title,
+      },
+    })
   }
 
   if (!session?.user) {
@@ -169,7 +174,7 @@ export default function LibraryScreen() {
               key={tile.id}
               style={({ pressed }) => [
                 styles.tile,
-                { backgroundColor: cardColor },
+                { backgroundColor: cardColor, width: tileWidth },
                 pressed && styles.tilePressed,
               ]}
               onPress={() => handleTilePress(tile)}
@@ -224,11 +229,10 @@ const styles = StyleSheet.create({
   tileGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    gap: 12,
+    paddingHorizontal: GRID_PADDING,
+    gap: TILE_GAP,
   },
   tile: {
-    width: '47%',
     aspectRatio: 1.2,
     borderRadius: 16,
     padding: 16,
