@@ -30,7 +30,6 @@ export default function ArticlesListScreen() {
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
 
-  const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
   const textSecondary = useThemeColor({}, 'icon')
   const tintColor = useThemeColor({}, 'tint')
@@ -38,7 +37,6 @@ export default function ArticlesListScreen() {
   const topPadding = headerHeight
   const filterType = params.filterType || 'all'
   const filterValue = params.filterValue
-  const title = params.title || 'Articles'
 
   useEffect(() => {
     if (session?.user) {

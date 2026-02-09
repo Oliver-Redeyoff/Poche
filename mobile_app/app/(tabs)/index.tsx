@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { StyleSheet, View, ScrollView, RefreshControl, Pressable } from 'react-native'
-import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
@@ -18,13 +17,10 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 
 export default function HomeScreen() {
   const { session } = useAuth()
-  const router = useRouter()
   const headerHeight = useHeaderHeight()
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
-  const [syncing, setSyncing] = useState(false)
   
-  const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
   const textSecondary = useThemeColor({}, 'icon')
   const tintColor = useThemeColor({}, 'tint')
@@ -54,19 +50,14 @@ export default function HomeScreen() {
 
   async function syncNewArticles() {
     try {
-      setSyncing(true)
       if (!session?.user) return
       
       const result = await syncArticles(session.user.id, { processImages: true })
-      if (!result.error) {
-        setArticles(result.allArticles)
-      } else if (result.allArticles.length > 0) {
+      if (!result.error || result.allArticles.length > 0) {
         setArticles(result.allArticles)
       }
     } catch (error) {
       console.error('Error syncing articles:', error)
-    } finally {
-      setSyncing(false)
     }
   }
 
