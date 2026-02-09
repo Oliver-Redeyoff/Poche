@@ -88,10 +88,35 @@ interface Article {
   author: string | null;
   wordCount: number | null;
   tags: string | null;
+  readingProgress: number;       // 0-100 percentage
+  isFavorite: boolean;
+  startedAt: string | null;      // When first opened
+  finishedAt: string | null;     // When finished (progress = 100)
   createdAt: string;
   updatedAt: string;
 }
 ```
+
+### ArticleStatus
+
+```typescript
+type ArticleStatus = 'new' | 'reading' | 'finished';
+```
+
+Derived from `readingProgress`: 0 = new, 1-99 = reading, 100 = finished.
+
+### ArticleUpdates
+
+```typescript
+interface ArticleUpdates {
+  tags?: string | null;
+  title?: string;
+  readingProgress?: number;
+  isFavorite?: boolean;
+}
+```
+
+Used for PATCH requests to update articles.
 
 ### LegacyArticle
 
@@ -121,8 +146,18 @@ interface LegacyArticle {
 Generates a consistent color for a given tag string. Uses a hash function to ensure the same tag always gets the same color.
 
 ```typescript
-function tagToColor(tag: string): string
+function tagToColor(tag: string, opacity?: number): string
 ```
+
+### getArticleStatus
+
+Derives the reading status from the reading progress percentage.
+
+```typescript
+function getArticleStatus(readingProgress: number): ArticleStatus
+```
+
+Returns `'new'` if 0, `'finished'` if 100, `'reading'` otherwise.
 
 **Usage:**
 
@@ -278,6 +313,10 @@ The package uses TypeScript source files directly (no build step required). This
 - ✅ Installed in all 4 projects (mobile app, browser extension, backend, web app)
 - ✅ Updated imports across all projects to use `@poche/shared`
 - ✅ **No build step**: Uses TypeScript source directly (works with Metro, Vite, EAS)
+- ✅ **ArticleStatus type**: `'new'` | `'reading'` | `'finished'` for reading status
+- ✅ **ArticleUpdates interface**: For PATCH requests with readingProgress, isFavorite
+- ✅ **getArticleStatus utility**: Derives status from reading progress
+- ✅ **Article interface updated**: Added readingProgress, isFavorite, startedAt, finishedAt fields
 
 ## Future Enhancements
 

@@ -10,19 +10,21 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Authentication**: Email/password login and signup via self-hosted backend
 - **Forgot Password**: Request password reset email from auth screen
 - **Account Deletion**: Delete account from settings with password confirmation (iOS Alert.prompt)
-- **Article Viewing**: Display all articles saved by the user
-- **Native Navigation**: Tab-based navigation with native iOS blur effects
+- **Tab Navigation**: Home and Library tabs with native iOS blur effects
+- **Home Page**: "Continue Reading" section (in-progress articles) and "New Articles" section (unread articles)
+- **Library Page**: Tile grid for All Articles, Favorites, and tag-based filtering with article counts
+- **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
 - **Dark Mode**: Automatic theme switching based on system preferences with custom Poche color theme
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
 - **Background Sync**: Periodic background task to sync latest articles and cache images
-- **Instant Loading**: Articles from local storage appear immediately on homepage
+- **Instant Loading**: Articles from local storage appear immediately
+- **Smart Data Refresh**: Screens reload from storage on focus to reflect changes made elsewhere
 - **Article Animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article Deletion**: Delete articles with confirmation dialog and smooth animations
-- **Article Detail View**: Full article reading experience with markdown rendering and offline support
+- **Article Detail View**: Full article reading experience with markdown rendering and progress tracking
 - **Tag Management**: Add and remove tags from articles directly from article cards with confirmation dialogs
-- **Tag Filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading Time**: Display estimated reading time based on article word count
 - **Clear Data on Logout**: Locally stored articles are cleared when user signs out
 - **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
@@ -48,15 +50,21 @@ The Poche mobile app is a React Native application built with Expo that allows u
 mobile_app/
 ├── app/                    # Expo Router file-based routes
 │   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext, onboarding check)
-│   ├── index.tsx          # Home screen with article list and tag filtering
-│   ├── article/[id].tsx    # Article detail screen with markdown rendering
-│   ├── auth.tsx            # Authentication screen (login/signup/forgot password)
-│   ├── onboarding.tsx      # First-time user onboarding experience
-│   └── settings.tsx        # Settings screen
+│   ├── (tabs)/            # Tab navigator group
+│   │   ├── _layout.tsx    # Tab layout (Home & Library tabs)
+│   │   ├── index.tsx      # Home tab - Continue Reading & New Articles sections
+│   │   └── library.tsx    # Library tab - All Articles, Favorites, Tags tiles
+│   ├── articles/
+│   │   └── index.tsx      # Filtered article list (by tag, favorites, or all)
+│   ├── article/[id].tsx   # Article detail screen with markdown rendering & progress tracking
+│   ├── auth.tsx           # Authentication screen (login/signup/forgot password)
+│   ├── onboarding.tsx     # First-time user onboarding experience
+│   └── settings.tsx       # Settings screen
 ├── components/            # React components
 │   ├── button.tsx         # Unified Button component (primary, secondary, danger, ghost variants)
 │   ├── segmented-control.tsx # Segmented control for mode switching
-│   ├── article-card.tsx   # Article card with tag management, delete, and animations
+│   ├── article-card.tsx   # Article card with tag management, progress bar, delete, animations
+│   ├── header.tsx         # Custom header component with logo and back button
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
@@ -64,7 +72,7 @@ mobile_app/
 ├── lib/
 │   ├── api.ts            # API client (uses @poche/shared helpers)
 │   ├── background-sync.ts # Background task for syncing articles
-│   ├── article-sync.ts   # Centralized article sync logic with clear on logout
+│   ├── article-sync.ts   # Centralized article sync logic with reading progress updates
 │   └── image-cache.ts    # Image extraction, downloading, and caching utilities
 ├── hooks/                # Custom React hooks
 │   ├── use-color-scheme.ts
@@ -95,17 +103,28 @@ First-time user onboarding experience:
 - Completion state saved to AsyncStorage (`@poche_onboarding_complete`)
 - Beautiful iconography and typography matching app theme
 
-### app/index.tsx
-Home screen that:
-- Checks authentication status via AuthContext
-- Shows Auth screen if not logged in
-- Shows article list if logged in
-- Loads articles from local storage immediately
-- Syncs new articles from backend in background
-- Handles article deletion with animations
-- Manages article list state and storage
-- **Tag filtering**: Displays tag chips at top for filtering articles by tag
-- **Tag updates**: Handles tag updates from ArticleCard and syncs to backend and local storage
+### app/(tabs)/index.tsx
+Home tab that:
+- Displays "Continue Reading" section with in-progress articles (1-99% progress)
+- Displays "New Articles" section with unread articles (0% progress)
+- Shows empty states when no articles or all caught up
+- Uses `useFocusEffect` to reload data when tab comes into focus
+- Handles article deletion and tag updates
+
+### app/(tabs)/library.tsx
+Library tab that:
+- Displays tile grid with All Articles, Favorites, and tag-based filters
+- Shows article counts for each tile
+- Calculates tile widths dynamically based on screen size
+- Navigates to filtered article list on tile press
+- Uses `useFocusEffect` to reload data when tab comes into focus
+
+### app/articles/index.tsx
+Filtered article list screen:
+- Receives filter type and value via URL params (all, favorites, tag)
+- Displays filtered articles in a scrollable list
+- Shows appropriate empty states for each filter type
+- Handles article deletion and tag updates
 
 ### app/auth.tsx
 Authentication screen:
@@ -153,6 +172,12 @@ Custom markdown-to-React-Native renderer:
 Article detail screen with premium reading experience:
 - Displays full article content with enhanced typography
 - Uses custom `Markdown` component for rendering
+- **Reading progress tracking**:
+  - Tracks scroll position and calculates progress (0-100%)
+  - Updates local storage on scroll (debounced, 5% threshold)
+  - Syncs to backend with 3-second debounce
+  - Immediate sync when reaching 100% progress
+  - Final sync on component unmount
 - **Custom image rendering**:
   - Filters out invalid image URLs (empty, #, data URIs)
   - Filters out low-resolution images (< 50x50 pixels)
@@ -174,7 +199,12 @@ API client using `@poche/shared` helpers:
 ### lib/article-sync.ts
 Centralized article sync logic:
 - `syncArticles()` - Sync articles from backend and cache images
+- `loadArticlesFromStorage()` - Load articles from AsyncStorage
+- `saveArticlesToStorage()` - Save articles to AsyncStorage
 - `clearArticlesFromStorage(userId)` - Clear all locally stored articles for a user (used on logout)
+- `updateReadingProgressLocal()` - Update reading progress in local storage only (for performance)
+- `syncReadingProgressToBackend()` - Sync reading progress to backend API
+- `updateArticleWithSync()` - Update article in both backend and local storage
 
 ## Routing Structure
 
@@ -182,8 +212,11 @@ Centralized article sync logic:
 Expo Router uses file-based routing similar to Next.js:
 
 - `app/_layout.tsx` - Root layout with Stack navigator, AuthContext provider, registers background sync
-- `app/index.tsx` - Home screen (default route `/`) with article list
-- `app/article/[id].tsx` - Article detail screen with dynamic ID parameter
+- `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs
+- `app/(tabs)/index.tsx` - Home tab with Continue Reading and New Articles sections
+- `app/(tabs)/library.tsx` - Library tab with article filter tiles
+- `app/articles/index.tsx` - Filtered article list screen
+- `app/article/[id].tsx` - Article detail screen with reading progress tracking
 - `app/auth.tsx` - Authentication screen
 - `app/settings.tsx` - Settings screen
 
@@ -216,6 +249,10 @@ API URL is configured via environment variable:
 - `url`, `siteName`, `author` - Metadata
 - `wordCount` (number) - For reading time calculation
 - `tags` (string) - Comma-delimited list
+- `readingProgress` (number) - Reading progress 0-100%
+- `isFavorite` (boolean) - Whether article is favorited
+- `startedAt` (timestamp) - When first opened
+- `finishedAt` (timestamp) - When finished reading
 - `createdAt`, `updatedAt` (timestamps)
 
 ### Local Storage
@@ -456,7 +493,7 @@ A patch is applied to React Native to fix a text cut-off issue on iOS with the n
 Potential features:
 - Article search functionality
 - Article organization (folders/categories)
-- Reading progress tracking
+- Favorite toggle on article cards
 - Article sharing
 - Push notifications for new articles
 - Article editing
