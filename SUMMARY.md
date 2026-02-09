@@ -55,6 +55,10 @@ The project uses a PostgreSQL database with the following main tables:
 - `author` (string, nullable) - Article author
 - `wordCount` (integer, nullable) - Word count for reading time
 - `tags` (string, nullable) - Comma-delimited list of tags
+- `readingProgress` (integer, default 0) - Reading progress 0-100%
+- `isFavorite` (boolean, default false) - Whether article is favorited
+- `startedAt` (timestamp, nullable) - When article was first opened
+- `finishedAt` (timestamp, nullable) - When article was finished (progress = 100)
 - `createdAt`, `updatedAt` (timestamps)
 
 ### Authentication
@@ -135,7 +139,10 @@ Poche/
 - User authentication (email/password login and signup)
 - **Forgot password**: Request password reset email from login screen
 - View saved articles linked to user account
-- Tab-based navigation with native iOS blur effects
+- **Tab-based navigation**: Home and Library tabs with native iOS blur effects
+- **Home page**: "Continue Reading" section (in-progress articles) and "New Articles" section
+- **Library page**: Tile grid for All Articles, Favorites, and tag-based filtering
+- **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%)
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
@@ -147,7 +154,6 @@ Poche/
 - **Article animations**: Smooth entry/exit animations for articles
 - **Article deletion**: Delete articles with confirmation dialog
 - **Tag management**: Add and remove tags from articles directly from article cards
-- **Tag filtering**: Filter articles by tag using tag chips at the top of the homepage
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
 
@@ -256,9 +262,12 @@ The shared package provides common functionality across all projects:
 
 ### Types (`types.ts`)
 - `User`, `AuthResponse`, `Article`, `LegacyArticle`
+- `ArticleStatus` - Reading status type (`'new'` | `'reading'` | `'finished'`)
+- `ArticleUpdates` - Interface for article PATCH requests
 
 ### Utilities (`util.ts`)
 - `tagToColor()` - Generates consistent colors for tag chips
+- `getArticleStatus()` - Derives reading status from progress (0=new, 1-99=reading, 100=finished)
 
 ### Constants (`constants.ts`)
 - `SESSION_DURATION` - 7 days in milliseconds
@@ -334,7 +343,6 @@ The shared package provides common functionality across all projects:
 - ✅ Article deletion with confirmation
 - ✅ Modular ArticleCard component
 - ✅ Tag management (add/remove tags from article cards)
-- ✅ Tag filtering on homepage
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
@@ -347,6 +355,11 @@ The shared package provides common functionality across all projects:
 - ✅ **Clear articles on logout**: Locally stored articles cleared on sign out
 - ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
+- ✅ **Tab-based navigation**: Home and Library tabs with Expo Router
+- ✅ **Home page**: "Continue Reading" (in-progress) and "New Articles" sections
+- ✅ **Library page**: Tile grid for All Articles, Favorites, and tags with counts
+- ✅ **Reading progress tracking**: Scroll-based progress (0-100%) with debounced backend sync
+- ✅ **Smart data refresh**: Screens reload from storage on focus to reflect changes
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
@@ -424,7 +437,6 @@ Potential features to add:
 - Article folders/categories
 - Search functionality
 - Article sharing
-- Reading progress tracking
 - Enhanced sync across devices
 - Tag autocomplete/suggestions
 - Bulk tag operations

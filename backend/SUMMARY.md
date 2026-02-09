@@ -103,6 +103,10 @@ backend/
 - `author` (text, nullable)
 - `wordCount` (integer, nullable)
 - `tags` (text, nullable) - Comma-delimited tags
+- `readingProgress` (integer, default 0) - Reading progress 0-100%
+- `isFavorite` (boolean, default false) - Whether article is favorited
+- `startedAt` (timestamp, nullable) - When article was first opened
+- `finishedAt` (timestamp, nullable) - When article was finished (progress = 100)
 - `createdAt`, `updatedAt` (timestamps)
 
 ## API Endpoints
@@ -127,7 +131,9 @@ All article endpoints require `Authorization: Bearer <token>` header.
 - `POST /api/articles` - Save article from URL
   - Body: `{ url: string, tags?: string }`
   - Backend fetches URL and extracts content with Defuddle
-- `PATCH /api/articles/:id` - Update article (tags, title)
+- `PATCH /api/articles/:id` - Update article (tags, title, readingProgress, isFavorite)
+  - Automatically sets `startedAt` when progress first goes above 0
+  - Automatically sets `finishedAt` when progress reaches 100
 - `DELETE /api/articles/:id` - Delete article
 
 ## Authentication Flow
@@ -340,6 +346,12 @@ The webapp is built and deployed to `backend/web_app_dist/`. Docker Compose moun
 - ✅ Docker volume mount for webapp build (`./web_app_dist:/var/www/web_app_dist:ro`)
 - ✅ Removed dotenv dependency from drizzle.config.ts (not needed with env vars)
 - ✅ Database password requirements documented (no special characters)
+
+## Recent Additions
+
+- ✅ **Reading progress fields**: `readingProgress`, `isFavorite`, `startedAt`, `finishedAt`
+- ✅ **Smart timestamp handling**: Auto-sets `startedAt` and `finishedAt` based on progress updates
+- ✅ **ArticleUpdates validation**: Zod schema for progress and favorite updates
 
 ## Future Enhancements
 
