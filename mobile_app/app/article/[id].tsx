@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
@@ -9,6 +9,10 @@ import { Article, tagToColor } from '@poche/shared'
 import { getCachedImagePath } from '../../lib/image-cache'
 import { useTheme } from '@react-navigation/native'
 import { useAuth } from '../_layout'
+import { 
+  updateReadingProgressLocal, 
+  syncReadingProgressToBackend 
+} from '../../lib/article-sync'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -23,6 +27,14 @@ export default function ArticleScreen() {
   // Use hook instead of Dimensions.get() to ensure correct values on initial render
   const { width: screenWidth } = useWindowDimensions()
   const contentWidth = Math.min(screenWidth - 40, 600) // Max width for comfortable reading
+
+  // Reading progress tracking
+  const [readingProgress, setReadingProgress] = useState(0)
+  const readingProgressRef = useRef(0) // Ref copy for cleanup function
+  const articleRef = useRef<Article | null>(null) // Ref copy for cleanup function
+  const lastSyncedProgress = useRef(0)
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasReachedEnd = useRef(false)
   
   // Premium reading colors - warm tones that are easy on the eyes
   const colors = useMemo(() => ({
@@ -82,6 +94,12 @@ export default function ArticleScreen() {
       
       if (storedArticle) {
         setArticle(storedArticle)
+        articleRef.current = storedArticle
+        // Initialize reading progress from stored article
+        const initialProgress = storedArticle.readingProgress || 0
+        setReadingProgress(initialProgress)
+        readingProgressRef.current = initialProgress
+        lastSyncedProgress.current = initialProgress
       } else {
         // Article not found in local storage
         Alert.alert('Article not found', 'This article is not available offline. Please sync your articles first.')
@@ -96,6 +114,72 @@ export default function ArticleScreen() {
       setLoading(false)
     }
   }
+
+  // Handle scroll to track reading progress
+  const lastLocalSaveProgress = useRef(0)
+  const PROGRESS_SAVE_THRESHOLD = 5 // Only save when progress changes by 5%
+  
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent
+    
+    // Calculate scroll progress (0-100)
+    const scrollableHeight = contentSize.height - layoutMeasurement.height
+    if (scrollableHeight <= 0) return
+    
+    const progress = Math.min(100, Math.max(0, Math.round((contentOffset.y / scrollableHeight) * 100)))
+    
+    // Only update if progress increased (don't decrease on scroll up)
+    if (progress > readingProgress) {
+      setReadingProgress(progress)
+      readingProgressRef.current = progress
+      
+      // Only save to local storage when progress changes by threshold amount (or reaches 100)
+      const shouldSaveLocally = progress === 100 || 
+        (progress - lastLocalSaveProgress.current >= PROGRESS_SAVE_THRESHOLD)
+      
+      if (shouldSaveLocally && session?.user && article) {
+        updateReadingProgressLocal(session.user.id, article.id, progress)
+        lastLocalSaveProgress.current = progress
+      }
+      
+      // Debounce backend sync - wait 3 seconds after scrolling stops
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current)
+      }
+      
+      // Sync to backend after 3 seconds of no scrolling, or immediately if finished
+      if (progress === 100 && !hasReachedEnd.current) {
+        hasReachedEnd.current = true
+        if (article) {
+          syncReadingProgressToBackend(article.id, 100)
+          lastSyncedProgress.current = 100
+        }
+      } else {
+        syncTimeoutRef.current = setTimeout(() => {
+          if (article && progress > lastSyncedProgress.current) {
+            syncReadingProgressToBackend(article.id, progress)
+            lastSyncedProgress.current = progress
+          }
+        }, 3000)
+      }
+    }
+  }, [readingProgress, session?.user, article])
+
+  // Cleanup and sync on unmount only
+  useEffect(() => {
+    return () => {
+      // Clear any pending sync timeout
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current)
+      }
+      
+      // Sync final progress to backend on unmount if changed
+      // Using refs to avoid re-running effect on every state change
+      if (articleRef.current && readingProgressRef.current > lastSyncedProgress.current) {
+        syncReadingProgressToBackend(articleRef.current.id, readingProgressRef.current)
+      }
+    }
+  }, []) // Empty deps - only runs on unmount
   
   // Markdown styles for premium reading experience
   const markdownStyles = useMemo((): MarkdownStyles => ({
@@ -369,6 +453,8 @@ export default function ArticleScreen() {
             paddingTop: 120,
           }
         ]}
+        onScroll={handleScroll}
+        scrollEventThrottle={250}
       >
         {/* Article Header */}
         <View style={[styles.header, { backgroundColor: theme.colors.card }]}>

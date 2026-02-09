@@ -1,4 +1,4 @@
-import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi } from './api'
+import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi, ArticleUpdates } from './api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '@poche/shared'
 import { processArticlesImages } from './image-cache'
@@ -172,4 +172,70 @@ export async function updateArticleTagsWithSync(userId: string, articleId: numbe
       : article
   )
   await saveArticlesToStorage(userId, updatedArticles)
+}
+
+/**
+ * Update article in backend and local storage
+ */
+export async function updateArticleWithSync(
+  userId: string, 
+  articleId: number, 
+  updates: ArticleUpdates
+): Promise<Article | null> {
+  try {
+    // Update in backend
+    const updatedArticle = await updateArticleApi(articleId, updates)
+    
+    // Update in local storage
+    const articles = await loadArticlesFromStorage(userId)
+    const updatedArticles = articles.map(article => 
+      article.id === articleId 
+        ? { ...article, ...updates }
+        : article
+    )
+    await saveArticlesToStorage(userId, updatedArticles)
+    
+    return updatedArticle
+  } catch (error) {
+    console.error('Error updating article with sync:', error)
+    throw error
+  }
+}
+
+/**
+ * Update reading progress for an article (local storage only for performance)
+ * Use this for frequent updates during reading, then sync to backend less frequently
+ */
+export async function updateReadingProgressLocal(
+  userId: string,
+  articleId: number,
+  readingProgress: number
+): Promise<void> {
+  try {
+    const articles = await loadArticlesFromStorage(userId)
+    const updatedArticles = articles.map(article => 
+      article.id === articleId 
+        ? { ...article, readingProgress }
+        : article
+    )
+    await saveArticlesToStorage(userId, updatedArticles)
+  } catch (error) {
+    console.error('Error updating reading progress locally:', error)
+  }
+}
+
+/**
+ * Sync reading progress to backend
+ */
+export async function syncReadingProgressToBackend(
+  articleId: number,
+  readingProgress: number
+): Promise<void> {
+  try {
+    console.log('Syncing reading progress to backend:', articleId, readingProgress)
+    await updateArticleApi(articleId, { readingProgress })
+  } catch (error) {
+    console.error('Error syncing reading progress to backend:', error)
+    // Don't throw - reading progress sync failures shouldn't break the UX
+  }
 }
