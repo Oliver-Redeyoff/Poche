@@ -87,7 +87,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   centerSection: {
-    backgroundColor: 'green',
     flex: 2,
     alignItems: 'center',
   },

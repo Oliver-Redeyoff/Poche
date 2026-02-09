@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { StyleSheet, View, ScrollView, RefreshControl, Pressable } from 'react-native'
 import { useHeaderHeight } from '@react-navigation/elements'
+import { useFocusEffect } from '@react-navigation/native'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
@@ -28,6 +29,7 @@ export default function HomeScreen() {
 
   const topPadding = headerHeight
 
+  // Initial load and sync when session changes
   useEffect(() => {
     if (session?.user) {
       loadStoredArticles().then(() => {
@@ -37,6 +39,15 @@ export default function HomeScreen() {
       setArticles([])
     }
   }, [session])
+
+  // Reload from storage when screen comes into focus (to pick up changes from other screens)
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user) {
+        loadStoredArticles()
+      }
+    }, [session])
+  )
 
   async function loadStoredArticles() {
     try {

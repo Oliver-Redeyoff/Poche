@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { StyleSheet, View, ScrollView, RefreshControl } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
+import { useFocusEffect } from '@react-navigation/native'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
@@ -38,6 +39,7 @@ export default function ArticlesListScreen() {
   const filterType = params.filterType || 'all'
   const filterValue = params.filterValue
 
+  // Initial load when session changes
   useEffect(() => {
     if (session?.user) {
       loadStoredArticles()
@@ -45,6 +47,15 @@ export default function ArticlesListScreen() {
       setArticles([])
     }
   }, [session])
+
+  // Reload from storage when screen comes into focus (to pick up changes from article view)
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user) {
+        loadStoredArticles()
+      }
+    }, [session])
+  )
 
   async function loadStoredArticles() {
     try {
