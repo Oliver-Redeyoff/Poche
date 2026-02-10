@@ -1,14 +1,20 @@
-import React, { useState, useRef } from 'react'
+import React, { useRef } from 'react'
 import { 
   StyleSheet, 
   View, 
   Dimensions, 
-  TouchableOpacity, 
-  ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   Pressable,
 } from 'react-native'
+import Animated, { 
+  useSharedValue, 
+  useAnimatedScrollHandler, 
+  useAnimatedStyle, 
+  interpolate,
+  interpolateColor,
+  runOnJS,
+  SharedValue,
+} from 'react-native-reanimated'
+import { useState } from 'react'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
 import { Button } from '../components/button'
@@ -60,24 +66,78 @@ const slides: OnboardingSlide[] = [
   },
 ]
 
+// Animated dot component that smoothly transitions based on scroll position
+function PaginationDot({ 
+  index, 
+  scrollX, 
+  accentColor, 
+  dividerColor,
+  onPress 
+}: { 
+  index: number
+  scrollX: SharedValue<number>
+  accentColor: string
+  dividerColor: string
+  onPress: () => void
+}) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * SCREEN_WIDTH,
+      index * SCREEN_WIDTH,
+      (index + 1) * SCREEN_WIDTH,
+    ]
+    
+    const width = interpolate(
+      scrollX.value,
+      inputRange,
+      [8, 24, 8],
+      'clamp'
+    )
+    
+    const backgroundColor = interpolateColor(
+      scrollX.value,
+      inputRange,
+      [dividerColor, accentColor, dividerColor]
+    )
+    
+    return {
+      width,
+      backgroundColor,
+    }
+  })
+
+  return (
+    <Pressable onPress={onPress}>
+      <Animated.View style={[styles.dot, animatedStyle]} />
+    </Pressable>
+  )
+}
+
 export default function Onboarding() {
   const colorScheme = useColorScheme() ?? 'light'
   const colors = Colors[colorScheme]
   const textSecondary = useThemeColor({}, 'textSecondary')
   const { completeOnboarding } = useAuth()
   
+  const scrollX = useSharedValue(0)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const scrollViewRef = useRef<ScrollView>(null)
+  const scrollViewRef = useRef<Animated.ScrollView>(null)
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const contentOffset = event.nativeEvent.contentOffset.x
-    const index = Math.round(contentOffset / SCREEN_WIDTH)
+  const updateCurrentIndex = (index: number) => {
     setCurrentIndex(index)
   }
 
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollX.value = event.contentOffset.x
+      // Update the current index for button text (only when crossing index boundaries)
+      const newIndex = Math.round(event.contentOffset.x / SCREEN_WIDTH)
+      runOnJS(updateCurrentIndex)(newIndex)
+    },
+  })
+
   const goToSlide = (index: number) => {
     scrollViewRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true })
-    setCurrentIndex(index)
   }
 
   const handleNext = () => {
@@ -115,12 +175,12 @@ export default function Onboarding() {
       />
 
       {/* Slides */}
-      <ScrollView
+      <Animated.ScrollView
         ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
+        onScroll={scrollHandler}
         scrollEventThrottle={16}
         bounces={false}
       >
@@ -143,23 +203,20 @@ export default function Onboarding() {
             </View>
           </View>
         ))}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Bottom Section */}
       <View style={styles.bottomSection}>
         {/* Pagination Dots */}
         <View style={styles.pagination}>
           {slides.map((_, index) => (
-            <TouchableOpacity
+            <PaginationDot
               key={index}
+              index={index}
+              scrollX={scrollX}
+              accentColor={colors.accent}
+              dividerColor={colors.divider}
               onPress={() => goToSlide(index)}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: index === currentIndex ? colors.accent : colors.divider,
-                  width: index === currentIndex ? 24 : 8,
-                }
-              ]}
             />
           ))}
         </View>
