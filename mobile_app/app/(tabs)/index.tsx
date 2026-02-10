@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { StyleSheet, View, ScrollView, RefreshControl, Pressable } from 'react-native'
+import { StyleSheet, View, ScrollView, RefreshControl, Pressable, useWindowDimensions } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { useFocusEffect } from '@react-navigation/native'
@@ -17,10 +17,14 @@ import {
 } from '@/lib/article-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 
+const TILE_GAP = 12
+const GRID_PADDING = 16
+
 export default function HomeScreen() {
   const { session } = useAuth()
   const router = useRouter()
   const headerHeight = useHeaderHeight()
+  const { width: screenWidth } = useWindowDimensions()
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
   
@@ -30,6 +34,8 @@ export default function HomeScreen() {
   const cardColor = useThemeColor({}, 'card')
 
   const topPadding = headerHeight
+  // Calculate tile width for 2-column grid
+  const tileWidth = (screenWidth - (GRID_PADDING * 2) - TILE_GAP) / 2
 
   // Initial load and sync when session changes
   useEffect(() => {
@@ -175,15 +181,16 @@ export default function HomeScreen() {
                 <View style={styles.sectionHeader}>
                   <ThemedText style={styles.sectionTitle}>Continue Reading</ThemedText>
                 </View>
-                <View style={styles.verticalList}>
+                <View style={styles.tileGrid}>
                   {continueReadingArticles.map(article => (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      onDelete={deleteArticle}
-                      onUpdateTags={updateArticleTags}
-                      showProgress
-                    />
+                    <View key={article.id} style={{ width: tileWidth }}>
+                      <ArticleCard
+                        article={article}
+                        onDelete={deleteArticle}
+                        onUpdateTags={updateArticleTags}
+                        variant="tile"
+                      />
+                    </View>
                   ))}
                 </View>
               </View>
@@ -266,6 +273,12 @@ const styles = StyleSheet.create({
   verticalList: {
     paddingHorizontal: 16,
     gap: 12,
+  },
+  tileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: GRID_PADDING,
+    gap: TILE_GAP,
   },
   emptyState: {
     flex: 1,
