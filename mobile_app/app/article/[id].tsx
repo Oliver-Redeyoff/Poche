@@ -11,7 +11,8 @@ import { useTheme } from '@react-navigation/native'
 import { useAuth } from '../_layout'
 import { 
   updateReadingProgressLocal, 
-  syncReadingProgressToBackend 
+  syncReadingProgressToBackend,
+  updateArticleWithSync
 } from '../../lib/article-sync'
 import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
@@ -183,6 +184,25 @@ export default function ArticleScreen() {
       }
     }
   }, []) // Empty deps - only runs on unmount
+
+  // Toggle favorite status
+  const toggleFavorite = useCallback(async () => {
+    if (!article || !session?.user) return
+    
+    const newFavoriteStatus = !article.isFavorite
+    
+    // Optimistic update
+    setArticle({ ...article, isFavorite: newFavoriteStatus })
+    
+    // Sync to storage and backend
+    try {
+      await updateArticleWithSync(session.user.id, article.id, { isFavorite: newFavoriteStatus })
+    } catch (error) {
+      // Revert on error
+      setArticle({ ...article, isFavorite: !newFavoriteStatus })
+      Alert.alert('Error', 'Failed to update favorite status')
+    }
+  }, [article, session?.user])
   
   // Markdown styles for premium reading experience
   const markdownStyles = useMemo((): MarkdownStyles => ({
@@ -452,14 +472,26 @@ export default function ArticleScreen() {
         showLogo
         showBack
         rightElement={
-          article.url && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
-              onPress={() => Linking.openURL(article.url as string)}
+              onPress={toggleFavorite}
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
             >
-              <IconSymbol name="arrow.up.right.square" size={24} color={colors.text} />
+              <IconSymbol 
+                name={article.isFavorite ? 'star.fill' : 'star'} 
+                size={28} 
+                color={article.isFavorite ? '#FFD700' : colors.text} 
+              />
             </Pressable>
-          )
+            {article.url && (
+              <Pressable
+                onPress={() => Linking.openURL(article.url as string)}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+              >
+                <IconSymbol name="arrow.up.right.square" size={28} color={colors.text} />
+              </Pressable>
+            )}
+          </View>
         }
       />
 
@@ -556,10 +588,8 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     paddingBottom: 12,
-    borderBottomWidth: 4,
-    borderColor: 'red',
   },
   title: {
     fontSize: 28,

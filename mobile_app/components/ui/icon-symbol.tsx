@@ -28,6 +28,9 @@ const MAPPING = {
   'tag': 'label-outline',
   // External link
   'arrow.up.right.square': 'open-in-new',
+  // Favorites
+  'star': 'star-outline',
+  'star.fill': 'star',
 } as IconMapping;
 
 /**

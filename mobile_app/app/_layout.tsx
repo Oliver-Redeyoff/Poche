@@ -273,7 +273,7 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         <Stack.Screen 
           name="settings" 
           options={{ 
-            header: () => <Header showBack title="Settings" />,
+            header: () => <Header showBack />,
           }} 
         />
         <Stack.Screen 

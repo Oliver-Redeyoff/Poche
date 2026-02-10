@@ -6,6 +6,7 @@ export default function TabLayout() {
   const backgroundColor = useThemeColor({}, 'background')
   const tintColor = useThemeColor({}, 'tint')
   const iconColor = useThemeColor({}, 'icon')
+  const borderColor = useThemeColor({}, 'border')
 
   return (
     <Tabs
@@ -15,7 +16,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: iconColor,
         tabBarStyle: {
           backgroundColor,
-          borderTopColor: 'transparent',
+          borderTopColor: borderColor,
+          borderTopWidth: 1,
         },
         tabBarLabelStyle: {
           fontFamily: 'SourceSans3_500Medium',
