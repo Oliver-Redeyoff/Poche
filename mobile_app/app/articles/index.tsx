@@ -8,7 +8,7 @@ import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useArticleActions } from '@/hooks/use-article-actions'
 import { ArticleCard } from '@/components/article-card'
-import { Article } from '@poche/shared'
+import { Article, tagToColor } from '@poche/shared'
 import { useAuth } from '../_layout'
 import { loadArticlesFromStorage, syncArticles } from '@/lib/article-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
@@ -104,13 +104,43 @@ export default function ArticlesListScreen() {
   const filteredArticles = getFilteredArticles()
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
+  // Determine the header title and icon based on filter type
+  const getHeaderTitle = () => {
+    switch (filterType) {
+      case 'favorites':
+        return 'Favorites'
+      case 'tag':
+        return filterValue || 'Tagged'
+      case 'all':
+      default:
+        return 'All Articles'
+    }
+  }
+
+  const renderHeaderCenter = () => (
+    <View style={styles.headerCenter}>
+      {filterType === 'tag' && filterValue ? (
+        <View style={[styles.tagDot, { backgroundColor: tagToColor(filterValue, 1.0) }]} />
+      ) : (
+        <IconSymbol 
+          name={filterType === 'favorites' ? 'star.fill' : 'doc.text.fill'} 
+          size={18} 
+          color={filterType === 'favorites' ? '#FFB800' : tintColor} 
+        />
+      )}
+      <ThemedText style={styles.headerTitle} numberOfLines={1}>
+        {getHeaderTitle()}
+      </ThemedText>
+    </View>
+  )
+
   if (!session?.user) {
     return null
   }
 
   return (
     <ThemedView style={styles.container}>
-      <Header showBack />
+      <Header showBack centerElement={renderHeaderCenter()} />
 
       <ScrollView
         style={styles.scrollView}
@@ -176,6 +206,20 @@ const styles = StyleSheet.create({
   articleList: {
     paddingHorizontal: 16,
     gap: 12,
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontFamily: 'SourceSans3_600SemiBold',
+  },
+  tagDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
   },
   emptyState: {
     flex: 1,

@@ -13,6 +13,8 @@ interface HeaderProps {
   showBack?: boolean
   /** Title to display in the center */
   title?: string
+  /** Custom element to display in the center (overrides title) */
+  centerElement?: React.ReactNode
   /** Custom element to display on the right */
   rightElement?: React.ReactNode
   /** Additional style for the header container */
@@ -23,6 +25,7 @@ export function Header({
   showLogo = true,
   showBack = false,
   title,
+  centerElement,
   rightElement,
   style,
 }: HeaderProps) {
@@ -62,9 +65,9 @@ export function Header({
 
         {/* Center section */}
         <View style={styles.centerSection}>
-          {title && (
+          {centerElement || (title && (
             <ThemedText style={styles.title}>{title}</ThemedText>
-          )}
+          ))}
         </View>
 
         {/* Right section */}
