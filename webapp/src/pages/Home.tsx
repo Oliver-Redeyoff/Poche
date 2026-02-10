@@ -79,27 +79,130 @@ const Home = () => {
           <div className="hero-mockup">
             <div className="mockup-phone">
               <div className="mockup-screen">
+                {/* Header */}
                 <div className="mockup-header">
-                  <div className="mockup-logo"></div>
+                  <div className="mockup-logo">
+                    <img src="/logo.png" alt="" />
+                  </div>
                   <span>Poche</span>
+                  <div className="mockup-search-icon">
+                    <i className="fa-solid fa-magnifying-glass"></i>
+                  </div>
                 </div>
-                <div className="mockup-article">
-                  <div className="mockup-article-title"></div>
-                  <div className="mockup-article-meta"></div>
-                  <div className="mockup-article-line"></div>
-                  <div className="mockup-article-line short"></div>
+
+                {/* Continue Reading Section */}
+                <div className="mockup-section">
+                  <div className="mockup-section-title">Continue Reading</div>
+                  <div className="mockup-tiles">
+                    <div className="mockup-tile">
+                      <div className="mockup-tile-image" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}></div>
+                      <div className="mockup-tile-content">
+                        <div className="mockup-tile-title">The Future of AI</div>
+                        <div className="mockup-tile-meta">TechCrunch · 8 min</div>
+                      </div>
+                      <div className="mockup-tile-progress">
+                        <div className="mockup-tile-progress-bar" style={{ width: '65%' }}></div>
+                      </div>
+                    </div>
+                    <div className="mockup-tile">
+                      <div className="mockup-tile-image" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}></div>
+                      <div className="mockup-tile-content">
+                        <div className="mockup-tile-title">Design Systems</div>
+                        <div className="mockup-tile-meta">Medium · 5 min</div>
+                      </div>
+                      <div className="mockup-tile-progress">
+                        <div className="mockup-tile-progress-bar" style={{ width: '30%' }}></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mockup-article">
-                  <div className="mockup-article-title"></div>
-                  <div className="mockup-article-meta"></div>
-                  <div className="mockup-article-line"></div>
-                  <div className="mockup-article-line short"></div>
+
+                {/* New Articles Section */}
+                <div className="mockup-section">
+                  <div className="mockup-section-title">New Articles</div>
+                  <div className="mockup-article">
+                    <div className="mockup-article-image" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}></div>
+                    <div className="mockup-article-content">
+                      <div className="mockup-article-title">Building Better Products</div>
+                      <div className="mockup-article-meta">Product Hunt · 12 min read</div>
+                      <div className="mockup-article-tags">
+                        <span className="mockup-tag" style={{ background: '#E8F5E9', color: '#2E7D32' }}>Product</span>
+                        <span className="mockup-tag" style={{ background: '#E3F2FD', color: '#1565C0' }}>UX</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mockup-article">
+                    <div className="mockup-article-image" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' }}></div>
+                    <div className="mockup-article-content">
+                      <div className="mockup-article-title">Remote Work Tips</div>
+                      <div className="mockup-article-meta">Forbes · 6 min read</div>
+                      <div className="mockup-article-tags">
+                        <span className="mockup-tag" style={{ background: '#FFF3E0', color: '#E65100' }}>Career</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mockup-article">
-                  <div className="mockup-article-title"></div>
-                  <div className="mockup-article-meta"></div>
-                  <div className="mockup-article-line"></div>
-                  <div className="mockup-article-line short"></div>
+
+                {/* Tab Bar */}
+                <div className="mockup-tabbar">
+                  <div className="mockup-tab active">
+                    <i className="fa-solid fa-house"></i>
+                    <span>Home</span>
+                  </div>
+                  <div className="mockup-tab">
+                    <i className="fa-solid fa-book"></i>
+                    <span>Library</span>
+                  </div>
+                </div>
+
+                {/* Article Detail Overlay (animated) */}
+                <div className="mockup-article-detail">
+                  <div className="mockup-detail-header">
+                    <div className="mockup-back-btn">
+                      <i className="fa-solid fa-chevron-left"></i>
+                    </div>
+                    <div className="mockup-detail-actions">
+                      <i className="fa-regular fa-star"></i>
+                      <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                    </div>
+                  </div>
+                  <div className="mockup-detail-scroll">
+                    <div className="mockup-detail-content">
+                      <div className="mockup-detail-site">Product Hunt</div>
+                      <div className="mockup-detail-title">Building Better Products Through User Research</div>
+                      <div className="mockup-detail-meta">Sarah Chen · March 15, 2026 · 12 min read</div>
+                      <div className="mockup-detail-hero" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}></div>
+                      <div className="mockup-detail-paragraph">
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line short"></div>
+                      </div>
+                      <div className="mockup-detail-paragraph">
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line short"></div>
+                      </div>
+                      <div className="mockup-detail-heading">Understanding Your Users</div>
+                      <div className="mockup-detail-paragraph">
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                      </div>
+                      <div className="mockup-detail-paragraph">
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line short"></div>
+                      </div>
+                      <div className="mockup-detail-heading">Research Methods</div>
+                      <div className="mockup-detail-paragraph">
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                        <div className="mockup-text-line"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
