@@ -13,9 +13,11 @@ import {
   loadArticlesFromStorage, 
   syncArticles,
   deleteArticleWithSync,
-  updateArticleTagsWithSync
+  updateArticleTagsWithSync,
+  updateArticleWithSync
 } from '@/lib/article-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
+import { Header } from '@/components/header'
 
 type FilterType = 'all' | 'favorites' | 'tag'
 
@@ -102,6 +104,28 @@ export default function ArticlesListScreen() {
     }
   }
 
+  async function toggleFavorite(articleId: number) {
+    if (!session?.user) return
+    const article = articles.find(a => a.id === articleId)
+    if (!article) return
+    
+    const newFavoriteStatus = !article.isFavorite
+    // Optimistic update
+    setArticles(articles.map(a => 
+      a.id === articleId ? { ...a, isFavorite: newFavoriteStatus } : a
+    ))
+    
+    try {
+      await updateArticleWithSync(session.user.id, articleId, { isFavorite: newFavoriteStatus })
+    } catch (error) {
+      // Revert on error
+      setArticles(articles.map(a => 
+        a.id === articleId ? { ...a, isFavorite: !newFavoriteStatus } : a
+      ))
+      console.error('Error toggling favorite:', error)
+    }
+  }
+
   // Filter articles based on filter type
   function getFilteredArticles(): Article[] {
     switch (filterType) {
@@ -129,6 +153,8 @@ export default function ArticlesListScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <Header showBack />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: topPadding, paddingBottom: 100 }}
@@ -172,6 +198,7 @@ export default function ArticlesListScreen() {
                 article={article}
                 onDelete={deleteArticle}
                 onUpdateTags={updateArticleTags}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </View>
@@ -187,6 +214,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingTop: 16,
   },
   articleList: {
     paddingHorizontal: 16,

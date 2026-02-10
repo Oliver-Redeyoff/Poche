@@ -14,6 +14,7 @@ interface ArticleCardProps {
   article: Article
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
+  onToggleFavorite?: (articleId: number) => Promise<void>
   showProgress?: boolean // Show reading progress bar
   variant?: 'default' | 'tile' // Layout variant
 }
@@ -39,6 +40,7 @@ export function ArticleCard({
   article,
   onDelete,
   onUpdateTags,
+  onToggleFavorite,
   showProgress = false,
   variant = 'default',
 }: ArticleCardProps) {
@@ -172,6 +174,12 @@ export function ArticleCard({
 
   const handleModalAdd = () => {
     addTag(newTagInput)
+  }
+
+  const handleToggleFavorite = () => {
+    if (onToggleFavorite) {
+      onToggleFavorite(article.id)
+    }
   }
 
   // Tile variant - compact card for Continue Reading section
@@ -328,8 +336,21 @@ export function ArticleCard({
 
         {/* Icon list */}
         <View style={styles.articleIconList}>
+          {onToggleFavorite && (
+            <Pressable
+              onPress={handleToggleFavorite}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+            >
+              <IconSymbol 
+                name={article.isFavorite ? 'star.fill' : 'star'} 
+                size={20} 
+                color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'} 
+              />
+            </Pressable>
+          )}
           <Pressable
             onPress={handleDelete}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
             <IconSymbol name="trash" size={20} color="rgba(120, 120, 120, 0.75)" />
           </Pressable>
@@ -561,7 +582,9 @@ const styles = StyleSheet.create({
     height: 26,
   },
   articleIconList: {
-    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   modalOverlay: {
     flex: 1,
