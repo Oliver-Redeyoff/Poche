@@ -75,6 +75,7 @@ mobile_app/
 │   ├── article-sync.ts   # Centralized article sync logic with reading progress updates
 │   └── image-cache.ts    # Image extraction, downloading, and caching utilities
 ├── hooks/                # Custom React hooks
+│   ├── use-article-actions.ts  # Article management hook (delete, tags, favorites)
 │   ├── use-color-scheme.ts
 │   └── use-theme-color.ts
 ├── constants/
@@ -98,7 +99,7 @@ First-time user onboarding experience:
 - Swipeable carousel with 4 slides
 - Explains what Poche is, how to save articles, offline reading, and organization
 - Skip button to bypass onboarding
-- Pagination dots for navigation
+- **Animated pagination dots**: Smooth width and color transitions using React Native Reanimated
 - "Get Started" button on final slide
 - Completion state saved to AsyncStorage (`@poche_onboarding_complete`)
 - Beautiful iconography and typography matching app theme
@@ -148,6 +149,7 @@ Article card component:
 - Renders individual article card with title, site name, reading time, and optional image
 - Handles navigation to article detail page
 - Delete button with confirmation dialog
+- **Favorite toggle**: Star icon (outline when not favorited, filled gold when favorited)
 - Entry and exit animations using react-native-reanimated
 - **Tag management**: 
   - Displays tags as colored chips
@@ -155,7 +157,7 @@ Article card component:
   - Click "+" button to add new tag (cross-platform modal)
   - Updates tags via `onUpdateTags` callback
 - **Reading time**: Calculates and displays reading time based on article wordCount
-- Updates parent state and storage on deletion and tag changes
+- Updates parent state and storage on deletion, tag changes, and favorites
 
 ### components/markdown.tsx
 Custom markdown-to-React-Native renderer:
@@ -172,6 +174,9 @@ Custom markdown-to-React-Native renderer:
 Article detail screen with premium reading experience:
 - Displays full article content with enhanced typography
 - Uses custom `Markdown` component for rendering
+- **Header actions**:
+  - Favorite toggle button (star icon, gold when favorited)
+  - Open original article button (external link icon)
 - **Reading progress tracking**:
   - Tracks scroll position and calculates progress (0-100%)
   - Updates local storage on scroll (debounced, 5% threshold)
@@ -205,6 +210,13 @@ Centralized article sync logic:
 - `updateReadingProgressLocal()` - Update reading progress in local storage only (for performance)
 - `syncReadingProgressToBackend()` - Sync reading progress to backend API
 - `updateArticleWithSync()` - Update article in both backend and local storage
+
+### hooks/use-article-actions.ts
+Custom hook for article management with optimistic updates:
+- `deleteArticle(articleId)` - Delete article with sync to backend
+- `updateArticleTags(articleId, tags)` - Update article tags with sync
+- `toggleFavorite(articleId)` - Toggle favorite status with optimistic update and rollback on error
+- Used by Home, Library, Search, and Articles List screens to reduce code duplication
 
 ## Routing Structure
 
@@ -446,8 +458,12 @@ module.exports = config;
 - ✅ **Store submissions**: iOS App Store and Google Play
 - ✅ **Account deletion**: Delete account from settings screen with Alert.prompt (iOS)
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
+- ✅ **Animated onboarding dots**: Smooth pagination dot transitions using React Native Reanimated
 - ✅ **Unified Button component**: Reusable button with primary, secondary, danger, ghost variants
 - ✅ **SegmentedControl component**: Reusable mode switcher for auth screens
+- ✅ **Favorite toggle**: Star icon on article cards and detail view with optimistic updates
+- ✅ **Open original article**: External link button in article detail header
+- ✅ **useArticleActions hook**: Consolidated article management (delete, tags, favorites) with optimistic updates
 
 ## Technical Notes
 
@@ -491,9 +507,7 @@ A patch is applied to React Native to fix a text cut-off issue on iOS with the n
 ## Future Enhancements
 
 Potential features:
-- Article search functionality
 - Article organization (folders/categories)
-- Favorite toggle on article cards
 - Article sharing
 - Push notifications for new articles
 - Article editing

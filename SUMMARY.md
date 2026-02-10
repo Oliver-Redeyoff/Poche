@@ -135,7 +135,7 @@ Poche/
 - Environment-based configuration via `.env` file
 
 ### Mobile App Features
-- **Onboarding experience**: First-time users see swipeable onboarding screens explaining how to use Poche
+- **Onboarding experience**: First-time users see swipeable onboarding screens with animated pagination dots
 - User authentication (email/password login and signup)
 - **Forgot password**: Request password reset email from login screen
 - View saved articles linked to user account
@@ -153,6 +153,8 @@ Poche/
 - **Instant article loading**: Articles from local storage appear immediately
 - **Article animations**: Smooth entry/exit animations for articles
 - **Article deletion**: Delete articles with confirmation dialog
+- **Favorite toggle**: Star icon on article cards and detail view to favorite/unfavorite articles
+- **Open original article**: External link button in article detail to open source URL
 - **Tag management**: Add and remove tags from articles directly from article cards
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
