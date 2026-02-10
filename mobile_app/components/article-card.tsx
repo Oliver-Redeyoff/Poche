@@ -15,6 +15,7 @@ interface ArticleCardProps {
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
   showProgress?: boolean // Show reading progress bar
+  variant?: 'default' | 'tile' // Layout variant
 }
 
 // Calculate reading time in minutes based on word count
@@ -39,6 +40,7 @@ export function ArticleCard({
   onDelete,
   onUpdateTags,
   showProgress = false,
+  variant = 'default',
 }: ArticleCardProps) {
   const router = useRouter()
   const imageUrl = extractFirstImageUrl(article.content || null)
@@ -47,6 +49,7 @@ export function ArticleCard({
   const [newTagInput, setNewTagInput] = useState('')
   const theme = useTheme()
   const tintColor = useThemeColor({}, 'tint')
+  const isTile = variant === 'tile'
   
   // Calculate remaining reading time based on progress
   const readingProgress = article.readingProgress || 0
@@ -171,6 +174,68 @@ export function ArticleCard({
     addTag(newTagInput)
   }
 
+  // Tile variant - compact card for Continue Reading section
+  if (isTile) {
+    return (
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+        layout={LinearTransition.duration(200)}
+      >
+        <Pressable
+          onPress={() => router.push(`/article/${article.id}`)}
+          style={({ pressed }) => [
+            styles.tileCard,
+            { backgroundColor: theme.colors.card },
+            pressed && styles.tileCardPressed,
+          ]}
+        >
+          {/* Image section */}
+          {imageUrl ? (
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.tileImage}
+              contentFit="cover"
+              transition={200}
+              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+            />
+          ) : (
+            <View style={[styles.tileImage, styles.tilePlaceholder]}>
+              <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
+            </View>
+          )}
+          
+          {/* Content section */}
+          <View style={styles.tileContent}>
+            {article.title && (
+              <ThemedText style={styles.tileTitle} numberOfLines={2}>
+                {article.title}
+              </ThemedText>
+            )}
+            <View style={styles.tileFooter}>
+              <ThemedText style={styles.tileMeta} numberOfLines={1}>
+                {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
+              </ThemedText>
+              {/* Progress bar */}
+              <View style={styles.tileProgressContainer}>
+                <View style={[styles.tileProgressBar, { backgroundColor: 'rgba(120, 120, 120, 0.15)' }]}>
+                  <View 
+                    style={[
+                      styles.tileProgressFill, 
+                      { width: `${readingProgress}%`, backgroundColor: tintColor }
+                    ]} 
+                  />
+                </View>
+                <ThemedText style={styles.tileProgressText}>{readingProgress}%</ThemedText>
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Animated.View>
+    )
+  }
+
+  // Default variant
   return (
     <Animated.View
       style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card }]}
@@ -338,6 +403,64 @@ export function ArticleCard({
 }
 
 const styles = StyleSheet.create({
+  // Tile variant styles
+  tileCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  tileCardPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
+  tileImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#f0f0f0',
+  },
+  tilePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileContent: {
+    padding: 12,
+    gap: 8,
+  },
+  tileTitle: {
+    fontSize: 15,
+    fontFamily: 'Bitter_600SemiBold',
+    lineHeight: 20,
+  },
+  tileFooter: {
+    gap: 6,
+  },
+  tileMeta: {
+    fontSize: 13,
+    fontFamily: 'SourceSans3_500Medium',
+    color: 'rgba(120, 120, 120, 0.75)',
+  },
+  tileProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tileProgressBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  tileProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  tileProgressText: {
+    fontSize: 12,
+    fontFamily: 'SourceSans3_500Medium',
+    color: 'rgba(120, 120, 120, 0.75)',
+    minWidth: 28,
+    textAlign: 'right',
+  },
+  // Default variant styles
   articleCardWrapper: {
     padding: 12,
     borderRadius: 18,

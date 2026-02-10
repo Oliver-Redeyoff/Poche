@@ -68,7 +68,7 @@ const lightColors: Colors = {
   background: {
     primary: '#FDF8F5',      // Cream - main background
     secondary: '#F5EBE4',    // Cream Dark - cards, sections
-    tertiary: '#FFFBF9',     // Warm White - elevated surfaces
+    tertiary: '#ededed',     // Warm White - elevated surfaces
   },
 
   // Text Colors
