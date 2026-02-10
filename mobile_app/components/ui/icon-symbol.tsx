@@ -26,6 +26,8 @@ const MAPPING = {
   'square.and.arrow.down': 'download',
   'icloud.and.arrow.down': 'cloud-download',
   'tag': 'label-outline',
+  // External link
+  'arrow.up.right.square': 'open-in-new',
 } as IconMapping;
 
 /**
