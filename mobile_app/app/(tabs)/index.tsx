@@ -6,16 +6,11 @@ import { useFocusEffect } from '@react-navigation/native'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { useThemeColor } from '@/hooks/use-theme-color'
+import { useArticleActions } from '@/hooks/use-article-actions'
 import { ArticleCard } from '@/components/article-card'
 import { Article, getArticleStatus } from '@poche/shared'
 import { useAuth } from '../_layout'
-import { 
-  loadArticlesFromStorage, 
-  syncArticles,
-  deleteArticleWithSync,
-  updateArticleTagsWithSync,
-  updateArticleWithSync
-} from '@/lib/article-sync'
+import { loadArticlesFromStorage, syncArticles } from '@/lib/article-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 
 const TILE_GAP = 12
@@ -90,49 +85,11 @@ export default function HomeScreen() {
     }
   }
 
-  async function deleteArticle(articleId: number) {
-    if (!session?.user) return
-    try {
-      await deleteArticleWithSync(session.user.id, articleId)
-      setArticles(articles.filter(a => a.id !== articleId))
-    } catch (error) {
-      console.error('Error deleting article:', error)
-    }
-  }
-
-  async function updateArticleTags(articleId: number, tags: string) {
-    if (!session?.user) return
-    try {
-      await updateArticleTagsWithSync(session.user.id, articleId, tags)
-      setArticles(articles.map(a => 
-        a.id === articleId ? { ...a, tags: tags || null } : a
-      ))
-    } catch (error) {
-      console.error('Error updating tags:', error)
-    }
-  }
-
-  async function toggleFavorite(articleId: number) {
-    if (!session?.user) return
-    const article = articles.find(a => a.id === articleId)
-    if (!article) return
-    
-    const newFavoriteStatus = !article.isFavorite
-    // Optimistic update
-    setArticles(articles.map(a => 
-      a.id === articleId ? { ...a, isFavorite: newFavoriteStatus } : a
-    ))
-    
-    try {
-      await updateArticleWithSync(session.user.id, articleId, { isFavorite: newFavoriteStatus })
-    } catch (error) {
-      // Revert on error
-      setArticles(articles.map(a => 
-        a.id === articleId ? { ...a, isFavorite: !newFavoriteStatus } : a
-      ))
-      console.error('Error toggling favorite:', error)
-    }
-  }
+  const { deleteArticle, updateArticleTags, toggleFavorite } = useArticleActions({
+    userId: session?.user?.id,
+    articles,
+    setArticles
+  })
 
   // Get articles that are currently being read (progress > 0 and < 100)
   const continueReadingArticles = articles
