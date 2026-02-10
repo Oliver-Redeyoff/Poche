@@ -12,7 +12,8 @@ import { useAuth } from './_layout'
 import { 
   loadArticlesFromStorage,
   deleteArticleWithSync,
-  updateArticleTagsWithSync
+  updateArticleTagsWithSync,
+  updateArticleWithSync
 } from '@/lib/article-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 
@@ -67,6 +68,28 @@ export default function SearchScreen() {
       ))
     } catch (error) {
       console.error('Error updating tags:', error)
+    }
+  }
+
+  async function toggleFavorite(articleId: number) {
+    if (!session?.user) return
+    const article = articles.find(a => a.id === articleId)
+    if (!article) return
+    
+    const newFavoriteStatus = !article.isFavorite
+    // Optimistic update
+    setArticles(articles.map(a => 
+      a.id === articleId ? { ...a, isFavorite: newFavoriteStatus } : a
+    ))
+    
+    try {
+      await updateArticleWithSync(session.user.id, articleId, { isFavorite: newFavoriteStatus })
+    } catch (error) {
+      // Revert on error
+      setArticles(articles.map(a => 
+        a.id === articleId ? { ...a, isFavorite: !newFavoriteStatus } : a
+      ))
+      console.error('Error toggling favorite:', error)
     }
   }
 
@@ -165,6 +188,7 @@ export default function SearchScreen() {
                 article={article}
                 onDelete={deleteArticle}
                 onUpdateTags={updateArticleTags}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </View>

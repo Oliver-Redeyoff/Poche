@@ -263,12 +263,15 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         />
         <Stack.Screen 
           name="articles/index" 
-          options={({ route }) => {
-            const params = route.params as { title?: string } | undefined
-            return {
-              header: () => <Header showBack title={params?.title || 'Articles'} />,
-            }
-          }} 
+          options={{
+            headerShown: false,
+          }}
+          // options={({ route }) => {
+          //   const params = route.params as { title?: string } | undefined
+          //   return {
+          //     header: () => <Header showBack title={params?.title || 'Articles'} />,
+          //   }
+          // }} 
         />
         <Stack.Screen 
           name="settings" 
