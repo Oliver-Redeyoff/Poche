@@ -28,10 +28,11 @@ export function Header({
 }: HeaderProps) {
   const insets = useSafeAreaInsets()
   const textColor = useThemeColor({}, 'text')
+  const borderColor = useThemeColor({}, 'border')
 
   return (
     <View style={[{ paddingTop: insets.top }, style]}>
-      <View style={styles.content}>
+      <View style={[styles.content, { borderBottomColor: borderColor }]}>
         {/* Left section */}
         <View style={styles.leftSection}>
           {showBack ? (
@@ -43,7 +44,7 @@ export function Header({
               ]}
               hitSlop={8}
             >
-              <IconSymbol name="chevron.left" size={20} color={textColor} />
+              <IconSymbol name="chevron.left" size={22} color={textColor} />
               <ThemedText style={styles.backText}>Back</ThemedText>
             </Pressable>
           ) : showLogo ? (
@@ -82,6 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 56,
     paddingHorizontal: 16,
+    borderBottomWidth: 1,
   },
   leftSection: {
     flex: 1,
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   backText: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'SourceSans3_600SemiBold',
   },
   pressed: {
