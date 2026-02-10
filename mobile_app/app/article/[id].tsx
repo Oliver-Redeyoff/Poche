@@ -13,6 +13,9 @@ import {
   updateReadingProgressLocal, 
   syncReadingProgressToBackend 
 } from '../../lib/article-sync'
+import { Header } from '@/components/header'
+import { IconSymbol } from '@/components/ui/icon-symbol'
+import { Pressable, Linking } from 'react-native'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -445,19 +448,29 @@ export default function ArticleScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header 
+        showLogo
+        showBack
+        rightElement={
+          article.url && (
+            <Pressable
+              onPress={() => Linking.openURL(article.url as string)}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+            >
+              <IconSymbol name="arrow.up.right.square" size={24} color={colors.text} />
+            </Pressable>
+          )
+        }
+      />
+
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent, 
-          { 
-            paddingTop: 120,
-          }
-        ]}
+        contentContainerStyle={[styles.scrollContent]}
         onScroll={handleScroll}
         scrollEventThrottle={250}
       >
         {/* Article Header */}
-        <View style={[styles.header, { backgroundColor: theme.colors.card }]}>
+        <View style={[styles.header]}>
           {article.title && (
             <ThemedText 
               style={[
@@ -537,26 +550,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingTop: 24,
   },
   header: {
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
     marginHorizontal: 16,
-    marginBottom: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
+    paddingBottom: 12,
+    borderBottomWidth: 4,
+    borderColor: 'red',
   },
   title: {
     fontSize: 28,
     fontFamily: 'Bitter_700Bold',
-    textDecorationLine: 'underline',
+    // textDecorationLine: 'underline',
   },
   meta: {
     flexDirection: 'row',

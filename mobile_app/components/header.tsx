@@ -43,7 +43,8 @@ export function Header({
               ]}
               hitSlop={8}
             >
-              <IconSymbol name="chevron.left" size={24} color={textColor} />
+              <IconSymbol name="chevron.left" size={20} color={textColor} />
+              <ThemedText style={styles.backText}>Back</ThemedText>
             </Pressable>
           ) : showLogo ? (
             <View style={styles.logo}>
@@ -113,7 +114,13 @@ const styles = StyleSheet.create({
     fontFamily: 'SourceSans3_600SemiBold',
   },
   backButton: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  backText: {
+    fontSize: 18,
+    fontFamily: 'SourceSans3_600SemiBold',
   },
   pressed: {
     opacity: 0.6,
