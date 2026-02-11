@@ -16,12 +16,13 @@ import {
 } from '../../lib/article-sync'
 import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
-import { Pressable, Linking } from 'react-native'
+import { Pressable, Linking, Dimensions } from 'react-native'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const { session } = useAuth()
+  const windowHeight = Dimensions.get('window').height
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const colorScheme = useColorScheme()
@@ -39,6 +40,11 @@ export default function ArticleScreen() {
   const lastSyncedProgress = useRef(0)
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasReachedEnd = useRef(false)
+  
+  // Scroll restoration
+  const scrollViewRef = useRef<ScrollView>(null)
+  const initialProgressRef = useRef<number | null>(null) // Store initial progress for scroll restoration
+  const hasRestoredScroll = useRef(false)
   
   // Premium reading colors - warm tones that are easy on the eyes
   const colors = useMemo(() => ({
@@ -104,6 +110,11 @@ export default function ArticleScreen() {
         setReadingProgress(initialProgress)
         readingProgressRef.current = initialProgress
         lastSyncedProgress.current = initialProgress
+        // Store initial progress for scroll restoration (only if in progress)
+        if (initialProgress > 0 && initialProgress < 100) {
+          initialProgressRef.current = initialProgress
+          hasRestoredScroll.current = false
+        } 
       } else {
         // Article not found in local storage
         Alert.alert('Article not found', 'This article is not available offline. Please sync your articles first.')
@@ -119,11 +130,31 @@ export default function ArticleScreen() {
     }
   }
 
+  // Restore scroll position when content is ready
+  const handleContentSizeChange = useCallback((contentWidth: number, contentHeight: number) => {
+    if (
+      initialProgressRef.current !== null && 
+      !hasRestoredScroll.current && 
+      contentHeight > 0 &&
+      scrollViewRef.current
+    ) {
+      // Calculate the scroll position based on progress percentage, subtract the height of the screen
+      const scrollPosition = (initialProgressRef.current / 100) * (contentHeight - windowHeight)
+      
+      // Scroll instantly (not animated) so content appears at correct position
+      scrollViewRef.current?.scrollTo({ y: scrollPosition, animated: false })
+      hasRestoredScroll.current = true
+    }
+  }, [])
+
   // Handle scroll to track reading progress
   const lastLocalSaveProgress = useRef(0)
   const PROGRESS_SAVE_THRESHOLD = 5 // Only save when progress changes by 5%
   
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    // Ignore scroll events until scroll restoration is complete (if restoration is needed)
+    if (initialProgressRef.current !== null && !hasRestoredScroll.current) return
+    
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent
     
     // Calculate scroll progress (0-100)
@@ -496,9 +527,11 @@ export default function ArticleScreen() {
       />
 
       <ScrollView 
-        style={styles.scrollView}
+        ref={scrollViewRef}
+        style={[styles.scrollView]}
         contentContainerStyle={[styles.scrollContent]}
         onScroll={handleScroll}
+        onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
       >
         {/* Article Header */}
