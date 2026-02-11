@@ -31,6 +31,9 @@ const MAPPING = {
   // Favorites
   'star': 'star-outline',
   'star.fill': 'star',
+  // Documents
+  'doc.text': 'article',
+  'doc.text.fill': 'article',
 } as IconMapping;
 
 /**

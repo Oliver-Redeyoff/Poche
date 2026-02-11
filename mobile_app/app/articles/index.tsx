@@ -104,20 +104,15 @@ export default function ArticlesListScreen() {
   const filteredArticles = getFilteredArticles()
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-  // Determine the header title and icon based on filter type
-  const getHeaderTitle = () => {
-    switch (filterType) {
-      case 'favorites':
-        return 'Favorites'
-      case 'tag':
-        return filterValue || 'Tagged'
-      case 'all':
-      default:
-        return 'All Articles'
-    }
-  }
+  // Header title based on filter type
+  const headerTitle = filterType === 'favorites' 
+    ? 'Favorites' 
+    : filterType === 'tag' 
+      ? (filterValue || 'Tagged')
+      : 'All Articles'
 
-  const renderHeaderCenter = () => (
+  // Header center element with icon and title
+  const headerCenter = (
     <View style={styles.headerCenter}>
       {filterType === 'tag' && filterValue ? (
         <View style={[styles.tagDot, { backgroundColor: tagToColor(filterValue, 1.0) }]} />
@@ -129,7 +124,7 @@ export default function ArticlesListScreen() {
         />
       )}
       <ThemedText style={styles.headerTitle} numberOfLines={1}>
-        {getHeaderTitle()}
+        {headerTitle}
       </ThemedText>
     </View>
   )
@@ -140,7 +135,7 @@ export default function ArticlesListScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Header showBack centerElement={renderHeaderCenter()} />
+      <Header showBack centerElement={headerCenter} />
 
       <ScrollView
         style={styles.scrollView}
