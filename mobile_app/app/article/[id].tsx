@@ -16,13 +16,12 @@ import {
 } from '../../lib/article-sync'
 import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
-import { Pressable, Linking, Dimensions } from 'react-native'
+import { Pressable, Linking } from 'react-native'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const { session } = useAuth()
-  const windowHeight = Dimensions.get('window').height
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const colorScheme = useColorScheme()
@@ -45,6 +44,7 @@ export default function ArticleScreen() {
   const scrollViewRef = useRef<ScrollView>(null)
   const initialProgressRef = useRef<number | null>(null) // Store initial progress for scroll restoration
   const hasRestoredScroll = useRef(false)
+  const [isScrollReady, setIsScrollReady] = useState(false) // Hide content until scroll position is restored
   
   // Premium reading colors - warm tones that are easy on the eyes
   const colors = useMemo(() => ({
@@ -114,7 +114,11 @@ export default function ArticleScreen() {
         if (initialProgress > 0 && initialProgress < 100) {
           initialProgressRef.current = initialProgress
           hasRestoredScroll.current = false
-        } 
+          setIsScrollReady(false) // Keep hidden until scroll is restored
+        } else {
+          // No scroll restoration needed, show content immediately
+          setIsScrollReady(true)
+        }
       } else {
         // Article not found in local storage
         Alert.alert('Article not found', 'This article is not available offline. Please sync your articles first.')
@@ -138,12 +142,14 @@ export default function ArticleScreen() {
       contentHeight > 0 &&
       scrollViewRef.current
     ) {
-      // Calculate the scroll position based on progress percentage, subtract the height of the screen
-      const scrollPosition = (initialProgressRef.current / 100) * (contentHeight - windowHeight)
+      // Calculate the scroll position based on progress percentage
+      const scrollPosition = (initialProgressRef.current / 100) * contentHeight
       
       // Scroll instantly (not animated) so content appears at correct position
       scrollViewRef.current?.scrollTo({ y: scrollPosition, animated: false })
       hasRestoredScroll.current = true
+      // Reveal content after scroll position is set
+      setIsScrollReady(true)
     }
   }, [])
 
@@ -528,7 +534,7 @@ export default function ArticleScreen() {
 
       <ScrollView 
         ref={scrollViewRef}
-        style={[styles.scrollView]}
+        style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0 }]}
         contentContainerStyle={[styles.scrollContent]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
