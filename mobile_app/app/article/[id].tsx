@@ -744,7 +744,6 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 1.5,
   },
   returnButtonContainer: {
     position: 'absolute',
