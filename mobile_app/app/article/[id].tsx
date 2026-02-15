@@ -675,15 +675,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     alignSelf: 'center',
   },
-  contentLoadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingTop: 60,
-    alignItems: 'center',
-    zIndex: 10,
-  },
   endMarker: {
     alignItems: 'center',
     paddingVertical: 48,

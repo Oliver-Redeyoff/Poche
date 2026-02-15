@@ -9,7 +9,7 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 - **Authentication**: Email/password authentication with bearer token support
 - **Password Reset**: Email-based password reset flow via Resend
 - **Email Service**: Transactional emails with beautiful HTML templates
-- **Article Extraction**: Server-side article parsing using Defuddle (URL → markdown)
+- **Article Extraction**: Server-side article parsing with domain-specific configs (Readability, raw DOM, or Defuddle) and NodeHtmlMarkdown (URL → markdown)
 - **RESTful API**: Full CRUD operations for articles
 - **Docker Support**: Easy deployment with Docker Compose
 - **Type Safety**: Full TypeScript with Drizzle ORM
@@ -23,7 +23,7 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 - **Authentication**: Better Auth with bearer plugin
 - **Email**: Resend for transactional emails (password reset)
 - **Database**: PostgreSQL with Drizzle ORM
-- **Article Extraction**: Defuddle (Node.js version for markdown output)
+- **Article Extraction**: JSDOM + domain-specific extraction (Readability, raw DOM, or Defuddle) + NodeHtmlMarkdown for HTML→markdown
 - **Shared Types**: `@poche/shared` npm package
 - **Runtime**: Node.js 20
 - **Containerization**: Docker & Docker Compose
@@ -43,7 +43,7 @@ backend/
 │   ├── lib/
 │   │   ├── auth.ts           # Better Auth configuration
 │   │   ├── email.ts          # Email service (Resend)
-│   │   └── article-extractor.ts  # Defuddle article extraction
+│   │   └── article-extractor.ts  # Domain-specific article extraction (Readability/raw DOM)
 │   └── routes/
 │       └── articles.ts       # Article API routes
 ├── docker-compose.yml        # Production Docker config (API + PostgreSQL + Nginx)
@@ -96,7 +96,7 @@ backend/
 - `id` (integer, auto-generated primary key)
 - `userId` (text, foreign key to user, cascade delete)
 - `title` (text, nullable)
-- `content` (text, nullable) - Markdown content from Defuddle
+- `content` (text, nullable) - Markdown content from article extraction
 - `excerpt` (text, nullable)
 - `url` (text, nullable) - Original article URL
 - `siteName` (text, nullable)
@@ -130,7 +130,7 @@ All article endpoints require `Authorization: Bearer <token>` header.
 - `GET /api/articles/:id` - Get single article
 - `POST /api/articles` - Save article from URL
   - Body: `{ url: string, tags?: string }`
-  - Backend fetches URL and extracts content with Defuddle
+  - Backend fetches URL and extracts content via domain-specific extraction
 - `PATCH /api/articles/:id` - Update article (tags, title, readingProgress, isFavorite)
   - Automatically sets `startedAt` when progress first goes above 0
   - Automatically sets `finishedAt` when progress reaches 100
@@ -269,11 +269,28 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/restart-nginx.sh
 
 ### Article Extraction
 
-The `article-extractor.ts` module uses Defuddle's Node.js version to:
-1. Fetch the URL content
-2. Parse HTML with JSDOM
-3. Extract readable content as markdown
-4. Return title, content, excerpt, author, wordCount, siteName
+The `article-extractor.ts` module performs domain-specific extraction:
+
+**Domain configuration** (`DOMAIN_CONFIGS`): Each entry has:
+- `domains`: array of domain strings (e.g., `['bbc.co.uk', 'bbc.com']`)
+- `config`: object with:
+  - `readabilityLibrary`: `'readability'` | `'defuddle'` | `'none'` — controls which extraction library to use
+  - `selector`: CSS selector to narrow the DOM to the article container
+  - `removeSelectors`: optional array of CSS selectors for elements to strip before extraction
+
+**Extraction flow**:
+1. Fetch page with JSDOM (desktop Chrome user agent)
+2. If a domain config exists: narrow DOM to the `selector` element, strip elements matching `removeSelectors`
+3. If `readabilityLibrary` is `'readability'`: use @mozilla/readability (extracts title, content, excerpt, author, siteName, textContent)
+4. If `readabilityLibrary` is `'none'`: use raw DOM body HTML directly (useful when selector + removeSelectors already isolate clean article content)
+5. Convert HTML to markdown via NodeHtmlMarkdown
+6. Calculate word count from text content using `split(/\s+/).filter(Boolean)` (works for both Readability results and raw DOM mode)
+
+**`getDomainConfig`**: Matches URLs by hostname (with `www.` stripped), supporting subdomain matching (e.g., `news.bbc.co.uk` matches `bbc.co.uk`).
+
+**Currently configured domains**:
+- **BBC** (bbc.co.uk, bbc.com): `readabilityLibrary` `'none'`, selector `article`, removes byline/metadata/links/topicList/promoList/share blocks
+- **medium.com, nytimes.com, theguardian.com, washingtonpost.com, reuters.com, arstechnica.com, wired.com, theverge.com**: various selectors (mostly `article`, `#story`, `#maincontent`, `#main-content`)
 
 ### Better Auth Configuration
 

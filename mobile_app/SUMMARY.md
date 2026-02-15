@@ -11,7 +11,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Forgot Password**: Request password reset email from auth screen
 - **Account Deletion**: Delete account from settings with password confirmation (iOS Alert.prompt)
 - **Tab Navigation**: Home and Library tabs with native iOS blur effects
-- **Home Page**: "Continue Reading" section (in-progress articles) and "New Articles" section (unread articles)
+- **Home Page**: "Continue Reading" section (in-progress articles), "New Articles" section (unread articles), and "Recently Read" section (3 most recently finished articles at 100% progress)
 - **Library Page**: Tile grid for All Articles, Favorites, and tag-based filtering with article counts
 - **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
 - **Dark Mode**: Automatic theme switching based on system preferences with custom Poche color theme
@@ -24,7 +24,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Article Animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article Deletion**: Delete articles with confirmation dialog and smooth animations
 - **Article Detail View**: Full article reading experience with markdown rendering and progress tracking
-- **Tag Management**: Add and remove tags from articles directly from article cards with confirmation dialogs
+- **Tag Management**: Shared `TagList` component for adding/removing tags on article cards and article detail view (parses comma-separated tags, animated chips, iOS Alert.prompt or custom Modal on Android)
 - **Reading Time**: Display estimated reading time based on article word count
 - **Clear Data on Logout**: Locally stored articles are cleared when user signs out
 - **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
@@ -52,7 +52,7 @@ mobile_app/
 │   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext, onboarding check)
 │   ├── (tabs)/            # Tab navigator group
 │   │   ├── _layout.tsx    # Tab layout (Home & Library tabs)
-│   │   ├── index.tsx      # Home tab - Continue Reading & New Articles sections
+│   │   ├── index.tsx      # Home tab - Continue Reading, New Articles & Recently Read sections
 │   │   └── library.tsx    # Library tab - All Articles, Favorites, Tags tiles
 │   ├── articles/
 │   │   └── index.tsx      # Filtered article list (by tag, favorites, or all)
@@ -63,7 +63,8 @@ mobile_app/
 ├── components/            # React components
 │   ├── button.tsx         # Unified Button component (primary, secondary, danger, ghost variants)
 │   ├── segmented-control.tsx # Segmented control for mode switching
-│   ├── article-card.tsx   # Article card with tag management, progress bar, delete, animations
+│   ├── article-card.tsx   # Article card with TagList, progress bar, delete, animations
+│   ├── tag-list.tsx       # Reusable TagList component for displaying and managing tags
 │   ├── header.tsx         # Custom header component with logo and back button
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
@@ -108,7 +109,8 @@ First-time user onboarding experience:
 Home tab that:
 - Displays "Continue Reading" section with in-progress articles (1-99% progress)
 - Displays "New Articles" section with unread articles (0% progress)
-- Shows empty states when no articles or all caught up
+- Displays "Recently Read" section with 3 most recently finished articles (100% progress), sorted by `updatedAt`
+- Shows "all caught up" empty state only when all three sections are empty
 - Uses `useFocusEffect` to reload data when tab comes into focus
 - Handles article deletion and tag updates
 
@@ -144,6 +146,15 @@ Settings screen:
 - Sign out functionality
 - **Clears local articles on logout**: Calls `clearArticlesFromStorage(userId)` before signing out
 
+### components/tag-list.tsx
+Reusable TagList component for displaying and managing tags:
+- Parses comma-separated tags strings
+- Renders animated tags (FadeIn/FadeOut/LinearTransition from react-native-reanimated) with remove-on-tap
+- "Add tag" button (+) uses iOS native `Alert.prompt` or custom Modal on Android
+- `size` prop ('small' | 'default') for different visual contexts
+- Handles `tagToColor` internally (from `@poche/shared`)
+- Used by both `ArticleCard` and article detail view (`article/[id].tsx`)
+
 ### components/article-card.tsx
 Article card component:
 - Renders individual article card with title, site name, reading time, and optional image
@@ -151,11 +162,7 @@ Article card component:
 - Delete button with confirmation dialog
 - **Favorite toggle**: Star icon (outline when not favorited, filled gold when favorited)
 - Entry and exit animations using react-native-reanimated
-- **Tag management**: 
-  - Displays tags as colored chips
-  - Click tag to remove (with confirmation alert)
-  - Click "+" button to add new tag (cross-platform modal)
-  - Updates tags via `onUpdateTags` callback
+- **Tag management**: Uses shared `TagList` component (tag logic removed from ArticleCard)
 - **Reading time**: Calculates and displays reading time based on article wordCount
 - Updates parent state and storage on deletion, tag changes, and favorites
 
@@ -177,19 +184,22 @@ Article detail screen with premium reading experience:
 - **Header actions**:
   - Favorite toggle button (star icon, gold when favorited)
   - Open original article button (external link icon)
+  - Delete article button (trash icon) with confirmation alert, navigates back on success via `deleteArticleWithSync`
 - **Reading progress tracking**:
   - Tracks scroll position and calculates progress (0-100%)
   - Updates local storage on scroll (debounced, 5% threshold)
   - Syncs to backend with 3-second debounce
   - Immediate sync when reaching 100% progress
   - Final sync on component unmount
+  - Scroll restoration uses `opacity: 0` to hide content until position is restored (instant appearance at correct position)
+  - Scroll handler ignores events until restoration complete, preventing false reading progress updates
 - **Custom image rendering**:
   - Filters out invalid image URLs (empty, #, data URIs)
   - Filters out low-resolution images (< 50x50 pixels)
   - Handles image load errors gracefully
   - 100% width images with preserved aspect ratio
 - **Link styling**: Links appear in accent color with underline
-- Tags displayed at top of article with colored chips
+- **Tag management**: Uses shared `TagList` component; `handleUpdateTags` uses `updateArticleTagsWithSync` and updates local article state
 - Loads articles from local storage only (offline-first)
 - Handles navigation back if article not found
 
@@ -210,6 +220,8 @@ Centralized article sync logic:
 - `updateReadingProgressLocal()` - Update reading progress in local storage only (for performance)
 - `syncReadingProgressToBackend()` - Sync reading progress to backend API
 - `updateArticleWithSync()` - Update article in both backend and local storage
+- `deleteArticleWithSync(userId, articleId)` - Delete article from backend and local storage
+- `updateArticleTagsWithSync(userId, articleId, tags)` - Update article tags in both backend and local storage
 
 ### hooks/use-article-actions.ts
 Custom hook for article management with optimistic updates:
@@ -464,6 +476,11 @@ module.exports = config;
 - ✅ **Favorite toggle**: Star icon on article cards and detail view with optimistic updates
 - ✅ **Open original article**: External link button in article detail header
 - ✅ **useArticleActions hook**: Consolidated article management (delete, tags, favorites) with optimistic updates
+- ✅ **TagList component**: Self-contained reusable component for tag display/management (parsing, animated chips, add/remove, size prop)
+- ✅ **ArticleCard simplification**: Tag logic moved to TagList; `tagToColor` no longer imported in ArticleCard
+- ✅ **Article detail updates**: TagList integration, delete button in header, improved scroll restoration (opacity: 0), removed unused imports
+- ✅ **Recently Read section**: Home tab shows 3 most recently finished articles (100% progress), sorted by `updatedAt`
+- ✅ **All caught up logic**: Empty state only when Continue Reading, New Articles, and Recently Read are all empty
 
 ## Technical Notes
 

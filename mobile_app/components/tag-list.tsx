@@ -25,8 +25,7 @@ export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) 
     : []
 
   const isSmall = size === 'small'
-  const tagFontSize = isSmall ? 12 : 13
-  const closeFontSize = isSmall ? 12 : 13
+  const fontSize = isSmall ? 12 : 13
   const plusIconSize = isSmall ? 14 : 16
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -118,10 +117,10 @@ export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) 
                 }
               ]}
             >
-              <ThemedText style={{ color: tagToColor(tag), fontSize: tagFontSize, fontFamily: 'SourceSans3_600SemiBold' }}>
+              <ThemedText style={{ color: tagToColor(tag), fontSize, fontFamily: 'SourceSans3_600SemiBold' }}>
                 {tag}
               </ThemedText>
-              <ThemedText style={{ color: tagToColor(tag), fontSize: closeFontSize, fontFamily: 'SourceSans3_700Bold', opacity: 0.4, marginLeft: 4 }}>
+              <ThemedText style={{ color: tagToColor(tag), fontSize, fontFamily: 'SourceSans3_700Bold', opacity: 0.4, marginLeft: 4 }}>
                 ×
               </ThemedText>
             </Pressable>
