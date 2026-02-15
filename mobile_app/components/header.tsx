@@ -32,9 +32,10 @@ export function Header({
   const insets = useSafeAreaInsets()
   const textColor = useThemeColor({}, 'text')
   const borderColor = useThemeColor({}, 'border')
+  const backgroundColor = useThemeColor({}, 'background')
 
   return (
-    <View style={[{ paddingTop: insets.top }, style]}>
+    <View style={[{ paddingTop: insets.top, backgroundColor: backgroundColor }, style]}>
       <View style={[styles.content, { borderBottomColor: borderColor }]}>
         {/* Left section */}
         <View style={styles.leftSection}>

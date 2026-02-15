@@ -34,6 +34,11 @@ const MAPPING = {
   // Documents
   'doc.text': 'article',
   'doc.text.fill': 'article',
+  // More / ellipsis
+  'ellipsis': 'more-horiz',
+  'ellipsis.circle': 'more-horiz',
+  // Reading status
+  'book.closed': 'menu-book',
 } as IconMapping;
 
 /**
