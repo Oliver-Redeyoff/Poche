@@ -20,6 +20,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
 - **Background Sync**: Periodic background task to sync latest articles and cache images
 - **Instant Loading**: Articles from local storage appear immediately
+- **Search**: Full-screen search across all articles by title, site name, tags, and content
 - **Smart Data Refresh**: Screens reload from storage on focus to reflect changes made elsewhere
 - **Article Animations**: Smooth entry animations for new articles and exit animations for deleted articles
 - **Article Deletion**: Delete articles with confirmation dialog and smooth animations
@@ -57,6 +58,7 @@ mobile_app/
 │   ├── articles/
 │   │   └── index.tsx      # Filtered article list (by tag, favorites, or all)
 │   ├── article/[id].tsx   # Article detail screen with markdown rendering & progress tracking
+│   ├── search.tsx         # Full-screen search with filtering across all articles
 │   ├── auth.tsx           # Authentication screen (login/signup/forgot password)
 │   ├── onboarding.tsx     # First-time user onboarding experience
 │   └── settings.tsx       # Settings screen
@@ -65,6 +67,7 @@ mobile_app/
 │   ├── segmented-control.tsx # Segmented control for mode switching
 │   ├── article-card.tsx   # Article card with TagList, progress bar, delete, animations
 │   ├── tag-list.tsx       # Reusable TagList component for displaying and managing tags
+│   ├── dropdown-menu.tsx  # Reusable positioned dropdown menu component
 │   ├── header.tsx         # Custom header component with logo and back button
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
@@ -155,16 +158,29 @@ Reusable TagList component for displaying and managing tags:
 - Handles `tagToColor` internally (from `@poche/shared`)
 - Used by both `ArticleCard` and article detail view (`article/[id].tsx`)
 
+### components/dropdown-menu.tsx
+Reusable positioned dropdown menu component:
+- Renders a trigger element that opens a dropdown menu on press
+- **Smart positioning**: Measures trigger position with `measureInWindow`, then measures menu with `onLayout` to determine optimal placement
+  - Vertical: prefers below trigger, flips above if not enough space
+  - Horizontal: prefers right-aligned with trigger, flips left-aligned if it would go off-screen, clamps to edges with 8px padding
+- Menu renders invisibly off-screen first (`top: -9999, opacity: 0`) to measure its actual size, then positions and reveals
+- Dark/light mode adaptive colors (`#2C2C2E` dark / `#FFFFFF` light)
+- Auto-inserts separators before destructive items
+- **Props**: `trigger` (ReactNode), `items` (array of `DropdownMenuItem` with `key`, `label`, optional `icon`, optional `destructive`, `onPress`)
+- Uses `Modal` for overlay (renders above all content, handles Android back button)
+- Used by article detail view and `ArticleCard` component
+
 ### components/article-card.tsx
 Article card component:
 - Renders individual article card with title, site name, reading time, and optional image
 - Handles navigation to article detail page
-- Delete button with confirmation dialog
 - **Favorite toggle**: Star icon (outline when not favorited, filled gold when favorited)
+- **Dropdown menu**: Ellipsis icon opens `DropdownMenu` with Open Original, Mark as Unread, and Delete (destructive) options
 - Entry and exit animations using react-native-reanimated
 - **Tag management**: Uses shared `TagList` component (tag logic removed from ArticleCard)
 - **Reading time**: Calculates and displays reading time based on article wordCount
-- Updates parent state and storage on deletion, tag changes, and favorites
+- Updates parent state and storage on deletion, tag changes, favorites, and mark-as-unread
 
 ### components/markdown.tsx
 Custom markdown-to-React-Native renderer:
@@ -183,8 +199,7 @@ Article detail screen with premium reading experience:
 - Uses custom `Markdown` component for rendering
 - **Header actions**:
   - Favorite toggle button (star icon, gold when favorited)
-  - Open original article button (external link icon)
-  - Delete article button (trash icon) with confirmation alert, navigates back on success via `deleteArticleWithSync`
+  - Dropdown menu (ellipsis icon) via `DropdownMenu` component with: Open Original, Mark as Unread, Delete (destructive)
 - **Reading progress tracking**:
   - Tracks scroll position and calculates progress (0-100%)
   - Updates local storage on scroll (debounced, 5% threshold)
@@ -228,6 +243,7 @@ Custom hook for article management with optimistic updates:
 - `deleteArticle(articleId)` - Delete article with sync to backend
 - `updateArticleTags(articleId, tags)` - Update article tags with sync
 - `toggleFavorite(articleId)` - Toggle favorite status with optimistic update and rollback on error
+- `markAsUnread(articleId)` - Reset reading progress to 0 with optimistic update and rollback on error
 - Used by Home, Library, Search, and Articles List screens to reduce code duplication
 
 ## Routing Structure
@@ -241,6 +257,7 @@ Expo Router uses file-based routing similar to Next.js:
 - `app/(tabs)/library.tsx` - Library tab with article filter tiles
 - `app/articles/index.tsx` - Filtered article list screen
 - `app/article/[id].tsx` - Article detail screen with reading progress tracking
+- `app/search.tsx` - Full-screen search across all articles
 - `app/auth.tsx` - Authentication screen
 - `app/settings.tsx` - Settings screen
 
@@ -481,6 +498,11 @@ module.exports = config;
 - ✅ **Article detail updates**: TagList integration, delete button in header, improved scroll restoration (opacity: 0), removed unused imports
 - ✅ **Recently Read section**: Home tab shows 3 most recently finished articles (100% progress), sorted by `updatedAt`
 - ✅ **All caught up logic**: Empty state only when Continue Reading, New Articles, and Recently Read are all empty
+- ✅ **DropdownMenu component**: Reusable positioned dropdown with smart placement (above/below, left/right aligned), dark mode, auto-separators before destructive items
+- ✅ **Article detail dropdown**: Header uses favorite toggle + ellipsis dropdown (Open Original, Mark as Unread, Delete) instead of multiple icon buttons
+- ✅ **ArticleCard dropdown**: Ellipsis dropdown replaces direct delete button, includes Open Original, Mark as Unread, Delete
+- ✅ **Mark as Unread**: Resets reading progress to 0, available in article detail and article cards via `useArticleActions` hook
+- ✅ **Icon mappings**: Added ellipsis, book.closed icons to `icon-symbol.tsx`
 
 ## Technical Notes
 
