@@ -85,7 +85,7 @@ export default function HomeScreen() {
     }
   }
 
-  const { deleteArticle, updateArticleTags, toggleFavorite } = useArticleActions({
+  const { deleteArticle, updateArticleTags, toggleFavorite, markAsUnread } = useArticleActions({
     userId: session?.user?.id,
     articles,
     setArticles
@@ -179,6 +179,7 @@ export default function HomeScreen() {
                         onDelete={deleteArticle}
                         onUpdateTags={updateArticleTags}
                         onToggleFavorite={toggleFavorite}
+                        onMarkAsUnread={markAsUnread}
                         variant="tile"
                       />
                     </View>
@@ -201,6 +202,7 @@ export default function HomeScreen() {
                       onDelete={deleteArticle}
                       onUpdateTags={updateArticleTags}
                       onToggleFavorite={toggleFavorite}
+                      onMarkAsUnread={markAsUnread}
                     />
                   ))}
                 </View>
@@ -221,6 +223,7 @@ export default function HomeScreen() {
                       onDelete={deleteArticle}
                       onUpdateTags={updateArticleTags}
                       onToggleFavorite={toggleFavorite}
+                      onMarkAsUnread={markAsUnread}
                     />
                   ))}
                 </View>

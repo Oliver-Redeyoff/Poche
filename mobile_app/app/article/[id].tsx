@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, ActionSheetIOS, Platform, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
@@ -19,6 +19,7 @@ import {
 import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { TagList } from '@/components/tag-list'
+import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
 import { Pressable, Linking } from 'react-native'
 
 export default function ArticleScreen() {
@@ -282,48 +283,27 @@ export default function ArticleScreen() {
     }
   }, [article, session?.user])
 
-  const showMoreActions = useCallback(() => {
-    if (!article) return
-
-    const options = [
-      ...(article.url ? ['Open Original'] : []),
-      'Mark as Unread',
-      'Delete',
-      'Cancel',
-    ]
-    const destructiveIndex = options.indexOf('Delete')
-    const cancelIndex = options.indexOf('Cancel')
-
-    const handleAction = (index: number) => {
-      const action = options[index]
-      if (action === 'Open Original' && article.url) {
-        Linking.openURL(article.url)
-      } else if (action === 'Mark as Unread') {
-        markAsUnread()
-      } else if (action === 'Delete') {
-        deleteArticle()
-      }
-    }
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          destructiveButtonIndex: destructiveIndex,
-          cancelButtonIndex: cancelIndex,
-        },
-        handleAction
-      )
-    } else {
-      // Android: use Alert with buttons
-      Alert.alert('Options', undefined, [
-        ...(article.url ? [{ text: 'Open Original', onPress: () => Linking.openURL(article.url!) }] : []),
-        { text: 'Mark as Unread', onPress: markAsUnread },
-        { text: 'Delete', style: 'destructive' as const, onPress: () => deleteArticle() },
-        { text: 'Cancel', style: 'cancel' as const },
-      ])
-    }
-  }, [article, markAsUnread, deleteArticle])
+  const moreMenuItems = useMemo((): DropdownMenuItem[] => [
+    ...(article?.url ? [{
+      key: 'open-original',
+      label: 'Open Original',
+      icon: 'arrow.up.right.square' as const,
+      onPress: () => Linking.openURL(article.url!),
+    }] : []),
+    {
+      key: 'mark-unread',
+      label: 'Mark as Unread',
+      icon: 'book.closed' as const,
+      onPress: markAsUnread,
+    },
+    {
+      key: 'delete',
+      label: 'Delete',
+      icon: 'trash' as const,
+      destructive: true,
+      onPress: deleteArticle,
+    },
+  ], [article?.url, markAsUnread, deleteArticle])
 
   const handleUpdateTags = useCallback(async (tags: string) => {
     if (!article || !session?.user) return
@@ -610,12 +590,14 @@ export default function ArticleScreen() {
                 color={article.isFavorite ? '#FFD700' : colors.text} 
               />
             </Pressable>
-            <Pressable
-              onPress={showMoreActions}
-              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
-            >
-              <IconSymbol name="ellipsis" size={28} color={colors.text} />
-            </Pressable>
+            <DropdownMenu
+              trigger={
+                <View style={{ opacity: 1, padding: 4 }}>
+                  <IconSymbol name="ellipsis" size={28} color={colors.text} />
+                </View>
+              }
+              items={moreMenuItems}
+            />
           </View>
         }
       />

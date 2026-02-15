@@ -1,10 +1,11 @@
-import { StyleSheet, View, Pressable, Alert } from 'react-native'
+import { StyleSheet, View, Pressable, Alert, Linking } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { IconSymbol } from './ui/icon-symbol'
 import { TagList } from './tag-list'
+import { DropdownMenu, DropdownMenuItem } from './dropdown-menu'
 import { Article } from '@poche/shared'
 import { extractFirstImageUrl } from '../lib/image-cache'
 import { useThemeColor } from '@/hooks/use-theme-color'
@@ -15,6 +16,7 @@ interface ArticleCardProps {
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
   onToggleFavorite?: (articleId: number) => Promise<void>
+  onMarkAsUnread?: (articleId: number) => Promise<void>
   showProgress?: boolean // Show reading progress bar
   variant?: 'default' | 'tile' // Layout variant
 }
@@ -41,6 +43,7 @@ export function ArticleCard({
   onDelete,
   onUpdateTags,
   onToggleFavorite,
+  onMarkAsUnread,
   showProgress = false,
   variant = 'default',
 }: ArticleCardProps) {
@@ -89,6 +92,28 @@ export function ArticleCard({
       onToggleFavorite(article.id)
     }
   }
+
+  const dropdownItems: DropdownMenuItem[] = [
+    ...(article.url ? [{
+      key: 'open-original',
+      label: 'Open Original',
+      icon: 'arrow.up.right.square' as const,
+      onPress: () => Linking.openURL(article.url!),
+    }] : []),
+    ...(onMarkAsUnread ? [{
+      key: 'mark-unread',
+      label: 'Mark as Unread',
+      icon: 'book.closed' as const,
+      onPress: () => onMarkAsUnread(article.id),
+    }] : []),
+    {
+      key: 'delete',
+      label: 'Delete',
+      icon: 'trash' as const,
+      destructive: true,
+      onPress: handleDelete,
+    },
+  ]
 
   // Tile variant - compact card for Continue Reading section
   if (isTile) {
@@ -219,12 +244,14 @@ export function ArticleCard({
               />
             </Pressable>
           )}
-          <Pressable
-            onPress={handleDelete}
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-          >
-            <IconSymbol name="trash" size={20} color="rgba(120, 120, 120, 0.75)" />
-          </Pressable>
+          <DropdownMenu
+            trigger={
+              <View style={{ padding: 2 }}>
+                <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
+              </View>
+            }
+            items={dropdownItems}
+          />
         </View>
       </View>
 
