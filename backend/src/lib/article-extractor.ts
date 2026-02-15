@@ -1,5 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
+import Defuddle from 'defuddle';
 import { NodeHtmlMarkdown } from 'node-html-markdown'
 
 export interface ExtractedArticle {
@@ -32,7 +33,7 @@ const DOMAIN_CONFIGS: DomainConfigEntry[] = [
   {
     domains: ['bbc.co.uk', 'bbc.com'],
     config: {
-      readabilityLibrary: 'none',
+      readabilityLibrary: 'readability',
       selector: 'article',
       removeSelectors: [
         '[data-block="byline"]',
@@ -47,59 +48,59 @@ const DOMAIN_CONFIGS: DomainConfigEntry[] = [
   { 
     domains: ['medium.com'],
     config: { 
-      readabilityLibrary: 'none',
+      readabilityLibrary: 'readability',
       selector: 'article',
     },
   },
   { 
     domains: ['nytimes.com'],
     config: { 
-      readabilityLibrary: 'none',
+      readabilityLibrary: 'readability',
       selector: '#story',
     },
   },
   { 
     domains: ['theguardian.com'],
     config: { 
-      readabilityLibrary: 'none',
+      readabilityLibrary: 'defuddle',
       selector: '#maincontent',
     },
   },
-  { 
-    domains: ['washingtonpost.com'],
-    config: { 
-      readabilityLibrary: 'none',
-      selector: '#main-content',
-    },
-  },
-  { 
-    domains: ['reuters.com'],
-    config: { 
-      readabilityLibrary: 'none',
-      selector: 'article',
-    },
-  },
-  { 
-    domains: ['arstechnica.com'],
-    config: { 
-      readabilityLibrary: 'none',
-      selector: 'article',
-    },
-  },
-  { 
-    domains: ['wired.com'],
-    config: { 
-      readabilityLibrary: 'none',
-      selector: 'article',
-    },
-  },
-  { 
-    domains: ['theverge.com'],
-    config: { 
-      readabilityLibrary: 'none',
-      selector: 'article',
-    },
-  },
+  // { 
+  //   domains: ['washingtonpost.com'],
+  //   config: { 
+  //     readabilityLibrary: 'readability',
+  //     selector: '#main-content',
+  //   },
+  // },
+  // { 
+  //   domains: ['reuters.com'],
+  //   config: { 
+  //     readabilityLibrary: 'readability',
+  //     selector: 'article',
+  //   },
+  // },
+  // { 
+  //   domains: ['arstechnica.com'],
+  //   config: { 
+  //     readabilityLibrary: 'readability',
+  //     selector: 'article',
+  //   },
+  // },
+  // { 
+  //   domains: ['wired.com'],
+  //   config: { 
+  //     readabilityLibrary: 'readability',
+  //     selector: 'article',
+  //   },
+  // },
+  // { 
+  //   domains: ['theverge.com'],
+  //   config: { 
+  //     readabilityLibrary: 'readability',
+  //     selector: 'article',
+  //   },
+  // },
 ];
 
 /**
@@ -161,9 +162,8 @@ export async function extractArticle(url: string): Promise<ExtractedArticle> {
     let siteName: string | null = null;
     let textContent: string | null = null;
 
-    const useReadability = !domainConfig || domainConfig.readabilityLibrary === 'readability';
-
-    if (useReadability) {
+    // Readability
+    if (!domainConfig || domainConfig.readabilityLibrary === 'readability') {
       const readability = new Readability(doc);
       const readabilityResult = readability.parse();
       title = readabilityResult?.title || null;
@@ -172,7 +172,20 @@ export async function extractArticle(url: string): Promise<ExtractedArticle> {
       author = readabilityResult?.byline || null;
       siteName = readabilityResult?.siteName || null;
       textContent = readabilityResult?.textContent || null;
-    } else {
+    } 
+    // Deffudle
+    else if (domainConfig.readabilityLibrary === 'defuddle') {
+      const defuddle = new Defuddle(doc);
+      const defuddleResult = defuddle.parse();
+      title = defuddleResult?.title || null;
+      htmlContent = defuddleResult?.content || null;
+      excerpt = defuddleResult?.excerpt || null;
+      author = defuddleResult?.byline || null;
+      siteName = defuddleResult?.siteName || null;
+      textContent = defuddleResult?.textContent || null;
+    } 
+    // Raw DOM
+    else {
       // Use raw DOM content (after selector narrowing and clutter removal)
       htmlContent = doc.body.innerHTML;
       textContent = doc.body.textContent;
