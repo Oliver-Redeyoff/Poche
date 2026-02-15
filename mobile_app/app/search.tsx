@@ -45,7 +45,7 @@ export default function SearchScreen() {
     return () => clearTimeout(timer)
   }, [])
 
-  const { deleteArticle, updateArticleTags, toggleFavorite } = useArticleActions({
+  const { deleteArticle, updateArticleTags, toggleFavorite, markAsUnread } = useArticleActions({
     userId: session?.user?.id,
     articles,
     setArticles
@@ -147,6 +147,7 @@ export default function SearchScreen() {
                 onDelete={deleteArticle}
                 onUpdateTags={updateArticleTags}
                 onToggleFavorite={toggleFavorite}
+                onMarkAsUnread={markAsUnread}
               />
             ))}
           </View>

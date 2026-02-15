@@ -61,9 +61,30 @@ export function useArticleActions({ userId, articles, setArticles }: UseArticleA
     }
   }
 
+  async function markAsUnread(articleId: number) {
+    if (!userId) return
+    // Optimistic update
+    setArticles(prev => prev.map(a =>
+      a.id === articleId ? { ...a, readingProgress: 0 } : a
+    ))
+    try {
+      await updateArticleWithSync(userId, articleId, { readingProgress: 0 })
+    } catch (error) {
+      // Revert on error
+      const original = articles.find(a => a.id === articleId)
+      if (original) {
+        setArticles(prev => prev.map(a =>
+          a.id === articleId ? { ...a, readingProgress: original.readingProgress } : a
+        ))
+      }
+      console.error('Error marking as unread:', error)
+    }
+  }
+
   return {
     deleteArticle,
     updateArticleTags,
-    toggleFavorite
+    toggleFavorite,
+    markAsUnread
   }
 }
