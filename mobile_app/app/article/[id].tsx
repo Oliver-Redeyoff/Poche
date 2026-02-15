@@ -5,17 +5,20 @@ import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Article, tagToColor } from '@poche/shared'
+import { Article } from '@poche/shared'
 import { getCachedImagePath } from '../../lib/image-cache'
 import { useTheme } from '@react-navigation/native'
 import { useAuth } from '../_layout'
 import { 
   updateReadingProgressLocal, 
   syncReadingProgressToBackend,
-  updateArticleWithSync
+  updateArticleWithSync,
+  deleteArticleWithSync,
+  updateArticleTagsWithSync
 } from '../../lib/article-sync'
 import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
+import { TagList } from '@/components/tag-list'
 import { Pressable, Linking } from 'react-native'
 
 export default function ArticleScreen() {
@@ -239,6 +242,35 @@ export default function ArticleScreen() {
       setArticle({ ...article, isFavorite: !newFavoriteStatus })
       Alert.alert('Error', 'Failed to update favorite status')
     }
+  }, [article, session?.user])
+
+  const deleteArticle = useCallback(() => {
+    if (!article || !session?.user) return
+    Alert.alert(
+      'Delete Article',
+      'Are you sure you want to delete this article?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteArticleWithSync(session.user.id, article.id)
+              router.back()
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete article')
+            }
+          },
+        },
+      ]
+    )
+  }, [article, session?.user])
+
+  const handleUpdateTags = useCallback(async (tags: string) => {
+    if (!article || !session?.user) return
+    await updateArticleTagsWithSync(session.user.id, article.id, tags)
+    setArticle({ ...article, tags: tags || null })
   }, [article, session?.user])
   
   // Markdown styles for premium reading experience
@@ -528,6 +560,12 @@ export default function ArticleScreen() {
                 <IconSymbol name="arrow.up.right.square" size={28} color={colors.text} />
               </Pressable>
             )}
+            <Pressable
+              onPress={deleteArticle}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+            >
+              <IconSymbol name="trash" size={28} color={colors.text} />
+            </Pressable>
           </View>
         }
       />
@@ -564,26 +602,10 @@ export default function ArticleScreen() {
           </View>
           
           {/* Tags */}
-          {article.tags && article.tags.length > 0 && (
-            <View style={styles.tagsContainer}>
-              {article.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0).map((tag) => (
-                <View
-                  key={tag}
-                  style={[
-                    styles.tagChip,
-                    { backgroundColor: tagToColor(tag, 0.15) }
-                  ]}
-                >
-                  <ThemedText style={[
-                    styles.tagChipText,
-                    { color: tagToColor(tag, 1.0) }
-                  ]}>
-                    {tag}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          )}
+          <TagList
+            tags={article.tags}
+            onUpdateTags={handleUpdateTags}
+          />
         </View>
         
         {/* Article Content */}
@@ -604,6 +626,7 @@ export default function ArticleScreen() {
           <View style={[styles.endMarkerDot, { backgroundColor: colors.accent }]} />
         </View>
       </ScrollView>
+
     </View>
   )
 }
@@ -645,20 +668,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.8)',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tagChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  tagChipText: {
-    fontSize: 13,
-    fontFamily: 'SourceSans3_500Medium',
   },
   contentContainer: {
     flex: 1,
