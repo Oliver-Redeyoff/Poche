@@ -109,6 +109,15 @@ export default function HomeScreen() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3)
 
+  // Get recently read articles (progress = 100)
+  const recentlyReadArticles = articles
+    .filter(a => {
+      const status = getArticleStatus(a.readingProgress || 0)
+      return status === 'finished'
+    })
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 3)
+
   if (!session?.user) {
     return null
   }
@@ -116,6 +125,7 @@ export default function HomeScreen() {
   const hasNoArticles = articles.length === 0
   const hasContinueReading = continueReadingArticles.length > 0
   const hasNewArticles = newArticles.length > 0
+  const hasRecentlyRead = recentlyReadArticles.length > 0
 
   return (
     <ThemedView style={styles.container}>
@@ -197,8 +207,28 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* If no new or in-progress articles, show a message */}
-            {!hasContinueReading && !hasNewArticles && (
+            {/* Recently Read Section */}
+            {hasRecentlyRead && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <ThemedText style={styles.sectionTitle}>Recently Read</ThemedText>
+                </View>
+                <View style={styles.verticalList}>
+                  {recentlyReadArticles.map(article => (
+                    <ArticleCard
+                      key={article.id}
+                      article={article}
+                      onDelete={deleteArticle}
+                      onUpdateTags={updateArticleTags}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* If no articles in any section, show a message */}
+            {!hasContinueReading && !hasNewArticles && !hasRecentlyRead && (
               <View style={styles.emptyState}>
                 <IconSymbol name="checkmark.circle" size={48} color={tintColor} />
                 <ThemedText style={[styles.emptyTitle, { color: textColor }]}>
