@@ -21,7 +21,7 @@ Poche is a "read it later" application that allows users to save articles from t
 - **Shared Package**: TypeScript types, utilities, colors, and markdown parsing (`@poche/shared`)
 - **Authentication**: Better Auth (email/password with bearer tokens for API clients)
 - **Email**: Resend for transactional emails (password reset)
-- **Article Extraction**: Defuddle (server-side Node.js version, markdown output)
+- **Article Extraction**: Domain-specific configurations (Readability, Defuddle, or raw DOM per domain)
 - **Deployment**: Docker & Docker Compose with Nginx reverse proxy
 - **SSL/TLS**: Let's Encrypt via Certbot with Cloudflare DNS plugin
 
@@ -125,7 +125,7 @@ Poche/
 
 ### Backend Features
 - RESTful API for authentication and article management
-- Server-side article extraction (URL → markdown via Defuddle)
+- Server-side article extraction with domain-specific configurations (URL → markdown)
 - Bearer token authentication for browser extensions and mobile apps
 - **Password reset**: Email-based password reset flow via Resend
 - **Email service**: Transactional emails with beautiful HTML templates
@@ -140,9 +140,9 @@ Poche/
 - **Forgot password**: Request password reset email from login screen
 - View saved articles linked to user account
 - **Tab-based navigation**: Home and Library tabs with native iOS blur effects
-- **Home page**: "Continue Reading" section (in-progress articles) and "New Articles" section
+- **Home page**: "Continue Reading" section (in-progress articles), "New Articles" section, and "Recently Read" section (finished articles)
 - **Library page**: Tile grid for All Articles, Favorites, and tag-based filtering
-- **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%)
+- **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%) with scroll restoration guard (ignores events during restoration)
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
@@ -150,12 +150,12 @@ Poche/
 - **Offline article access**: Articles stored locally in AsyncStorage
 - **Offline image caching**: Images downloaded and stored locally for offline viewing
 - **Background article sync**: Periodic background task to sync latest articles and cache images
-- **Instant article loading**: Articles from local storage appear immediately
+- **Instant article loading**: Articles from local storage appear immediately with scroll restoration (content hidden until last-read position is set)
 - **Article animations**: Smooth entry/exit animations for articles
-- **Article deletion**: Delete articles with confirmation dialog
+- **Article deletion**: Delete articles with confirmation dialog (trash icon in article detail header)
 - **Favorite toggle**: Star icon on article cards and detail view to favorite/unfavorite articles
 - **Open original article**: External link button in article detail to open source URL
-- **Tag management**: Add and remove tags from articles directly from article cards
+- **Tag management**: Reusable `TagList` component for add/remove tags with animations (used by ArticleCard and article detail view)
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
 
@@ -193,7 +193,7 @@ Poche/
 2. **User browses the web** and finds an article they want to save
 3. **User clicks the browser extension** icon
 4. **Extension sends URL** to backend API
-5. **Backend extracts article** using Defuddle (server-side, outputs markdown)
+5. **Backend extracts article** using domain-specific extraction (Readability, Defuddle, or raw DOM per domain)
 6. **Article saved** to PostgreSQL with userId
 7. **User views saved articles** in the mobile app (markdown rendered) or extension
 
@@ -203,6 +203,8 @@ Poche/
 - Built with Hono framework
 - Uses Better Auth for authentication with bearer plugin
 - Drizzle ORM for type-safe database queries
+- **Article extractor**: Domain-specific configurations—each domain can specify a CSS selector to narrow the DOM, elements to remove, and extraction library (Readability, Defuddle, or none/raw DOM); BBC uses raw DOM with targeted element removal for better content preservation
+- **Word count**: Improved calculation with proper whitespace splitting
 - Docker Compose for development and production
 - Hot-reloading in development mode
 - Binds to `0.0.0.0` for mobile app access on local network
@@ -309,7 +311,7 @@ The shared package provides common functionality across all projects:
 ### Backend
 - ✅ Self-hosted API server with Hono
 - ✅ Better Auth integration with bearer plugin for token-based auth
-- ✅ Server-side article extraction with Defuddle (markdown output)
+- ✅ Server-side article extraction with domain-specific configurations: CSS selector to narrow DOM, elements to remove, extraction library per domain (Readability, Defuddle, or raw DOM); BBC uses raw DOM with targeted element removal
 - ✅ **Password reset flow**: `POST /api/auth/request-password-reset`
 - ✅ **Account deletion**: `POST /api/auth/delete-user` with password confirmation
 - ✅ **Email service**: Resend integration for transactional emails
@@ -325,6 +327,7 @@ The shared package provides common functionality across all projects:
 - ✅ Environment variables loaded from `.env` file with required validation
 - ✅ Default server blocks to reject unknown hostnames
 - ✅ Node.js-based healthcheck (no external dependencies like wget)
+- ✅ Word count calculation improved with proper whitespace splitting
 
 ### Mobile App
 - ✅ Migrated from Supabase to self-hosted backend
@@ -340,11 +343,11 @@ The shared package provides common functionality across all projects:
 - ✅ Offline article reading support
 - ✅ Offline image caching with `expo-file-system/legacy`
 - ✅ Background article syncing with image caching
-- ✅ Instant article loading from local storage
+- ✅ Instant article loading from local storage with scroll restoration (content hidden until last-read position set)
 - ✅ Article entry and exit animations
-- ✅ Article deletion with confirmation
+- ✅ Article deletion with confirmation (trash icon in article detail header)
 - ✅ Modular ArticleCard component
-- ✅ Tag management (add/remove tags from article cards)
+- ✅ Reusable `TagList` component for tag management (add/remove with animations) used by ArticleCard and article detail view
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
@@ -358,9 +361,9 @@ The shared package provides common functionality across all projects:
 - ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
 - ✅ **Tab-based navigation**: Home and Library tabs with Expo Router
-- ✅ **Home page**: "Continue Reading" (in-progress) and "New Articles" sections
+- ✅ **Home page**: "Continue Reading" (in-progress), "New Articles", and "Recently Read" (finished) sections
 - ✅ **Library page**: Tile grid for All Articles, Favorites, and tags with counts
-- ✅ **Reading progress tracking**: Scroll-based progress (0-100%) with debounced backend sync
+- ✅ **Reading progress tracking**: Scroll-based progress (0-100%) with debounced backend sync; scroll events ignored during restoration to prevent false updates
 - ✅ **Smart data refresh**: Screens reload from storage on focus to reflect changes
 
 ### Browser Extension

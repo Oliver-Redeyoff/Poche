@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
-import { NodeHtmlMarkdown, NodeHtmlMarkdownOptions } from 'node-html-markdown'
+import { NodeHtmlMarkdown } from 'node-html-markdown'
 
 export interface ExtractedArticle {
   title: string | null;
@@ -18,7 +18,7 @@ export interface ExtractedArticle {
  * - removeSelectors: CSS selectors for elements to strip before Readability runs
  */
 interface DomainConfig {
-  readbilityLibrary: 'readability' | 'defuddle' | 'none';
+  readabilityLibrary: 'readability' | 'defuddle' | 'none';
   selector: string;
   removeSelectors?: string[];
 }
@@ -32,7 +32,7 @@ const DOMAIN_CONFIGS: DomainConfigEntry[] = [
   {
     domains: ['bbc.co.uk', 'bbc.com'],
     config: {
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: 'article',
       removeSelectors: [
         '[data-block="byline"]',
@@ -47,56 +47,56 @@ const DOMAIN_CONFIGS: DomainConfigEntry[] = [
   { 
     domains: ['medium.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: 'article',
     },
   },
   { 
     domains: ['nytimes.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: '#story',
     },
   },
   { 
     domains: ['theguardian.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: '#maincontent',
     },
   },
   { 
     domains: ['washingtonpost.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: '#main-content',
     },
   },
   { 
     domains: ['reuters.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: 'article',
     },
   },
   { 
     domains: ['arstechnica.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: 'article',
     },
   },
   { 
     domains: ['wired.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: 'article',
     },
   },
   { 
     domains: ['theverge.com'],
     config: { 
-      readbilityLibrary: 'none',
+      readabilityLibrary: 'none',
       selector: 'article',
     },
   },
@@ -124,14 +124,6 @@ function getDomainConfig(url: string): DomainConfig | null {
  */
 export async function extractArticle(url: string): Promise<ExtractedArticle> {
   try {
-    const result: Record<string, string | null | undefined> = {
-      title: null,
-      content: null,
-      excerpt: null,
-      author: null,
-      siteName: null,
-    }
-
     // Fetch the page using JSDOM with desktop-like settings
     const dom = await JSDOM.fromURL(url, {
       // Use a desktop Chrome user agent to get full-quality content
@@ -141,7 +133,7 @@ export async function extractArticle(url: string): Promise<ExtractedArticle> {
 
     const doc = dom.window.document;
 
-    // Apply domain-specific processing
+    // Apply domain-specific preprocessing
     const domainConfig = getDomainConfig(url);
     if (domainConfig) {
       // Narrow DOM to known article container
@@ -160,49 +152,45 @@ export async function extractArticle(url: string): Promise<ExtractedArticle> {
           }
         }
       }
+    }
 
-      // Apply desired readability library
-      if (domainConfig.readbilityLibrary === 'readability') {
-        const readability = new Readability(doc);
-        const readabilityResult = readability.parse();
-        result.title = readabilityResult?.title;
-        result.content = readabilityResult?.content;
-        result.excerpt = readabilityResult?.excerpt;
-        result.author = readabilityResult?.byline;
-        result.siteName = readabilityResult?.siteName;
-      } else if (domainConfig.readbilityLibrary === "none") {
-        result.content = doc.body.innerHTML;
-      }
-    } else {
-      // If no domain config is found, use the default readability library
+    let title: string | null = null;
+    let htmlContent: string | null = null;
+    let excerpt: string | null = null;
+    let author: string | null = null;
+    let siteName: string | null = null;
+    let textContent: string | null = null;
+
+    const useReadability = !domainConfig || domainConfig.readabilityLibrary === 'readability';
+
+    if (useReadability) {
       const readability = new Readability(doc);
       const readabilityResult = readability.parse();
-      result.title = readabilityResult?.title;
-      result.content = readabilityResult?.content;
-      result.excerpt = readabilityResult?.excerpt;
-      result.author = readabilityResult?.byline;
-      result.siteName = readabilityResult?.siteName;
+      title = readabilityResult?.title || null;
+      htmlContent = readabilityResult?.content || null;
+      excerpt = readabilityResult?.excerpt || null;
+      author = readabilityResult?.byline || null;
+      siteName = readabilityResult?.siteName || null;
+      textContent = readabilityResult?.textContent || null;
+    } else {
+      // Use raw DOM content (after selector narrowing and clutter removal)
+      htmlContent = doc.body.innerHTML;
+      textContent = doc.body.textContent;
     }
 
-    if (!result || !result.content) {
+    if (!htmlContent) {
       throw new Error('Could not extract article content');
     }
 
-    console.log(result.content);
-    result.content = NodeHtmlMarkdown.translate(result.content ?? "");
-    console.log(result.content);
-
-    if (!result || !result.content) {
-      throw new Error('Could not extract article content');
-    }
+    const content = NodeHtmlMarkdown.translate(htmlContent);
 
     return {
-      title: result.title || null,
-      content: result.content,
-      excerpt: result.excerpt || null,
-      author: result.byline || null,
-      siteName: result.siteName || new URL(url).hostname,
-      wordCount: result.textContent ? result.textContent.split(' ').length : null,
+      title,
+      content,
+      excerpt,
+      author,
+      siteName: siteName || new URL(url).hostname,
+      wordCount: textContent ? textContent.split(/\s+/).filter(Boolean).length : null,
     };
   } catch (error) {
     if (error instanceof Error) {
