@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, ActionSheetIOS, Platform, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
@@ -266,6 +266,64 @@ export default function ArticleScreen() {
       ]
     )
   }, [article, session?.user])
+
+  const markAsUnread = useCallback(async () => {
+    if (!article || !session?.user) return
+    try {
+      await updateArticleWithSync(session.user.id, article.id, { readingProgress: 0 })
+      setArticle({ ...article, readingProgress: 0 })
+      setReadingProgress(0)
+      readingProgressRef.current = 0
+      lastSyncedProgress.current = 0
+      lastLocalSaveProgress.current = 0
+      hasReachedEnd.current = false
+    } catch (error) {
+      Alert.alert('Error', 'Failed to mark article as unread')
+    }
+  }, [article, session?.user])
+
+  const showMoreActions = useCallback(() => {
+    if (!article) return
+
+    const options = [
+      ...(article.url ? ['Open Original'] : []),
+      'Mark as Unread',
+      'Delete',
+      'Cancel',
+    ]
+    const destructiveIndex = options.indexOf('Delete')
+    const cancelIndex = options.indexOf('Cancel')
+
+    const handleAction = (index: number) => {
+      const action = options[index]
+      if (action === 'Open Original' && article.url) {
+        Linking.openURL(article.url)
+      } else if (action === 'Mark as Unread') {
+        markAsUnread()
+      } else if (action === 'Delete') {
+        deleteArticle()
+      }
+    }
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          destructiveButtonIndex: destructiveIndex,
+          cancelButtonIndex: cancelIndex,
+        },
+        handleAction
+      )
+    } else {
+      // Android: use Alert with buttons
+      Alert.alert('Options', undefined, [
+        ...(article.url ? [{ text: 'Open Original', onPress: () => Linking.openURL(article.url!) }] : []),
+        { text: 'Mark as Unread', onPress: markAsUnread },
+        { text: 'Delete', style: 'destructive' as const, onPress: () => deleteArticle() },
+        { text: 'Cancel', style: 'cancel' as const },
+      ])
+    }
+  }, [article, markAsUnread, deleteArticle])
 
   const handleUpdateTags = useCallback(async (tags: string) => {
     if (!article || !session?.user) return
@@ -552,19 +610,11 @@ export default function ArticleScreen() {
                 color={article.isFavorite ? '#FFD700' : colors.text} 
               />
             </Pressable>
-            {article.url && (
-              <Pressable
-                onPress={() => Linking.openURL(article.url as string)}
-                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
-              >
-                <IconSymbol name="arrow.up.right.square" size={28} color={colors.text} />
-              </Pressable>
-            )}
             <Pressable
-              onPress={deleteArticle}
+              onPress={showMoreActions}
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
             >
-              <IconSymbol name="trash" size={28} color={colors.text} />
+              <IconSymbol name="ellipsis" size={28} color={colors.text} />
             </Pressable>
           </View>
         }
