@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
@@ -8,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '@poche/shared'
 import { getCachedImagePath } from '../../lib/image-cache'
 import { useTheme } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../_layout'
 import { 
   updateReadingProgressLocal, 
@@ -31,6 +33,7 @@ export default function ArticleScreen() {
   const colorScheme = useColorScheme()
   const theme = useTheme()
   const isDark = colorScheme === 'dark'
+  const insets = useSafeAreaInsets()
   
   // Use hook instead of Dimensions.get() to ensure correct values on initial render
   const { width: screenWidth } = useWindowDimensions()
@@ -44,12 +47,24 @@ export default function ArticleScreen() {
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasReachedEnd = useRef(false)
   
+  // Animated progress bar
+  const progressBarWidth = useSharedValue(0) // 0-1 fraction
+  const progressTrackWidth = useSharedValue(0)
+  const progressBarStyle = useAnimatedStyle(() => ({
+    width: progressBarWidth.value * progressTrackWidth.value,
+  }))
+
   // Scroll restoration
   const scrollViewRef = useRef<ScrollView>(null)
   const initialProgressRef = useRef<number | null>(null) // Store initial progress for scroll restoration
   const hasRestoredScroll = useRef(false)
   const [isScrollReady, setIsScrollReady] = useState(false) // Hide content until scroll position is restored
   
+  // "Return to progress" button
+  const contentHeightRef = useRef(0)
+  const layoutHeightRef = useRef(0)
+  const [showReturnButton, setShowReturnButton] = useState(false)
+
   // Premium reading colors - warm tones that are easy on the eyes
   const colors = useMemo(() => ({
     text: theme.colors.text,
@@ -114,6 +129,7 @@ export default function ArticleScreen() {
         setReadingProgress(initialProgress)
         readingProgressRef.current = initialProgress
         lastSyncedProgress.current = initialProgress
+        progressBarWidth.value = initialProgress / 100
         // Store initial progress for scroll restoration (only if in progress)
         if (initialProgress > 0 && initialProgress < 100) {
           initialProgressRef.current = initialProgress
@@ -167,16 +183,25 @@ export default function ArticleScreen() {
     
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent
     
+    // Track content dimensions for "return to progress" button
+    contentHeightRef.current = contentSize.height
+    layoutHeightRef.current = layoutMeasurement.height
+    
     // Calculate scroll progress (0-100)
     const scrollableHeight = contentSize.height - layoutMeasurement.height
     if (scrollableHeight <= 0) return
     
     const progress = Math.min(100, Math.max(0, Math.round((contentOffset.y / scrollableHeight) * 100)))
     
+    // Show/hide "return to progress" button when scrolled above current reading progress
+    const isAboveProgress = progress < readingProgressRef.current - 5 && readingProgressRef.current > 5
+    setShowReturnButton(isAboveProgress)
+    
     // Only update if progress increased (don't decrease on scroll up)
     if (progress > readingProgress) {
       setReadingProgress(progress)
       readingProgressRef.current = progress
+      progressBarWidth.value = withTiming(progress / 100, { duration: 300 })
       
       // Only save to local storage when progress changes by threshold amount (or reaches 100)
       const shouldSaveLocally = progress === 100 || 
@@ -276,12 +301,21 @@ export default function ArticleScreen() {
       setReadingProgress(0)
       readingProgressRef.current = 0
       lastSyncedProgress.current = 0
+      progressBarWidth.value = withTiming(0, { duration: 300 })
       lastLocalSaveProgress.current = 0
       hasReachedEnd.current = false
     } catch (error) {
       Alert.alert('Error', 'Failed to mark article as unread')
     }
   }, [article, session?.user])
+
+  const returnToProgress = useCallback(() => {
+    const scrollableHeight = contentHeightRef.current - layoutHeightRef.current
+    if (scrollableHeight <= 0) return
+    const scrollPosition = (readingProgressRef.current / 100) * scrollableHeight
+    scrollViewRef.current?.scrollTo({ y: scrollPosition, animated: true })
+    setShowReturnButton(false)
+  }, [])
 
   const moreMenuItems = useMemo((): DropdownMenuItem[] => [
     ...(article?.url ? [{
@@ -602,6 +636,37 @@ export default function ArticleScreen() {
         }
       />
 
+      {/* Reading progress bar */}
+      <View 
+        style={styles.progressBarTrack} 
+        onLayout={(e: LayoutChangeEvent) => { progressTrackWidth.value = e.nativeEvent.layout.width }}
+      >
+        <Animated.View 
+          style={[
+            styles.progressBarFill, 
+            { backgroundColor: colors.accent },
+            progressBarStyle,
+          ]} 
+        />
+      </View>
+
+      {/* Return to progress button */}
+      {showReturnButton && (
+        <Animated.View 
+          entering={FadeIn.duration(200)} 
+          exiting={FadeOut.duration(200)}
+          style={[styles.returnButtonContainer, { top: insets.top + 56 + 3 + 8 }]}
+        >
+          <Pressable 
+            onPress={returnToProgress}
+            style={[styles.returnButton, { backgroundColor: colors.accent }]}
+          >
+            <IconSymbol name="chevron.down" size={14} color="#FFFFFF" />
+            <ThemedText style={styles.returnButtonText}>Continue reading</ThemedText>
+          </Pressable>
+        </Animated.View>
+      )}
+
       <ScrollView 
         ref={scrollViewRef}
         style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0 }]}
@@ -609,6 +674,8 @@ export default function ArticleScreen() {
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
       >
         {/* Article Header */}
         <View style={[styles.header]}>
@@ -670,6 +737,39 @@ const styles = StyleSheet.create({
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  progressBarTrack: {
+    height: 3,
+    backgroundColor: 'transparent',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 1.5,
+  },
+  returnButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  returnButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  returnButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'SourceSans3_600SemiBold',
   },
   scrollView: {
     flex: 1,

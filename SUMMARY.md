@@ -142,6 +142,7 @@ Poche/
 - **Tab-based navigation**: Home and Library tabs with native iOS blur effects
 - **Home page**: "Continue Reading" section (in-progress articles), "New Articles" section, and "Recently Read" section (finished articles)
 - **Library page**: Tile grid for All Articles, Favorites, and tag-based filtering
+- **Search**: Full-screen search across all articles by title, site name, tags, and content
 - **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%) with scroll restoration guard (ignores events during restoration)
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
@@ -152,9 +153,10 @@ Poche/
 - **Background article sync**: Periodic background task to sync latest articles and cache images
 - **Instant article loading**: Articles from local storage appear immediately with scroll restoration (content hidden until last-read position is set)
 - **Article animations**: Smooth entry/exit animations for articles
-- **Article deletion**: Delete articles with confirmation dialog (trash icon in article detail header)
+- **Dropdown menu**: Reusable `DropdownMenu` component with smart positioning (above/below, left/right aligned to avoid going off-screen)
+- **Article actions menu**: Ellipsis dropdown in article detail header and article cards with Open Original, Mark as Unread, Delete options
 - **Favorite toggle**: Star icon on article cards and detail view to favorite/unfavorite articles
-- **Open original article**: External link button in article detail to open source URL
+- **Mark as Unread**: Reset reading progress to 0 from dropdown menu
 - **Tag management**: Reusable `TagList` component for add/remove tags with animations (used by ArticleCard and article detail view)
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
@@ -345,9 +347,11 @@ The shared package provides common functionality across all projects:
 - ✅ Background article syncing with image caching
 - ✅ Instant article loading from local storage with scroll restoration (content hidden until last-read position set)
 - ✅ Article entry and exit animations
-- ✅ Article deletion with confirmation (trash icon in article detail header)
+- ✅ Article actions via dropdown menu (Open Original, Mark as Unread, Delete) in both article detail and article cards
+- ✅ Reusable `DropdownMenu` component with smart positioning (measures trigger + menu, avoids screen edges)
 - ✅ Modular ArticleCard component
 - ✅ Reusable `TagList` component for tag management (add/remove with animations) used by ArticleCard and article detail view
+- ✅ Mark as Unread functionality (resets reading progress to 0) with optimistic updates
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
@@ -440,7 +444,6 @@ See `PRODUCTION.md` for a comprehensive guide on deploying Poche to a production
 Potential features to add:
 - Email verification
 - Article folders/categories
-- Search functionality
 - Article sharing
 - Enhanced sync across devices
 - Tag autocomplete/suggestions
