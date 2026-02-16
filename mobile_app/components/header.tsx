@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { View, Image, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { ThemedText } from './themed-text'
@@ -19,6 +20,8 @@ interface HeaderProps {
   rightElement?: React.ReactNode
   /** Additional style for the header container */
   style?: StyleProp<ViewStyle>
+  /** When true, the header collapses with a slide-up animation */
+  hidden?: boolean
 }
 
 export function Header({
@@ -28,17 +31,35 @@ export function Header({
   centerElement,
   rightElement,
   style,
+  hidden = false,
 }: HeaderProps) {
   const insets = useSafeAreaInsets()
   const textColor = useThemeColor({}, 'text')
   const borderColor = useThemeColor({}, 'border')
   const backgroundColor = useThemeColor({}, 'background')
 
+  const contentHeight = 56 + 1
+  const animProgress = useSharedValue(1)
+
+  useEffect(() => {
+    animProgress.value = withTiming(hidden ? 0 : 1, { duration: 250 })
+  }, [hidden])
+
+  const wrapperAnimStyle = useAnimatedStyle(() => ({
+    height: insets.top + animProgress.value * contentHeight,
+  }))
+
+  const slideAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: (animProgress.value - 1) * contentHeight }],
+    opacity: animProgress.value,
+  }))
+
   return (
-    <View style={[{ paddingTop: insets.top, backgroundColor: backgroundColor }, style]}>
-      <View style={[styles.content, { borderBottomColor: borderColor }]}>
-        {/* Left section */}
-        <View style={styles.leftSection}>
+    <Animated.View style={[{ overflow: 'hidden' }, wrapperAnimStyle]}>
+      <Animated.View style={[slideAnimStyle, { paddingTop: insets.top, backgroundColor }, style]}>
+        <View style={[styles.content, { borderBottomColor: borderColor }]}>
+          {/* Left section */}
+          <View style={styles.leftSection}>
           {showBack ? (
             <Pressable
               onPress={() => router.back()}
@@ -75,8 +96,9 @@ export function Header({
         <View style={styles.rightSection}>
           {rightElement || <View style={styles.placeholder} />}
         </View>
-      </View>
-    </View>
+        </View>
+      </Animated.View>
+    </Animated.View>
   )
 }
 
