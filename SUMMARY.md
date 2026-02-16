@@ -144,6 +144,9 @@ Poche/
 - **Library page**: Tile grid for All Articles, Favorites, and tag-based filtering
 - **Search**: Full-screen search across all articles by title, site name, tags, and content
 - **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%) with scroll restoration guard (ignores events during restoration)
+- **Reading progress bar**: Animated bar below header showing current reading progress
+- **Collapsible header**: Article detail header slides up when scrolling down, reappears on scroll up (preserves safe area)
+- **Continue reading button**: Floating button to jump back to reading position when scrolled above progress
 - Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling

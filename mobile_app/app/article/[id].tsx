@@ -22,7 +22,7 @@ import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { TagList } from '@/components/tag-list'
 import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
-import { Pressable, Linking } from 'react-native'
+import { Pressable, Linking, Modal, PanResponder } from 'react-native'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -80,19 +80,90 @@ export default function ArticleScreen() {
     top: returnBtnTop.value,
   }))
 
-  // Premium reading colors - warm tones that are easy on the eyes
-  const colors = useMemo(() => ({
-    text: theme.colors.text,
-    textSecondary: isDark ? '#A8A4A0' : '#666666',
-    textMuted: isDark ? '#787470' : '#999999',
-    background: theme.colors.background,
-    accent: theme.colors.primary,
-    accentHover: isDark ? '#E85A6E' : '#D93548',
-    divider: theme.colors.border,
-    blockquoteBg: isDark ? '#252320' : '#F5F3F0',
-    blockquoteBorder: isDark ? '#4A4845' : '#D4D0CC',
-    codeBg: isDark ? '#252320' : '#F0EDE8',
-  }), [isDark, theme])
+  // Reading settings
+  const [fontSize, setFontSize] = useState(18)
+  const [readingTheme, setReadingTheme] = useState<'auto' | 'light' | 'sepia' | 'dark'>('auto')
+  const [showSettings, setShowSettings] = useState(false)
+
+  const MIN_FONT_SIZE = 14
+  const MAX_FONT_SIZE = 26
+
+  // Drawer slide + swipe-to-dismiss
+  const DRAWER_OFFSCREEN = 400
+  const drawerTranslateY = useSharedValue(DRAWER_OFFSCREEN)
+  const drawerAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: drawerTranslateY.value }],
+  }))
+
+  // Slide drawer in when opened
+  useEffect(() => {
+    if (showSettings) {
+      drawerTranslateY.value = DRAWER_OFFSCREEN
+      drawerTranslateY.value = withTiming(0, { duration: 250 })
+    }
+  }, [showSettings])
+
+  const dismissDrawer = useCallback(() => {
+    drawerTranslateY.value = withTiming(DRAWER_OFFSCREEN, { duration: 200 })
+    setTimeout(() => {
+      setShowSettings(false)
+    }, 200)
+  }, [])
+
+  const drawerPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
+      onPanResponderMove: (_, gestureState) => {
+        drawerTranslateY.value = Math.max(0, gestureState.dy)
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 60 || gestureState.vy > 0.5) {
+          drawerTranslateY.value = withTiming(DRAWER_OFFSCREEN, { duration: 200 })
+          setTimeout(() => {
+            setShowSettings(false)
+          }, 200)
+        } else {
+          drawerTranslateY.value = withTiming(0, { duration: 200 })
+        }
+      },
+    })
+  ).current
+
+  // Reading colors based on reading theme selection
+  const effectiveDark = readingTheme === 'dark' || (readingTheme === 'auto' && isDark)
+
+  const colors = useMemo(() => {
+    if (readingTheme === 'sepia') {
+      return {
+        text: '#3D3229',
+        textSecondary: '#6B5D4F',
+        textMuted: '#8A7B6B',
+        background: '#F5ECD7',
+        accent: '#D44A5C',
+        accentHover: '#C03D4E',
+        divider: '#D4C9B0',
+        blockquoteBg: '#EDE3CA',
+        blockquoteBorder: '#C4B896',
+        codeBg: '#EDE3CA',
+        card: '#EDE3CA',
+      }
+    }
+    const dark = readingTheme === 'dark' || (readingTheme === 'auto' && isDark)
+    return {
+      text: dark ? '#E8E4E0' : '#1C1A18',
+      textSecondary: dark ? '#A8A4A0' : '#666666',
+      textMuted: dark ? '#787470' : '#999999',
+      background: dark ? '#1C1A18' : '#FAFAF8',
+      accent: dark ? '#F06B7E' : '#EF4056',
+      accentHover: dark ? '#E85A6E' : '#D93548',
+      divider: dark ? '#3A3835' : '#E8E4E0',
+      blockquoteBg: dark ? '#252320' : '#F5F3F0',
+      blockquoteBorder: dark ? '#4A4845' : '#D4D0CC',
+      codeBg: dark ? '#252320' : '#F0EDE8',
+      card: dark ? '#2C2A28' : '#FFFFFF',
+    }
+  }, [readingTheme, isDark])
   
 
   useEffect(() => {
@@ -372,53 +443,54 @@ export default function ArticleScreen() {
     setArticle({ ...article, tags: tags || null })
   }, [article, session?.user])
   
-  // Markdown styles for premium reading experience
+  // Markdown styles for premium reading experience (scaled by fontSize)
+  const lineHeight = Math.round(fontSize * 1.56)
   const markdownStyles = useMemo((): MarkdownStyles => ({
     paragraph: {
       color: colors.text,
-      fontSize: 18,
-      lineHeight: 28,
+      fontSize,
+      lineHeight,
       marginVertical: 12,
       fontFamily: 'SourceSans3_400Regular',
     },
     heading1: {
       color: colors.text,
-      fontSize: 32,
+      fontSize: fontSize + 14,
       marginBottom: 24,
       marginTop: 48,
       fontFamily: 'Bitter_600SemiBold',
     },
     heading2: {
       color: colors.text,
-      fontSize: 26,
+      fontSize: fontSize + 8,
       marginTop: 32,
       marginBottom: 16,
       fontFamily: 'Bitter_600SemiBold',
     },
     heading3: {
       color: colors.text,
-      fontSize: 22,
+      fontSize: fontSize + 4,
       marginTop: 24,
       marginBottom: 12,
       fontFamily: 'Bitter_600SemiBold',
     },
     heading4: {
       color: colors.text,
-      fontSize: 19,
+      fontSize: fontSize + 1,
       marginTop: 20,
       marginBottom: 8,
       fontFamily: 'Bitter_600SemiBold',
     },
     heading5: {
       color: colors.text,
-      fontSize: 17,
+      fontSize: fontSize - 1,
       marginTop: 16,
       marginBottom: 8,
       fontFamily: 'Bitter_600SemiBold',
     },
     heading6: {
       color: colors.textSecondary,
-      fontSize: 16,
+      fontSize: fontSize - 2,
       marginTop: 16,
       marginBottom: 8,
       fontFamily: 'Bitter_600SemiBold',
@@ -461,18 +533,18 @@ export default function ArticleScreen() {
     },
     list_item_text: {
       color: colors.text,
-      fontSize: 18,
-      lineHeight: 28,
+      fontSize,
+      lineHeight,
       fontFamily: 'SourceSans3_400Regular',
     },
     list_bullet: {
       color: colors.textSecondary,
-      fontSize: 18,
+      fontSize,
       fontFamily: 'SourceSans3_400Regular',
     },
     code_inline: {
       fontFamily: 'Menlo',
-      fontSize: 15,
+      fontSize: fontSize - 3,
       backgroundColor: colors.codeBg,
       paddingHorizontal: 6,
       paddingVertical: 2,
@@ -487,7 +559,7 @@ export default function ArticleScreen() {
     },
     code_block_text: {
       fontFamily: 'Menlo',
-      fontSize: 14,
+      fontSize: fontSize - 4,
       color: colors.text,
     },
     image: {
@@ -531,7 +603,7 @@ export default function ArticleScreen() {
       textDecorationLine: 'line-through',
       color: colors.textSecondary,
     },
-  }), [colors])
+  }), [colors, fontSize, lineHeight])
 
   // Track which images have failed to load
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set())
@@ -635,7 +707,7 @@ export default function ArticleScreen() {
     : null
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Header 
         showLogo
         showBack
@@ -649,13 +721,13 @@ export default function ArticleScreen() {
               <IconSymbol 
                 name={article.isFavorite ? 'star.fill' : 'star'} 
                 size={28} 
-                color={article.isFavorite ? '#FFD700' : colors.text} 
+                color={article.isFavorite ? '#FFD700' : theme.colors.text} 
               />
             </Pressable>
             <DropdownMenu
               trigger={
                 <View style={{ opacity: 1, padding: 4 }}>
-                  <IconSymbol name="ellipsis" size={28} color={colors.text} />
+                  <IconSymbol name="ellipsis" size={28} color={theme.colors.text} />
                 </View>
               }
               items={moreMenuItems}
@@ -697,7 +769,7 @@ export default function ArticleScreen() {
 
       <ScrollView 
         ref={scrollViewRef}
-        style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0 }]}
+        style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0, backgroundColor: colors.background }]}
         contentContainerStyle={[styles.scrollContent]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
@@ -753,6 +825,95 @@ export default function ArticleScreen() {
           <View style={[styles.endMarkerDot, { backgroundColor: colors.accent }]} />
         </View>
       </ScrollView>
+
+      {/* Floating settings button */}
+      {!showSettings && (
+        <Pressable
+          onPress={() => setShowSettings(true)}
+          style={({ pressed }) => [
+            styles.settingsButton,
+            { 
+              backgroundColor: colors.card, 
+              opacity: pressed ? 0.8 : 1,
+              bottom: insets.bottom + 20,
+            },
+          ]}
+        >
+          <ThemedText style={[styles.settingsButtonText, { color: colors.text }]}>Aa</ThemedText>
+        </Pressable>
+      )}
+
+      {/* Reading settings drawer */}
+      <Modal
+        visible={showSettings}
+        transparent
+        animationType="fade"
+        onRequestClose={dismissDrawer}
+      >
+        <View style={styles.drawerOverlay}>
+          <Pressable style={styles.drawerBackdrop} onPress={dismissDrawer} />
+          <Animated.View 
+            style={[styles.drawerContent, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }, drawerAnimStyle]}
+            {...drawerPanResponder.panHandlers}
+          >
+            <View style={styles.drawerHandle} />
+
+            {/* Font Size */}
+            <View style={styles.drawerSection}>
+              <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Text Size</ThemedText>
+              <View style={styles.fontSizeRow}>
+                <Pressable
+                  onPress={() => setFontSize(s => Math.max(MIN_FONT_SIZE, s - 1))}
+                  style={({ pressed }) => [
+                    styles.fontSizeButton,
+                    { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize <= MIN_FONT_SIZE ? 'transparent' : colors.background },
+                  ]}
+                  disabled={fontSize <= MIN_FONT_SIZE}
+                >
+                  <ThemedText style={[styles.fontSizeButtonTextSmall, { color: fontSize <= MIN_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
+                </Pressable>
+                <ThemedText style={[styles.fontSizeValue, { color: colors.text }]}>{fontSize}</ThemedText>
+                <Pressable
+                  onPress={() => setFontSize(s => Math.min(MAX_FONT_SIZE, s + 1))}
+                  style={({ pressed }) => [
+                    styles.fontSizeButton,
+                    { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize >= MAX_FONT_SIZE ? 'transparent' : colors.background },
+                  ]}
+                  disabled={fontSize >= MAX_FONT_SIZE}
+                >
+                  <ThemedText style={[styles.fontSizeButtonTextLarge, { color: fontSize >= MAX_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Theme */}
+            <View style={styles.drawerSection}>
+              <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Theme</ThemedText>
+              <View style={styles.themeRow}>
+                {([
+                  { key: 'auto' as const, label: 'Auto', bg: isDark ? '#1C1A18' : '#FAFAF8', border: true },
+                  { key: 'light' as const, label: 'Light', bg: '#FAFAF8', border: true },
+                  { key: 'sepia' as const, label: 'Sepia', bg: '#F5ECD7', border: false },
+                  { key: 'dark' as const, label: 'Dark', bg: '#1C1A18', border: false },
+                ]).map(t => (
+                  <Pressable key={t.key} onPress={() => setReadingTheme(t.key)} style={styles.themeOption}>
+                    <View style={[
+                      styles.themeCircle,
+                      { backgroundColor: t.bg },
+                      t.border && { borderWidth: 1, borderColor: colors.divider },
+                      readingTheme === t.key && { borderWidth: 2.5, borderColor: colors.accent },
+                    ]} />
+                    <ThemedText style={[
+                      styles.themeLabel,
+                      { color: readingTheme === t.key ? colors.text : colors.textMuted },
+                    ]}>{t.label}</ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
 
     </View>
   )
@@ -847,5 +1008,101 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     opacity: 0.6,
+  },
+  settingsButton: {
+    position: 'absolute',
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  settingsButtonText: {
+    fontSize: 16,
+    fontFamily: 'Bitter_600SemiBold',
+  },
+  drawerOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  drawerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  drawerContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  drawerHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(128,128,128,0.3)',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  drawerSection: {
+    marginBottom: 24,
+  },
+  drawerSectionTitle: {
+    fontSize: 13,
+    fontFamily: 'SourceSans3_600SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  fontSizeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+  },
+  fontSizeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fontSizeButtonTextSmall: {
+    fontSize: 14,
+    fontFamily: 'SourceSans3_600SemiBold',
+  },
+  fontSizeButtonTextLarge: {
+    fontSize: 22,
+    fontFamily: 'SourceSans3_600SemiBold',
+  },
+  fontSizeValue: {
+    fontSize: 18,
+    fontFamily: 'SourceSans3_600SemiBold',
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  themeRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  themeOption: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  themeCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  themeLabel: {
+    fontSize: 12,
+    fontFamily: 'SourceSans3_500Medium',
   },
 })
