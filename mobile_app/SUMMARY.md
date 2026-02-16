@@ -68,7 +68,7 @@ mobile_app/
 │   ├── article-card.tsx   # Article card with TagList, progress bar, delete, animations
 │   ├── tag-list.tsx       # Reusable TagList component for displaying and managing tags
 │   ├── dropdown-menu.tsx  # Reusable positioned dropdown menu component
-│   ├── header.tsx         # Custom header component with logo and back button
+│   ├── header.tsx         # Custom header component with logo, back button, and collapsible animation
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
@@ -200,6 +200,9 @@ Article detail screen with premium reading experience:
 - **Header actions**:
   - Favorite toggle button (star icon, gold when favorited)
   - Dropdown menu (ellipsis icon) via `DropdownMenu` component with: Open Original, Mark as Unread, Delete (destructive)
+- **Reading progress bar**: Animated thin progress bar below header using Reanimated `useSharedValue` + `withTiming` (300ms); fills smoothly as user scrolls
+- **Collapsible header**: Header slides up and collapses when scrolling down (past 80px), reappears on scroll up; safe area inset height is preserved so content doesn't appear behind the Dynamic Island; content fades out with opacity animation
+- **"Continue reading" button**: Floating pill button appears when user scrolls 15%+ above their current reading progress; uses `FadeIn`/`FadeOut` with hysteresis (shows at 15% gap, hides at 5% gap) to prevent flicker; scrolls smoothly back to progress position on press; hidden when progress is 100%; position animates in sync with collapsible header
 - **Reading progress tracking**:
   - Tracks scroll position and calculates progress (0-100%)
   - Updates local storage on scroll (debounced, 5% threshold)
@@ -503,6 +506,9 @@ module.exports = config;
 - ✅ **ArticleCard dropdown**: Ellipsis dropdown replaces direct delete button, includes Open Original, Mark as Unread, Delete
 - ✅ **Mark as Unread**: Resets reading progress to 0, available in article detail and article cards via `useArticleActions` hook
 - ✅ **Icon mappings**: Added ellipsis, book.closed icons to `icon-symbol.tsx`
+- ✅ **Reading progress bar**: Animated Reanimated bar below header (`useSharedValue` + `withTiming` 300ms), resets on mark-as-unread
+- ✅ **Collapsible header**: `hidden` prop on Header component; slides up + fades out via Reanimated (250ms); preserves safe area inset height; driven by scroll direction detection in article screen (10px threshold, only after 80px scroll)
+- ✅ **Continue reading button**: Floating pill below header; appears 15%+ above progress with hysteresis (hides at 5%); animated position tracks header collapse; hidden at 100% progress
 
 ## Technical Notes
 
