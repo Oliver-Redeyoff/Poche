@@ -36,7 +36,7 @@ export default function ArticleScreen() {
   const insets = useSafeAreaInsets()
   
   // Use hook instead of Dimensions.get() to ensure correct values on initial render
-  const { width: screenWidth } = useWindowDimensions()
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions()
   const contentWidth = Math.min(screenWidth - 40, 600) // Max width for comfortable reading
 
   // Reading progress tracking
@@ -163,7 +163,7 @@ export default function ArticleScreen() {
       scrollViewRef.current
     ) {
       // Calculate the scroll position based on progress percentage
-      const scrollPosition = (initialProgressRef.current / 100) * contentHeight
+      const scrollPosition = (initialProgressRef.current / 100) * (contentHeight - screenHeight)
       
       // Scroll instantly (not animated) so content appears at correct position
       scrollViewRef.current?.scrollTo({ y: scrollPosition, animated: false })
@@ -194,7 +194,7 @@ export default function ArticleScreen() {
     const progress = Math.min(100, Math.max(0, Math.round((contentOffset.y / scrollableHeight) * 100)))
     
     // Show/hide "return to progress" button when scrolled above current reading progress
-    const isAboveProgress = progress < readingProgressRef.current - 5 && readingProgressRef.current > 5
+    const isAboveProgress = progress < readingProgressRef.current - 5 && readingProgressRef.current > 5 && readingProgressRef.current < 100
     setShowReturnButton(isAboveProgress)
     
     // Only update if progress increased (don't decrease on scroll up)
@@ -310,9 +310,7 @@ export default function ArticleScreen() {
   }, [article, session?.user])
 
   const returnToProgress = useCallback(() => {
-    const scrollableHeight = contentHeightRef.current - layoutHeightRef.current
-    if (scrollableHeight <= 0) return
-    const scrollPosition = (readingProgressRef.current / 100) * scrollableHeight
+    const scrollPosition = (readingProgressRef.current / 100) * (contentHeightRef.current - screenHeight)
     scrollViewRef.current?.scrollTo({ y: scrollPosition, animated: true })
     setShowReturnButton(false)
   }, [])
