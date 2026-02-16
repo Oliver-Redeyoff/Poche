@@ -65,6 +65,21 @@ export default function ArticleScreen() {
   const layoutHeightRef = useRef(0)
   const [showReturnButton, setShowReturnButton] = useState(false)
 
+  // Collapsible header on scroll
+  const prevScrollY = useRef(0)
+  const [headerHidden, setHeaderHidden] = useState(false)
+  const returnBtnTop = useSharedValue(insets.top + 56 + 3 + 8)
+
+  useEffect(() => {
+    const fullTop = insets.top + 56 + 3 + 8
+    const collapsedTop = insets.top + 3 + 8
+    returnBtnTop.value = withTiming(headerHidden ? collapsedTop : fullTop, { duration: 250 })
+  }, [headerHidden, insets.top])
+
+  const returnButtonPositionStyle = useAnimatedStyle(() => ({
+    top: returnBtnTop.value,
+  }))
+
   // Premium reading colors - warm tones that are easy on the eyes
   const colors = useMemo(() => ({
     text: theme.colors.text,
@@ -186,6 +201,15 @@ export default function ArticleScreen() {
     // Track content dimensions for "return to progress" button
     contentHeightRef.current = contentSize.height
     layoutHeightRef.current = layoutMeasurement.height
+
+    // Detect scroll direction for collapsible header
+    const currentY = contentOffset.y
+    if (currentY > prevScrollY.current + 10 && currentY > 80) {
+      setHeaderHidden(true)
+    } else if (currentY < prevScrollY.current - 10) {
+      setHeaderHidden(false)
+    }
+    prevScrollY.current = currentY
     
     // Calculate scroll progress (0-100)
     const scrollableHeight = contentSize.height - layoutMeasurement.height
@@ -193,9 +217,14 @@ export default function ArticleScreen() {
     
     const progress = Math.min(100, Math.max(0, Math.round((contentOffset.y / scrollableHeight) * 100)))
     
-    // Show/hide "return to progress" button when scrolled above current reading progress
-    const isAboveProgress = progress < readingProgressRef.current - 5 && readingProgressRef.current > 5 && readingProgressRef.current < 100
-    setShowReturnButton(isAboveProgress)
+    // Show/hide "return to progress" button with hysteresis to prevent flicker
+    if (!showReturnButton) {
+      const shouldShow = progress < readingProgressRef.current - 15 && readingProgressRef.current > 15 && readingProgressRef.current < 100
+      if (shouldShow) setShowReturnButton(true)
+    } else {
+      const shouldHide = progress >= readingProgressRef.current - 5 || readingProgressRef.current >= 100
+      if (shouldHide) setShowReturnButton(false)
+    }
     
     // Only update if progress increased (don't decrease on scroll up)
     if (progress > readingProgress) {
@@ -233,7 +262,7 @@ export default function ArticleScreen() {
         }, 3000)
       }
     }
-  }, [readingProgress, session?.user, article])
+  }, [readingProgress, showReturnButton, session?.user, article])
 
   // Cleanup and sync on unmount only
   useEffect(() => {
@@ -610,6 +639,7 @@ export default function ArticleScreen() {
       <Header 
         showLogo
         showBack
+        hidden={headerHidden}
         rightElement={
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
@@ -653,7 +683,7 @@ export default function ArticleScreen() {
         <Animated.View 
           entering={FadeIn.duration(200)} 
           exiting={FadeOut.duration(200)}
-          style={[styles.returnButtonContainer, { top: insets.top + 56 + 3 + 8 }]}
+          style={[styles.returnButtonContainer, returnButtonPositionStyle]}
         >
           <Pressable 
             onPress={returnToProgress}
