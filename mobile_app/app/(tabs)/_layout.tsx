@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 import { Header } from '@/components/header'
 import { useState } from 'react'
 import { BottomDrawer } from '@/components/bottom-drawer'
+import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
 import { ThemedText } from '@/components/themed-text'
 import { Button } from '@/components/button'
 import { useAuth } from '../_layout'
@@ -25,6 +26,7 @@ export default function TabLayout() {
   const colors = Colors[resolvedScheme]
 
   const [showAccountSettings, setShowAccountSettings] = useState(false)
+  const [showReadingSettings, setShowReadingSettings] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   async function handleLogout() {
@@ -105,15 +107,26 @@ export default function TabLayout() {
       <Header 
         showLogo
         rightElement={
-          <Pressable 
-            onPress={() => setShowAccountSettings(true)}
-            style={({ pressed }) => [
-              { padding: 4 },
-              pressed && { opacity: 0.6 }
-            ]}
-          >
-            <IconSymbol name="person" size={26} color={textColor} />
-          </Pressable>
+          <View style={styles.headerRight}>
+            <Pressable 
+              onPress={() => setShowReadingSettings(true)}
+              style={({ pressed }) => [
+                { padding: 4 },
+                pressed && { opacity: 0.6 }
+              ]}
+            >
+              <IconSymbol name="paintpalette" size={26} color={textColor} />
+            </Pressable>
+            <Pressable 
+              onPress={() => setShowAccountSettings(true)}
+              style={({ pressed }) => [
+                { padding: 4 },
+                pressed && { opacity: 0.6 }
+              ]}
+            >
+              <IconSymbol name="person" size={26} color={textColor} />
+            </Pressable>
+          </View>
         }
       />
 
@@ -143,6 +156,11 @@ export default function TabLayout() {
             />
         </View>
       </BottomDrawer>
+
+      <ReadingSettingsDrawer
+        visible={showReadingSettings}
+        onDismiss={() => setShowReadingSettings(false)}
+      />
 
       <Tabs
         screenOptions={{
@@ -184,6 +202,11 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   section: {
     gap: 12,
   },
