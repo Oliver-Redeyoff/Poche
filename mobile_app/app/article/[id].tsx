@@ -23,6 +23,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 import { TagList } from '@/components/tag-list'
 import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
 import { Pressable, Linking } from 'react-native'
+import Slider from '@react-native-community/slider'
 import { BottomDrawer } from '@/components/bottom-drawer'
 
 export default function ArticleScreen() {
@@ -81,8 +82,15 @@ export default function ArticleScreen() {
   const [fontSize, setFontSize] = useState(18)
   const [showSettings, setShowSettings] = useState(false)
 
-  const MIN_FONT_SIZE = 14
-  const MAX_FONT_SIZE = 26
+  // Font size steps for the slider
+  const FONT_SIZE_STEPS = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26] as const
+  const FONT_SIZE_LAST_INDEX = FONT_SIZE_STEPS.length - 1
+  const fontSizeStepIndex = Math.min(
+    FONT_SIZE_LAST_INDEX,
+    Math.max(0, Math.round(
+      (fontSize - FONT_SIZE_STEPS[0]) / (FONT_SIZE_STEPS[FONT_SIZE_LAST_INDEX] - FONT_SIZE_STEPS[0]) * FONT_SIZE_LAST_INDEX
+    ))
+  )
 
   const dismissDrawer = useCallback(() => {
     setShowSettings(false)
@@ -678,6 +686,7 @@ export default function ArticleScreen() {
                 color={article.isFavorite ? '#FFD700' : theme.colors.text} 
               />
             </Pressable>
+
             <DropdownMenu
               trigger={
                 <View style={{ opacity: 1, padding: 4 }}>
@@ -785,29 +794,22 @@ export default function ArticleScreen() {
         {/* Font Size */}
         <View style={styles.drawerSection}>
           <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Text Size</ThemedText>
-          <View style={styles.fontSizeRow}>
-            <Pressable
-              onPress={() => setFontSize(s => Math.max(MIN_FONT_SIZE, s - 1))}
-              style={({ pressed }) => [
-                styles.fontSizeButton,
-                { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize <= MIN_FONT_SIZE ? 'transparent' : colors.background },
-              ]}
-              disabled={fontSize <= MIN_FONT_SIZE}
-            >
-              <ThemedText style={[styles.fontSizeButtonTextSmall, { color: fontSize <= MIN_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
-            </Pressable>
-            <ThemedText style={[styles.fontSizeValue, { color: colors.text }]}>{fontSize}</ThemedText>
-            <Pressable
-              onPress={() => setFontSize(s => Math.min(MAX_FONT_SIZE, s + 1))}
-              style={({ pressed }) => [
-                styles.fontSizeButton,
-                { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize >= MAX_FONT_SIZE ? 'transparent' : colors.background },
-              ]}
-              disabled={fontSize >= MAX_FONT_SIZE}
-            >
-              <ThemedText style={[styles.fontSizeButtonTextLarge, { color: fontSize >= MAX_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
-            </Pressable>
+          <View style={styles.fontSizeSliderRow}>
+            <ThemedText style={[styles.fontSizeSliderLabel, { color: colors.textMuted }]}>A</ThemedText>
+            <Slider
+              style={styles.fontSizeSlider}
+              minimumValue={0}
+              maximumValue={FONT_SIZE_LAST_INDEX}
+              step={1}
+              value={fontSizeStepIndex}
+              onValueChange={(value) => setFontSize(FONT_SIZE_STEPS[Math.round(value)])}
+              minimumTrackTintColor={colors.accent}
+              maximumTrackTintColor={colors.divider}
+              thumbTintColor={colors.accent}
+            />
+            <ThemedText style={[styles.fontSizeSliderLabel, { color: colors.text }]}>A</ThemedText>
           </View>
+          <ThemedText style={[styles.fontSizeValue, { color: colors.textSecondary }]}>{fontSize}</ThemedText>
         </View>
 
         {/* Theme */}
@@ -942,33 +944,27 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 12,
   },
-  fontSizeRow: {
+  fontSizeSliderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
+    gap: 12,
   },
-  fontSizeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fontSizeButtonTextSmall: {
+  fontSizeSliderLabel: {
     fontSize: 14,
     fontFamily: 'SourceSans3_600SemiBold',
+    width: 20,
+    textAlign: 'center',
   },
-  fontSizeButtonTextLarge: {
-    fontSize: 22,
-    fontFamily: 'SourceSans3_600SemiBold',
+  fontSizeSlider: {
+    flex: 1,
+    height: 40,
   },
   fontSizeValue: {
-    fontSize: 18,
-    fontFamily: 'SourceSans3_600SemiBold',
-    minWidth: 30,
+    fontSize: 14,
+    fontFamily: 'SourceSans3_500Medium',
+    marginTop: 6,
     textAlign: 'center',
+    opacity: 0.8,
   },
   themeRow: {
     flexDirection: 'row',
