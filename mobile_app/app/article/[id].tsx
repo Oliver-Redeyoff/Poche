@@ -22,7 +22,8 @@ import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { TagList } from '@/components/tag-list'
 import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
-import { Pressable, Linking, Modal, PanResponder } from 'react-native'
+import { Pressable, Linking } from 'react-native'
+import { BottomDrawer } from '@/components/bottom-drawer'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -67,17 +68,13 @@ export default function ArticleScreen() {
   // Collapsible header on scroll
   const prevScrollY = useRef(0)
   const [headerHidden, setHeaderHidden] = useState(false)
-  const returnBtnTop = useSharedValue(insets.top + 56 + 3 + 8)
+  const returnBtnTop = useSharedValue(insets.bottom)
 
   useEffect(() => {
     const fullTop = insets.top + 56 + 3 + 8
     const collapsedTop = insets.top + 3 + 8
     returnBtnTop.value = withTiming(headerHidden ? collapsedTop : fullTop, { duration: 250 })
   }, [headerHidden, insets.top])
-
-  const returnButtonPositionStyle = useAnimatedStyle(() => ({
-    top: returnBtnTop.value,
-  }))
 
   // Reading settings
   const { appTheme: readingTheme, setAppTheme: setReadingTheme } = useAuth()
@@ -87,47 +84,9 @@ export default function ArticleScreen() {
   const MIN_FONT_SIZE = 14
   const MAX_FONT_SIZE = 26
 
-  // Drawer slide + swipe-to-dismiss
-  const DRAWER_OFFSCREEN = 400
-  const drawerTranslateY = useSharedValue(DRAWER_OFFSCREEN)
-  const drawerAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: drawerTranslateY.value }],
-  }))
-
-  // Slide drawer in when opened
-  useEffect(() => {
-    if (showSettings) {
-      drawerTranslateY.value = DRAWER_OFFSCREEN
-      drawerTranslateY.value = withTiming(0, { duration: 250 })
-    }
-  }, [showSettings])
-
   const dismissDrawer = useCallback(() => {
-    drawerTranslateY.value = withTiming(DRAWER_OFFSCREEN, { duration: 200 })
-    setTimeout(() => {
-      setShowSettings(false)
-    }, 200)
+    setShowSettings(false)
   }, [])
-
-  const drawerPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
-      onPanResponderMove: (_, gestureState) => {
-        drawerTranslateY.value = Math.max(0, gestureState.dy)
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 60 || gestureState.vy > 0.5) {
-          drawerTranslateY.value = withTiming(DRAWER_OFFSCREEN, { duration: 200 })
-          setTimeout(() => {
-            setShowSettings(false)
-          }, 200)
-        } else {
-          drawerTranslateY.value = withTiming(0, { duration: 200 })
-        }
-      },
-    })
-  ).current
 
   // Reading colors derived from the active navigation theme + article-specific extras
   const effectiveDark = theme.dark
@@ -699,6 +658,17 @@ export default function ArticleScreen() {
         rightElement={
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable
+              onPress={() => {setShowSettings(true)}}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+            >
+              <IconSymbol 
+                name="paintpalette"
+                size={28} 
+                color={theme.colors.text} 
+              />
+            </Pressable>
+
+            <Pressable
               onPress={toggleFavorite}
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
             >
@@ -739,7 +709,7 @@ export default function ArticleScreen() {
         <Animated.View 
           entering={FadeIn.duration(200)} 
           exiting={FadeOut.duration(200)}
-          style={[styles.returnButtonContainer, returnButtonPositionStyle]}
+          style={[styles.returnButtonContainer, {bottom: insets.bottom + 20}]}
         >
           <Pressable 
             onPress={returnToProgress}
@@ -810,94 +780,62 @@ export default function ArticleScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating settings button */}
-      {!showSettings && (
-        <Pressable
-          onPress={() => setShowSettings(true)}
-          style={({ pressed }) => [
-            styles.settingsButton,
-            { 
-              backgroundColor: colors.card, 
-              opacity: pressed ? 0.8 : 1,
-              bottom: insets.bottom + 20,
-            },
-          ]}
-        >
-          <ThemedText style={[styles.settingsButtonText, { color: colors.text }]}>Aa</ThemedText>
-        </Pressable>
-      )}
-
       {/* Reading settings drawer */}
-      <Modal
-        visible={showSettings}
-        transparent
-        animationType="fade"
-        onRequestClose={dismissDrawer}
-      >
-        <View style={styles.drawerOverlay}>
-          <Pressable style={styles.drawerBackdrop} onPress={dismissDrawer} />
-          <Animated.View 
-            style={[styles.drawerContent, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }, drawerAnimStyle]}
-            {...drawerPanResponder.panHandlers}
-          >
-            <View style={styles.drawerHandle} />
-
-            {/* Font Size */}
-            <View style={styles.drawerSection}>
-              <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Text Size</ThemedText>
-              <View style={styles.fontSizeRow}>
-                <Pressable
-                  onPress={() => setFontSize(s => Math.max(MIN_FONT_SIZE, s - 1))}
-                  style={({ pressed }) => [
-                    styles.fontSizeButton,
-                    { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize <= MIN_FONT_SIZE ? 'transparent' : colors.background },
-                  ]}
-                  disabled={fontSize <= MIN_FONT_SIZE}
-                >
-                  <ThemedText style={[styles.fontSizeButtonTextSmall, { color: fontSize <= MIN_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
-                </Pressable>
-                <ThemedText style={[styles.fontSizeValue, { color: colors.text }]}>{fontSize}</ThemedText>
-                <Pressable
-                  onPress={() => setFontSize(s => Math.min(MAX_FONT_SIZE, s + 1))}
-                  style={({ pressed }) => [
-                    styles.fontSizeButton,
-                    { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize >= MAX_FONT_SIZE ? 'transparent' : colors.background },
-                  ]}
-                  disabled={fontSize >= MAX_FONT_SIZE}
-                >
-                  <ThemedText style={[styles.fontSizeButtonTextLarge, { color: fontSize >= MAX_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Theme */}
-            <View style={styles.drawerSection}>
-              <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Theme</ThemedText>
-              <View style={styles.themeRow}>
-                {([
-                  { key: 'auto' as const, label: 'Auto', bg: isDark ? '#1C1A18' : '#FAFAF8', border: true },
-                  { key: 'light' as const, label: 'Light', bg: '#FAFAF8', border: true },
-                  { key: 'sepia' as const, label: 'Sepia', bg: '#F5ECD7', border: false },
-                  { key: 'dark' as const, label: 'Dark', bg: '#1C1A18', border: false },
-                ]).map(t => (
-                  <Pressable key={t.key} onPress={() => setReadingTheme(t.key)} style={styles.themeOption}>
-                    <View style={[
-                      styles.themeCircle,
-                      { backgroundColor: t.bg },
-                      t.border && { borderWidth: 1, borderColor: colors.divider },
-                      readingTheme === t.key && { borderWidth: 2.5, borderColor: colors.accent },
-                    ]} />
-                    <ThemedText style={[
-                      styles.themeLabel,
-                      { color: readingTheme === t.key ? colors.text : colors.textMuted },
-                    ]}>{t.label}</ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          </Animated.View>
+      <BottomDrawer visible={showSettings} onDismiss={dismissDrawer}>
+        {/* Font Size */}
+        <View style={styles.drawerSection}>
+          <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Text Size</ThemedText>
+          <View style={styles.fontSizeRow}>
+            <Pressable
+              onPress={() => setFontSize(s => Math.max(MIN_FONT_SIZE, s - 1))}
+              style={({ pressed }) => [
+                styles.fontSizeButton,
+                { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize <= MIN_FONT_SIZE ? 'transparent' : colors.background },
+              ]}
+              disabled={fontSize <= MIN_FONT_SIZE}
+            >
+              <ThemedText style={[styles.fontSizeButtonTextSmall, { color: fontSize <= MIN_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
+            </Pressable>
+            <ThemedText style={[styles.fontSizeValue, { color: colors.text }]}>{fontSize}</ThemedText>
+            <Pressable
+              onPress={() => setFontSize(s => Math.min(MAX_FONT_SIZE, s + 1))}
+              style={({ pressed }) => [
+                styles.fontSizeButton,
+                { borderColor: colors.divider, opacity: pressed ? 0.6 : 1, backgroundColor: fontSize >= MAX_FONT_SIZE ? 'transparent' : colors.background },
+              ]}
+              disabled={fontSize >= MAX_FONT_SIZE}
+            >
+              <ThemedText style={[styles.fontSizeButtonTextLarge, { color: fontSize >= MAX_FONT_SIZE ? colors.textMuted : colors.text }]}>A</ThemedText>
+            </Pressable>
+          </View>
         </View>
-      </Modal>
+
+        {/* Theme */}
+        <View style={styles.drawerSection}>
+          <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Theme</ThemedText>
+          <View style={styles.themeRow}>
+            {([
+              { key: 'auto' as const, label: 'Auto', bg: isDark ? '#1C1A18' : '#FAFAF8', border: true },
+              { key: 'light' as const, label: 'Light', bg: '#FAFAF8', border: true },
+              { key: 'sepia' as const, label: 'Sepia', bg: '#F5ECD7', border: false },
+              { key: 'dark' as const, label: 'Dark', bg: '#1C1A18', border: false },
+            ]).map(t => (
+              <Pressable key={t.key} onPress={() => setReadingTheme(t.key)} style={styles.themeOption}>
+                <View style={[
+                  styles.themeCircle,
+                  { backgroundColor: t.bg },
+                  t.border && { borderWidth: 1, borderColor: colors.divider },
+                  readingTheme === t.key && { borderWidth: 2.5, borderColor: colors.accent },
+                ]} />
+                <ThemedText style={[
+                  styles.themeLabel,
+                  { color: readingTheme === t.key ? colors.text : colors.textMuted },
+                ]}>{t.label}</ThemedText>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </BottomDrawer>
 
     </View>
   )
@@ -920,6 +858,7 @@ const styles = StyleSheet.create({
   },
   returnButtonContainer: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
     zIndex: 10,
@@ -992,46 +931,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     opacity: 0.6,
-  },
-  settingsButton: {
-    position: 'absolute',
-    right: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  settingsButtonText: {
-    fontSize: 16,
-    fontFamily: 'Bitter_600SemiBold',
-  },
-  drawerOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  drawerBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  drawerContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-  },
-  drawerHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(128,128,128,0.3)',
-    alignSelf: 'center',
-    marginBottom: 20,
   },
   drawerSection: {
     marginBottom: 24,

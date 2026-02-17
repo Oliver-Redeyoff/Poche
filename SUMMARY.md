@@ -149,7 +149,9 @@ Poche/
 - **Continue reading button**: Floating button to jump back to reading position when scrolled above progress
 - **Unified theme system**: Light, dark, and sepia themes apply consistently across all screens via `useResolvedColorScheme()` hook and `Colors` palette
 - **Global theme selection**: Users can choose Auto, Light, Sepia, or Dark theme from the article reading settings drawer; persisted to AsyncStorage
-- **Reading settings drawer**: Bottom sheet with font size controls and theme selector; swipe-down to dismiss
+- **Bottom drawer component**: Reusable `BottomDrawer` component with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
+- **Reading settings drawer**: Bottom drawer with font size controls and theme selector; triggered by floating "Aa" button in article view
+- **Account settings drawer**: Bottom drawer triggered by person icon in header; shows signed-in email, sign out, and delete account
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
 - **Link styling**: Links appear in accent color with underline
@@ -341,7 +343,7 @@ The shared package provides common functionality across all projects:
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management and navigation guards
 - ✅ **Forgot password flow**: Request password reset from auth screen
-- ✅ **Account deletion**: Delete account from settings with password confirmation (iOS)
+- ✅ **Account deletion**: Delete account from account settings drawer with password confirmation (iOS)
 - ✅ Custom markdown renderer using shared parsing from `@poche/shared`
 - ✅ Custom image rendering with expo-image
 - ✅ Image filtering (invalid URLs, low-resolution < 50x50)
@@ -361,7 +363,9 @@ The shared package provides common functionality across all projects:
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ **Unified theme system**: `Colors` palette with light, dark, and sepia schemes; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme; all components use resolved scheme instead of system color scheme
 - ✅ **Global theme selection**: Auto/Light/Sepia/Dark via `appTheme` in AuthContext, persisted to AsyncStorage
-- ✅ **Reading settings drawer**: Bottom drawer with font size and theme controls, swipe-to-dismiss with PanResponder + Reanimated
+- ✅ **BottomDrawer component**: Reusable bottom sheet with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation
+- ✅ **Reading settings drawer**: Uses `BottomDrawer`; font size and theme controls in article view
+- ✅ **Account settings drawer**: Uses `BottomDrawer`; sign out and delete account, triggered by person icon in tab header (replaces separate settings screen)
 - ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
 - ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts`

@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Theme } from '@react-navigation/native'
-import { Stack, router } from 'expo-router'
+import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react'
@@ -26,7 +26,6 @@ import { useColorScheme } from '@/hooks/use-color-scheme'
 // Import background sync to ensure task is defined
 import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
-import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors, ResolvedColorScheme } from '@/constants/theme'
 
@@ -245,7 +244,6 @@ export default function RootLayout() {
 
 function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: AuthResponse | null, isLoading: boolean, hasCompletedOnboarding: boolean }) {
   const backgroundColor = useThemeColor({}, 'background')
-  const textColor = useThemeColor({}, 'text')
   
   // Show nothing while loading to prevent flash
   if (isLoading) {
@@ -294,22 +292,7 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         <Stack.Screen
           name="(tabs)" 
           options={{
-            header: () => (
-              <Header 
-                showLogo 
-                rightElement={
-                  <Pressable 
-                    onPress={() => router.push('/settings')}
-                    style={({ pressed }) => [
-                      { padding: 4 },
-                      pressed && { opacity: 0.6 }
-                    ]}
-                  >
-                    <IconSymbol name="gear" size={26} color={textColor} />
-                  </Pressable>
-                }
-              />
-            ),
+            headerShown: false,
           }}
         />
         <Stack.Screen 
@@ -319,16 +302,9 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
           }}
         />
         <Stack.Screen 
-          name="settings" 
-          options={{ 
-            header: () => <Header showBack />,
-          }} 
-        />
-        <Stack.Screen 
           name="article/[id]" 
           options={{ 
             headerShown: false,
-          //   header: () => <Header showBack />,
           }} 
         />
         <Stack.Screen 
