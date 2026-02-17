@@ -147,7 +147,9 @@ Poche/
 - **Reading progress bar**: Animated bar below header showing current reading progress
 - **Collapsible header**: Article detail header slides up when scrolling down, reappears on scroll up (preserves safe area)
 - **Continue reading button**: Floating button to jump back to reading position when scrolled above progress
-- Dark mode support with custom Poche color theme (warm tones, coral accent #EF4056)
+- **Unified theme system**: Light, dark, and sepia themes apply consistently across all screens via `useResolvedColorScheme()` hook and `Colors` palette
+- **Global theme selection**: Users can choose Auto, Light, Sepia, or Dark theme from the article reading settings drawer; persisted to AsyncStorage
+- **Reading settings drawer**: Bottom sheet with font size controls and theme selector; swipe-down to dismiss
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
 - **Link styling**: Links appear in accent color with underline
@@ -357,6 +359,9 @@ The shared package provides common functionality across all projects:
 - ✅ Mark as Unread functionality (resets reading progress to 0) with optimistic updates
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
+- ✅ **Unified theme system**: `Colors` palette with light, dark, and sepia schemes; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme; all components use resolved scheme instead of system color scheme
+- ✅ **Global theme selection**: Auto/Light/Sepia/Dark via `appTheme` in AuthContext, persisted to AsyncStorage
+- ✅ **Reading settings drawer**: Bottom drawer with font size and theme controls, swipe-to-dismiss with PanResponder + Reanimated
 - ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
 - ✅ Bitter + Source Sans 3 fonts via `@expo-google-fonts`

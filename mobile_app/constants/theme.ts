@@ -9,8 +9,19 @@ import { colors } from '@poche/shared';
 // Re-export shared colors for convenience
 export const sharedColors = colors;
 
+// The three resolved color schemes the app supports
+export type ResolvedColorScheme = 'light' | 'dark' | 'sepia'
+
 // App-specific color mappings using the shared palette
-export const Colors = {
+export const Colors: Record<ResolvedColorScheme, {
+  text: string; textSecondary: string; textMuted: string;
+  background: string; card: string; surface: string;
+  tint: string; accent: string; accentLight: string; accentDark: string;
+  icon: string; tabIconDefault: string; tabIconSelected: string;
+  divider: string; border: string;
+  success: string; successLight: string; warning: string; warningLight: string;
+  error: string; errorLight: string; info: string; infoLight: string;
+}> = {
   light: {
     // Text colors
     text: colors.light.text.primary,
@@ -78,6 +89,40 @@ export const Colors = {
     errorLight: colors.dark.semantic.errorLight,
     info: colors.dark.semantic.info,
     infoLight: colors.dark.semantic.infoLight,
+  },
+  sepia: {
+    // Text colors
+    text: '#3D3229',
+    textSecondary: '#6B5D4F',
+    textMuted: '#9A8B7A',
+    
+    // Background colors
+    background: '#F5ECD7',
+    card: '#EDE3CA',
+    surface: '#F0E5CE',
+    
+    // Brand/accent colors
+    tint: '#D44A5C',
+    accent: '#D44A5C',
+    accentLight: '#F2D0D5',
+    accentDark: '#B03344',
+    
+    // UI colors
+    icon: '#6B5D4F',
+    tabIconDefault: '#9A8B7A',
+    tabIconSelected: '#D44A5C',
+    divider: '#D4C9B0',
+    border: '#D4C9B0',
+    
+    // Semantic colors (same as light for readability on warm backgrounds)
+    success: colors.light.semantic.success,
+    successLight: '#E8F0E0',
+    warning: colors.light.semantic.warning,
+    warningLight: '#F5ECDA',
+    error: colors.light.semantic.error,
+    errorLight: '#F5DDD8',
+    info: colors.light.semantic.info,
+    infoLight: '#DDE8F0',
   },
 };
 

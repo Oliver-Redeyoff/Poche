@@ -21,7 +21,7 @@ import { Button } from '../components/button'
 import { Header } from '../components/header'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors } from '@/constants/theme'
-import { useColorScheme } from '@/hooks/use-color-scheme'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useAuth } from './_layout'
 
@@ -114,8 +114,8 @@ function PaginationDot({
 }
 
 export default function Onboarding() {
-  const colorScheme = useColorScheme() ?? 'light'
-  const colors = Colors[colorScheme]
+  const resolvedScheme = useResolvedColorScheme()
+  const colors = Colors[resolvedScheme]
   const textSecondary = useThemeColor({}, 'textSecondary')
   const { completeOnboarding } = useAuth()
   

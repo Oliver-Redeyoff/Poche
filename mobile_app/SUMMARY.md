@@ -14,7 +14,9 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Home Page**: "Continue Reading" section (in-progress articles), "New Articles" section (unread articles), and "Recently Read" section (3 most recently finished articles at 100% progress)
 - **Library Page**: Tile grid for All Articles, Favorites, and tag-based filtering with article counts
 - **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
-- **Dark Mode**: Automatic theme switching based on system preferences with custom Poche color theme
+- **Unified Theme System**: Light, dark, and sepia themes apply consistently across all screens; `Colors` palette has 3 schemes; `useResolvedColorScheme()` hook replaces direct `useColorScheme()` for color decisions
+- **Global Theme Selection**: Users choose Auto, Light, Sepia, or Dark from the reading settings drawer; persisted to AsyncStorage
+- **Reading Settings Drawer**: Bottom sheet with font size controls (+/-) and theme selector (colored circles); swipe-down to dismiss via PanResponder + Reanimated
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
@@ -80,10 +82,11 @@ mobile_app/
 │   └── image-cache.ts    # Image extraction, downloading, and caching utilities
 ├── hooks/                # Custom React hooks
 │   ├── use-article-actions.ts  # Article management hook (delete, tags, favorites)
-│   ├── use-color-scheme.ts
-│   └── use-theme-color.ts
+│   ├── use-color-scheme.ts     # Re-exports useColorScheme + useResolvedColorScheme() hook
+│   ├── use-color-scheme.web.ts # Web variant with hydration support
+│   └── use-theme-color.ts     # Returns colors from resolved theme (light/dark/sepia)
 ├── constants/
-│   └── theme.ts          # Theme colors and fonts
+│   └── theme.ts          # Colors (light/dark/sepia palettes), ResolvedColorScheme type, Fonts
 ├── patches/              # React Native patches (applied via patch-package)
 │   └── react-native+0.81.5.patch  # iOS text rendering fix
 ├── metro.config.js       # Metro bundler config for @poche/shared
@@ -216,6 +219,12 @@ Article detail screen with premium reading experience:
   - Filters out low-resolution images (< 50x50 pixels)
   - Handles image load errors gracefully
   - 100% width images with preserved aspect ratio
+- **Reading settings drawer**: Bottom sheet modal with:
+  - Font size controls (+/- buttons, range 14-26, default 18); dynamically scales all markdown typography
+  - Theme selector (Auto, Light, Sepia, Dark) with colored circles; modifies global `appTheme` via AuthContext
+  - Triggered by floating "Aa" button in bottom-right corner
+  - Swipe-down to dismiss via `PanResponder` + Reanimated `useSharedValue`; animates from release point
+  - `Modal` with `animationType="fade"` for backdrop; drawer slide controlled entirely by Reanimated
 - **Link styling**: Links appear in accent color with underline
 - **Tag management**: Uses shared `TagList` component; `handleUpdateTags` uses `updateArticleTagsWithSync` and updates local article state
 - Loads articles from local storage only (offline-first)
@@ -329,12 +338,16 @@ API URL is configured via environment variable:
 ## UI/UX Features
 
 ### Theming
-- Automatic dark/light mode detection
-- Custom Poche themes (`PocheLightTheme`, `PocheDarkTheme`) defined in `_layout.tsx`
-- Warm color palette: light background #FAFAF8, dark background #1C1A18
-- Poche coral accent: #EF4056 (light mode), #F06B7E (dark mode)
-- Theme colors: text, textSecondary, textMuted, background, card, border, divider, accent, codeBg, blockquoteBg, blockquoteBorder
-- Themed components (ThemedText, ThemedView)
+- **Unified theme system**: Three full color palettes (light, dark, sepia) in `constants/theme.ts`
+- **`ResolvedColorScheme` type**: `'light' | 'dark' | 'sepia'` — the resolved scheme after applying user preference
+- **Navigation themes**: `PocheLightTheme`, `PocheDarkTheme`, `PocheSepiaTheme` defined in `_layout.tsx`, each with a `resolvedScheme` property
+- **`useResolvedColorScheme()` hook**: Reads `resolvedScheme` from the navigation theme (set by `ThemeProvider`); all components use this instead of system `useColorScheme()` for color decisions
+- **`useThemeColor()` hook**: Updated to use resolved scheme — returns correct colors for light, dark, and sepia
+- **`appTheme` state**: `'auto' | 'light' | 'sepia' | 'dark'` stored in `AuthContext`, persisted to AsyncStorage; 'auto' follows system preference
+- Warm color palette: light background #FAFAF8, dark background #1C1A18, sepia background #F5ECD7
+- Poche coral accent: #EF4056 (light mode), #F06B7E (dark mode), #D44A5C (sepia mode)
+- Theme colors: text, textSecondary, textMuted, background, card, surface, border, divider, accent, accentLight, accentDark, icon, tabIconDefault, tabIconSelected, plus semantic colors
+- Themed components (ThemedText, ThemedView) — both use `useThemeColor()` which resolves via navigation theme
 
 ### Navigation
 - Stack navigation for all screens
@@ -509,6 +522,10 @@ module.exports = config;
 - ✅ **Reading progress bar**: Animated Reanimated bar below header (`useSharedValue` + `withTiming` 300ms), resets on mark-as-unread
 - ✅ **Collapsible header**: `hidden` prop on Header component; slides up + fades out via Reanimated (250ms); preserves safe area inset height; driven by scroll direction detection in article screen (10px threshold, only after 80px scroll)
 - ✅ **Continue reading button**: Floating pill below header; appears 15%+ above progress with hysteresis (hides at 5%); animated position tracks header collapse; hidden at 100% progress
+- ✅ **Unified theme system**: `Colors` palette expanded with `sepia` scheme; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme's `resolvedScheme` property; all components migrated from `useColorScheme()` + `Colors[colorScheme]` to `useResolvedColorScheme()` + `Colors[resolvedScheme]`
+- ✅ **Global theme selection**: `appTheme` (`'auto' | 'light' | 'sepia' | 'dark'`) in AuthContext, persisted to AsyncStorage; navigation `ThemeProvider` uses resolved theme (`PocheLightTheme`, `PocheDarkTheme`, `PocheSepiaTheme`)
+- ✅ **Reading settings drawer**: Bottom sheet with font size (+/-) and theme selector; PanResponder swipe-to-dismiss with Reanimated animations; floating "Aa" trigger button
+- ✅ **Sepia theme**: Full color palette (text #3D3229, background #F5ECD7, card #EDE3CA, accent #D44A5C) with navigation theme and `Colors.sepia` palette
 
 ## Technical Notes
 

@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { ThemedText } from './themed-text'
 import { Colors } from '@/constants/theme'
-import { useColorScheme } from '@/hooks/use-color-scheme'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
 
@@ -41,8 +41,8 @@ export function Button({
   style,
   textStyle,
 }: ButtonProps) {
-  const colorScheme = useColorScheme() ?? 'light'
-  const colors = Colors[colorScheme]
+  const resolvedScheme = useResolvedColorScheme()
+  const colors = Colors[resolvedScheme]
   
   const isDisabled = disabled || loading
   
