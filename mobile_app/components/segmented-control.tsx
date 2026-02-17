@@ -8,7 +8,7 @@ import {
 } from 'react-native'
 import { ThemedText } from './themed-text'
 import { Colors } from '@/constants/theme'
-import { useColorScheme } from '@/hooks/use-color-scheme'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { useThemeColor } from '@/hooks/use-theme-color'
 
 interface SegmentOption<T extends string> {
@@ -29,8 +29,8 @@ export function SegmentedControl<T extends string>({
   onValueChange,
   style,
 }: SegmentedControlProps<T>) {
-  const colorScheme = useColorScheme() ?? 'light'
-  const colors = Colors[colorScheme]
+  const resolvedScheme = useResolvedColorScheme()
+  const colors = Colors[resolvedScheme]
   const backgroundColor = useThemeColor({}, 'background')
   const textColor = useThemeColor({}, 'text')
 

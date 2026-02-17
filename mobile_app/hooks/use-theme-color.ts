@@ -1,21 +1,24 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * Returns a color from the app's resolved theme (auto/light/sepia/dark).
+ * Uses the navigation theme's resolvedScheme, so it respects the user's preference.
  */
 
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark
 ) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
+  const scheme = useResolvedColorScheme();
+
+  // Props override: light/dark overrides (sepia falls through to light)
+  const propsKey = scheme === 'dark' ? 'dark' : 'light';
+  const colorFromProps = props[propsKey];
 
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
   }
+
+  return Colors[scheme][colorName];
 }

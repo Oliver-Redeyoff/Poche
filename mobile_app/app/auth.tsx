@@ -7,7 +7,7 @@ import { SegmentedControl } from '../components/segmented-control'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { Colors } from '@/constants/theme'
-import { useColorScheme } from '@/hooks/use-color-scheme'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { useAuth } from './_layout'
 
 type AuthMode = 'signin' | 'signup' | 'forgot'
@@ -19,8 +19,8 @@ const AUTH_MODE_OPTIONS: { value: 'signin' | 'signup'; label: string }[] = [
 
 export default function Auth() {
   const headerHeight = useHeaderHeight()
-  const colorScheme = useColorScheme() ?? 'light'
-  const colors = Colors[colorScheme]
+  const resolvedScheme = useResolvedColorScheme()
+  const colors = Colors[resolvedScheme]
   const { setSession } = useAuth()
   
   const [mode, setMode] = useState<AuthMode>('signin')

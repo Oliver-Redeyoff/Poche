@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, useColorScheme, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
+import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
@@ -30,9 +30,8 @@ export default function ArticleScreen() {
   const { session } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
-  const colorScheme = useColorScheme()
   const theme = useTheme()
-  const isDark = colorScheme === 'dark'
+  const isDark = theme.dark
   const insets = useSafeAreaInsets()
   
   // Use hook instead of Dimensions.get() to ensure correct values on initial render
@@ -81,8 +80,8 @@ export default function ArticleScreen() {
   }))
 
   // Reading settings
+  const { appTheme: readingTheme, setAppTheme: setReadingTheme } = useAuth()
   const [fontSize, setFontSize] = useState(18)
-  const [readingTheme, setReadingTheme] = useState<'auto' | 'light' | 'sepia' | 'dark'>('auto')
   const [showSettings, setShowSettings] = useState(false)
 
   const MIN_FONT_SIZE = 14
@@ -130,40 +129,25 @@ export default function ArticleScreen() {
     })
   ).current
 
-  // Reading colors based on reading theme selection
-  const effectiveDark = readingTheme === 'dark' || (readingTheme === 'auto' && isDark)
+  // Reading colors derived from the active navigation theme + article-specific extras
+  const effectiveDark = theme.dark
 
   const colors = useMemo(() => {
-    if (readingTheme === 'sepia') {
-      return {
-        text: '#3D3229',
-        textSecondary: '#6B5D4F',
-        textMuted: '#8A7B6B',
-        background: '#F5ECD7',
-        accent: '#D44A5C',
-        accentHover: '#C03D4E',
-        divider: '#D4C9B0',
-        blockquoteBg: '#EDE3CA',
-        blockquoteBorder: '#C4B896',
-        codeBg: '#EDE3CA',
-        card: '#EDE3CA',
-      }
-    }
-    const dark = readingTheme === 'dark' || (readingTheme === 'auto' && isDark)
+    const isSepia = readingTheme === 'sepia'
     return {
-      text: dark ? '#E8E4E0' : '#1C1A18',
-      textSecondary: dark ? '#A8A4A0' : '#666666',
-      textMuted: dark ? '#787470' : '#999999',
-      background: dark ? '#1C1A18' : '#FAFAF8',
-      accent: dark ? '#F06B7E' : '#EF4056',
-      accentHover: dark ? '#E85A6E' : '#D93548',
-      divider: dark ? '#3A3835' : '#E8E4E0',
-      blockquoteBg: dark ? '#252320' : '#F5F3F0',
-      blockquoteBorder: dark ? '#4A4845' : '#D4D0CC',
-      codeBg: dark ? '#252320' : '#F0EDE8',
-      card: dark ? '#2C2A28' : '#FFFFFF',
+      text: theme.colors.text,
+      textSecondary: effectiveDark ? '#A8A4A0' : isSepia ? '#6B5D4F' : '#666666',
+      textMuted: effectiveDark ? '#787470' : isSepia ? '#8A7B6B' : '#999999',
+      background: theme.colors.background,
+      accent: theme.colors.primary,
+      accentHover: effectiveDark ? '#E85A6E' : isSepia ? '#C03D4E' : '#D93548',
+      divider: theme.colors.border,
+      blockquoteBg: effectiveDark ? '#252320' : isSepia ? '#EDE3CA' : '#F5F3F0',
+      blockquoteBorder: effectiveDark ? '#4A4845' : isSepia ? '#C4B896' : '#D4D0CC',
+      codeBg: effectiveDark ? '#252320' : isSepia ? '#EDE3CA' : '#F0EDE8',
+      card: theme.colors.card,
     }
-  }, [readingTheme, isDark])
+  }, [readingTheme, effectiveDark, theme])
   
 
   useEffect(() => {

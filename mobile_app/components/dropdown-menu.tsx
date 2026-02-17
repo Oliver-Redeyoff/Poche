@@ -1,7 +1,9 @@
 import { useRef, useState, useCallback, ReactNode } from 'react'
-import { StyleSheet, View, Pressable, Modal, useWindowDimensions, useColorScheme } from 'react-native'
+import { StyleSheet, View, Pressable, Modal, useWindowDimensions } from 'react-native'
 import { ThemedText } from './themed-text'
 import { IconSymbol } from './ui/icon-symbol'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
+import { Colors } from '@/constants/theme'
 
 type IconSymbolName = React.ComponentProps<typeof IconSymbol>['name']
 
@@ -32,7 +34,8 @@ interface TriggerLayout {
 
 export function DropdownMenu({ trigger, items }: DropdownMenuProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions()
-  const isDark = useColorScheme() === 'dark'
+  const resolvedScheme = useResolvedColorScheme()
+  const isDark = resolvedScheme === 'dark'
   const [visible, setVisible] = useState(false)
   const [menuStyle, setMenuStyle] = useState<{ top?: number; bottom?: number; left?: number; right?: number }>({})
   const [menuReady, setMenuReady] = useState(false)
@@ -89,9 +92,10 @@ export function DropdownMenu({ trigger, items }: DropdownMenuProps) {
     setTimeout(action, 100)
   }, [])
 
-  const textColor = isDark ? '#FFFFFF' : '#000000'
-  const bgColor = isDark ? '#2C2C2E' : '#FFFFFF'
-  const separatorColor = isDark ? '#3A3A3C' : '#E5E5EA'
+  const themeColors = Colors[resolvedScheme]
+  const textColor = themeColors.text
+  const bgColor = themeColors.card
+  const separatorColor = themeColors.divider
 
   const renderItems = () => {
     const elements: ReactNode[] = []

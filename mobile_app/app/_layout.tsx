@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider, Theme } from '@react-navigation
 import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
-import React, { useState, useEffect, createContext, useContext } from 'react'
+import React, { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import { View, Image, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Header } from '@/components/header'
@@ -28,16 +28,23 @@ import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
-import { Colors } from '@/constants/theme'
+import { Colors, ResolvedColorScheme } from '@/constants/theme'
 
 const ONBOARDING_COMPLETE_KEY = '@poche_onboarding_complete'
+const APP_THEME_KEY = '@poche_app_theme'
+
+export type AppTheme = 'auto' | 'light' | 'sepia' | 'dark'
 
 // Prevent splash screen from hiding until fonts are loaded
 SplashScreen.preventAutoHideAsync()
 
+// Extended theme type with resolved color scheme identifier
+type PocheTheme = Theme & { resolvedScheme: ResolvedColorScheme }
+
 // Custom Poche theme colors using unified theme constants
-const PocheLightTheme: Theme = {
+const PocheLightTheme: PocheTheme = {
   dark: false,
+  resolvedScheme: 'light',
   colors: {
     primary: Colors.light.accent,
     background: Colors.light.background,
@@ -49,8 +56,9 @@ const PocheLightTheme: Theme = {
   fonts: DefaultTheme.fonts,
 }
 
-const PocheDarkTheme: Theme = {
+const PocheDarkTheme: PocheTheme = {
   dark: true,
+  resolvedScheme: 'dark',
   colors: {
     primary: Colors.dark.accent,
     background: Colors.dark.background,
@@ -62,6 +70,20 @@ const PocheDarkTheme: Theme = {
   fonts: DarkTheme.fonts,
 }
 
+const PocheSepiaTheme: PocheTheme = {
+  dark: false,
+  resolvedScheme: 'sepia',
+  colors: {
+    primary: Colors.sepia.accent,
+    background: Colors.sepia.background,
+    card: Colors.sepia.card,
+    text: Colors.sepia.text,
+    border: Colors.sepia.border,
+    notification: Colors.sepia.accent,
+  },
+  fonts: DefaultTheme.fonts,
+}
+
 // Auth context to share session state across the app
 interface AuthContextType {
   session: AuthResponse | null
@@ -69,6 +91,8 @@ interface AuthContextType {
   isLoading: boolean
   hasCompletedOnboarding: boolean
   completeOnboarding: () => Promise<void>
+  appTheme: AppTheme
+  setAppTheme: (theme: AppTheme) => void
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -77,6 +101,8 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   hasCompletedOnboarding: true,
   completeOnboarding: async () => {},
+  appTheme: 'auto',
+  setAppTheme: () => {},
 })
 
 export function useAuth() {
@@ -85,7 +111,6 @@ export function useAuth() {
 
 // Check if onboarding has been completed
 async function checkOnboardingComplete(): Promise<boolean> {
-  return false
   try {
     const value = await AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY)
     return value === 'true'
@@ -109,6 +134,12 @@ export default function RootLayout() {
   const [session, setSession] = useState<AuthResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
+  const [appTheme, setAppThemeState] = useState<AppTheme>('auto')
+
+  const setAppTheme = useCallback((theme: AppTheme) => {
+    setAppThemeState(theme)
+    AsyncStorage.setItem(APP_THEME_KEY, theme).catch(() => {})
+  }, [])
 
   // Load custom fonts - Bitter for display/headers, Source Sans 3 for body
   const [bitterLoaded] = useBitterFonts({
@@ -131,6 +162,12 @@ export default function RootLayout() {
     // Check for existing session and onboarding state on app start
     async function initialize() {
       try {
+        // Load saved theme
+        const savedTheme = await AsyncStorage.getItem(APP_THEME_KEY)
+        if (savedTheme && ['auto', 'light', 'sepia', 'dark'].includes(savedTheme)) {
+          setAppThemeState(savedTheme as AppTheme)
+        }
+
         // Check onboarding first
         const onboardingComplete = await checkOnboardingComplete()
         setHasCompletedOnboarding(onboardingComplete)
@@ -182,11 +219,25 @@ export default function RootLayout() {
     return null
   }
 
+  // Resolve navigation theme from appTheme setting
+  const resolvedTheme = (() => {
+    switch (appTheme) {
+      case 'light': return PocheLightTheme
+      case 'dark': return PocheDarkTheme
+      case 'sepia': return PocheSepiaTheme
+      default: return colorScheme === 'dark' ? PocheDarkTheme : PocheLightTheme
+    }
+  })()
+
+  const statusBarStyle = appTheme === 'auto' ? 'auto'
+    : appTheme === 'dark' ? 'light'
+    : 'dark'
+
   return (
-    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding }}>
-      <ThemeProvider value={colorScheme === 'dark' ? PocheDarkTheme : PocheLightTheme}>
+    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme }}>
+      <ThemeProvider value={resolvedTheme}>
         <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
-        <StatusBar style="auto" />
+        <StatusBar style={statusBarStyle} />
       </ThemeProvider>
     </AuthContext.Provider>
   )

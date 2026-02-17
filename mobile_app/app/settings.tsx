@@ -6,7 +6,6 @@ import {
   ScrollView, 
   Alert,
   Platform,
-  useColorScheme,
 } from 'react-native'
 import { ThemedText } from '../components/themed-text'
 import { ThemedView } from '../components/themed-view'
@@ -16,12 +15,13 @@ import { clearArticlesFromStorage } from '../lib/article-sync'
 import { useAuth } from './_layout'
 import { router } from 'expo-router'
 import { Colors } from '../constants/theme'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 
 export default function SettingsScreen() {
   const headerHeight = useHeaderHeight()
   const { session, setSession } = useAuth()
-  const colorScheme = useColorScheme() ?? 'light'
-  const colors = Colors[colorScheme]
+  const resolvedScheme = useResolvedColorScheme()
+  const colors = Colors[resolvedScheme]
 
   const [isDeleting, setIsDeleting] = useState(false)
 
