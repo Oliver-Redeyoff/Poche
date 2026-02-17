@@ -39,6 +39,8 @@ const MAPPING = {
   'ellipsis.circle': 'more-horiz',
   // Reading status
   'book.closed': 'menu-book',
+  'person': 'person',
+  'paintpalette': 'palette'
 } as IconMapping;
 
 /**

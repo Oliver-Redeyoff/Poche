@@ -9,14 +9,16 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Onboarding**: First-time users see a swipeable onboarding experience explaining how to use Poche
 - **Authentication**: Email/password login and signup via self-hosted backend
 - **Forgot Password**: Request password reset email from auth screen
-- **Account Deletion**: Delete account from settings with password confirmation (iOS Alert.prompt)
+- **Account Deletion**: Delete account from account settings drawer with password confirmation (iOS Alert.prompt)
 - **Tab Navigation**: Home and Library tabs with native iOS blur effects
 - **Home Page**: "Continue Reading" section (in-progress articles), "New Articles" section (unread articles), and "Recently Read" section (3 most recently finished articles at 100% progress)
 - **Library Page**: Tile grid for All Articles, Favorites, and tag-based filtering with article counts
 - **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
 - **Unified Theme System**: Light, dark, and sepia themes apply consistently across all screens; `Colors` palette has 3 schemes; `useResolvedColorScheme()` hook replaces direct `useColorScheme()` for color decisions
 - **Global Theme Selection**: Users choose Auto, Light, Sepia, or Dark from the reading settings drawer; persisted to AsyncStorage
-- **Reading Settings Drawer**: Bottom sheet with font size controls (+/-) and theme selector (colored circles); swipe-down to dismiss via PanResponder + Reanimated
+- **Bottom Drawer Component**: Reusable `BottomDrawer` component (`components/bottom-drawer.tsx`) with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
+- **Reading Settings Drawer**: Uses `BottomDrawer`; font size controls (+/-) and theme selector (colored circles); triggered by floating "Aa" button in article view
+- **Account Settings Drawer**: Uses `BottomDrawer`; shows signed-in email, sign out, and delete account; triggered by person icon in tab header (no separate settings screen)
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
@@ -54,7 +56,7 @@ mobile_app/
 ├── app/                    # Expo Router file-based routes
 │   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext, onboarding check)
 │   ├── (tabs)/            # Tab navigator group
-│   │   ├── _layout.tsx    # Tab layout (Home & Library tabs)
+│   │   ├── _layout.tsx    # Tab layout (Home & Library tabs, account settings drawer)
 │   │   ├── index.tsx      # Home tab - Continue Reading, New Articles & Recently Read sections
 │   │   └── library.tsx    # Library tab - All Articles, Favorites, Tags tiles
 │   ├── articles/
@@ -62,13 +64,13 @@ mobile_app/
 │   ├── article/[id].tsx   # Article detail screen with markdown rendering & progress tracking
 │   ├── search.tsx         # Full-screen search with filtering across all articles
 │   ├── auth.tsx           # Authentication screen (login/signup/forgot password)
-│   ├── onboarding.tsx     # First-time user onboarding experience
-│   └── settings.tsx       # Settings screen
+│   └── onboarding.tsx     # First-time user onboarding experience
 ├── components/            # React components
 │   ├── button.tsx         # Unified Button component (primary, secondary, danger, ghost variants)
 │   ├── segmented-control.tsx # Segmented control for mode switching
 │   ├── article-card.tsx   # Article card with TagList, progress bar, delete, animations
 │   ├── tag-list.tsx       # Reusable TagList component for displaying and managing tags
+│   ├── bottom-drawer.tsx  # Reusable bottom sheet drawer with swipe-to-dismiss
 │   ├── dropdown-menu.tsx  # Reusable positioned dropdown menu component
 │   ├── header.tsx         # Custom header component with logo, back button, and collapsible animation
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
@@ -146,11 +148,24 @@ Authentication screen:
 - Themed UI with dark mode support
 - Redirects to home on successful authentication
 
-### app/settings.tsx
-Settings screen:
-- User information display
-- Sign out functionality
-- **Clears local articles on logout**: Calls `clearArticlesFromStorage(userId)` before signing out
+### app/(tabs)/_layout.tsx
+Tab layout with account settings:
+- Home and Library tabs with custom styling
+- **Header**: Shows Poche logo and person icon button
+- **Account settings drawer**: `BottomDrawer` triggered by person icon; displays signed-in email, Sign Out button, and Delete Account button
+- Sign out clears local articles via `clearArticlesFromStorage(userId)` before signing out
+- Delete account with password confirmation (iOS `Alert.prompt`, Android directs to web app)
+
+### components/bottom-drawer.tsx
+Reusable bottom sheet drawer component:
+- `Modal` with transparent background and fade animation for backdrop
+- Animated sheet slides up from bottom with drag handle
+- **Swipe-to-dismiss**: `PanResponder` detects downward drag; dismisses on 60px threshold or velocity > 0.5
+- `Reanimated` slide animation (250ms in, 200ms out)
+- Adapts colors from current theme via `useResolvedColorScheme()` and `Colors` palette
+- Handles safe area insets for bottom padding
+- **Props**: `visible` (boolean), `onDismiss` (callback), `children` (ReactNode)
+- Used by: reading settings in article detail view, account settings in tab layout
 
 ### components/tag-list.tsx
 Reusable TagList component for displaying and managing tags:
@@ -219,12 +234,10 @@ Article detail screen with premium reading experience:
   - Filters out low-resolution images (< 50x50 pixels)
   - Handles image load errors gracefully
   - 100% width images with preserved aspect ratio
-- **Reading settings drawer**: Bottom sheet modal with:
+- **Reading settings drawer**: Uses reusable `BottomDrawer` component with:
   - Font size controls (+/- buttons, range 14-26, default 18); dynamically scales all markdown typography
   - Theme selector (Auto, Light, Sepia, Dark) with colored circles; modifies global `appTheme` via AuthContext
   - Triggered by floating "Aa" button in bottom-right corner
-  - Swipe-down to dismiss via `PanResponder` + Reanimated `useSharedValue`; animates from release point
-  - `Modal` with `animationType="fade"` for backdrop; drawer slide controlled entirely by Reanimated
 - **Link styling**: Links appear in accent color with underline
 - **Tag management**: Uses shared `TagList` component; `handleUpdateTags` uses `updateArticleTagsWithSync` and updates local article state
 - Loads articles from local storage only (offline-first)
@@ -264,14 +277,13 @@ Custom hook for article management with optimistic updates:
 Expo Router uses file-based routing similar to Next.js:
 
 - `app/_layout.tsx` - Root layout with Stack navigator, AuthContext provider, registers background sync
-- `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs
+- `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs, account settings drawer
 - `app/(tabs)/index.tsx` - Home tab with Continue Reading and New Articles sections
 - `app/(tabs)/library.tsx` - Library tab with article filter tiles
 - `app/articles/index.tsx` - Filtered article list screen
 - `app/article/[id].tsx` - Article detail screen with reading progress tracking
 - `app/search.tsx` - Full-screen search across all articles
 - `app/auth.tsx` - Authentication screen
-- `app/settings.tsx` - Settings screen
 
 ## API Integration
 
@@ -501,7 +513,7 @@ module.exports = config;
 - ✅ **Shared markdown parsing**: Uses `@poche/shared` for tokenization and inline parsing
 - ✅ **EAS Build**: Configured for iOS App Store and Google Play distribution
 - ✅ **Store submissions**: iOS App Store and Google Play
-- ✅ **Account deletion**: Delete account from settings screen with Alert.prompt (iOS)
+- ✅ **Account deletion**: Delete account from account settings drawer with Alert.prompt (iOS)
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
 - ✅ **Animated onboarding dots**: Smooth pagination dot transitions using React Native Reanimated
 - ✅ **Unified Button component**: Reusable button with primary, secondary, danger, ghost variants
@@ -524,7 +536,9 @@ module.exports = config;
 - ✅ **Continue reading button**: Floating pill below header; appears 15%+ above progress with hysteresis (hides at 5%); animated position tracks header collapse; hidden at 100% progress
 - ✅ **Unified theme system**: `Colors` palette expanded with `sepia` scheme; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme's `resolvedScheme` property; all components migrated from `useColorScheme()` + `Colors[colorScheme]` to `useResolvedColorScheme()` + `Colors[resolvedScheme]`
 - ✅ **Global theme selection**: `appTheme` (`'auto' | 'light' | 'sepia' | 'dark'`) in AuthContext, persisted to AsyncStorage; navigation `ThemeProvider` uses resolved theme (`PocheLightTheme`, `PocheDarkTheme`, `PocheSepiaTheme`)
-- ✅ **Reading settings drawer**: Bottom sheet with font size (+/-) and theme selector; PanResponder swipe-to-dismiss with Reanimated animations; floating "Aa" trigger button
+- ✅ **BottomDrawer component**: Reusable bottom sheet (`components/bottom-drawer.tsx`) with Modal, swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation, theme-aware colors
+- ✅ **Reading settings drawer**: Uses `BottomDrawer`; font size (+/-) and theme selector; floating "Aa" trigger button
+- ✅ **Account settings drawer**: Uses `BottomDrawer` in tab layout; person icon trigger; sign out + delete account (replaces separate `settings.tsx` screen)
 - ✅ **Sepia theme**: Full color palette (text #3D3229, background #F5ECD7, card #EDE3CA, accent #D44A5C) with navigation theme and `Colors.sepia` palette
 
 ## Technical Notes
