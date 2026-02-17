@@ -335,8 +335,8 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
           name="search" 
           options={{ 
             headerShown: false,
-            presentation: 'fullScreenModal',
-            animation: 'fade',
+            animation: "fade_from_bottom",
+            animationDuration: 200,
           }} 
         />
       </Stack.Protected>
