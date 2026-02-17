@@ -31,6 +31,8 @@ import { Colors, ResolvedColorScheme } from '@/constants/theme'
 
 const ONBOARDING_COMPLETE_KEY = '@poche_onboarding_complete'
 const APP_THEME_KEY = '@poche_app_theme'
+const APP_FONT_SIZE_KEY = '@poche_app_font_size'
+const DEFAULT_FONT_SIZE = 18
 
 export type AppTheme = 'auto' | 'light' | 'sepia' | 'dark'
 
@@ -92,6 +94,8 @@ interface AuthContextType {
   completeOnboarding: () => Promise<void>
   appTheme: AppTheme
   setAppTheme: (theme: AppTheme) => void
+  appFontSize: number
+  setAppFontSize: (size: number) => void
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -102,6 +106,8 @@ const AuthContext = createContext<AuthContextType>({
   completeOnboarding: async () => {},
   appTheme: 'auto',
   setAppTheme: () => {},
+  appFontSize: DEFAULT_FONT_SIZE,
+  setAppFontSize: () => {},
 })
 
 export function useAuth() {
@@ -134,10 +140,16 @@ export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
   const [appTheme, setAppThemeState] = useState<AppTheme>('auto')
+  const [appFontSize, setAppFontSizeState] = useState<number>(DEFAULT_FONT_SIZE)
 
   const setAppTheme = useCallback((theme: AppTheme) => {
     setAppThemeState(theme)
     AsyncStorage.setItem(APP_THEME_KEY, theme).catch(() => {})
+  }, [])
+
+  const setAppFontSize = useCallback((size: number) => {
+    setAppFontSizeState(size)
+    AsyncStorage.setItem(APP_FONT_SIZE_KEY, String(size)).catch(() => {})
   }, [])
 
   // Load custom fonts - Bitter for display/headers, Source Sans 3 for body
@@ -165,6 +177,15 @@ export default function RootLayout() {
         const savedTheme = await AsyncStorage.getItem(APP_THEME_KEY)
         if (savedTheme && ['auto', 'light', 'sepia', 'dark'].includes(savedTheme)) {
           setAppThemeState(savedTheme as AppTheme)
+        }
+
+        // Load saved font size
+        const savedFontSize = await AsyncStorage.getItem(APP_FONT_SIZE_KEY)
+        if (savedFontSize) {
+          const n = parseInt(savedFontSize, 10)
+          if (!isNaN(n) && n >= 14 && n <= 26) {
+            setAppFontSizeState(n)
+          }
         }
 
         // Check onboarding first
@@ -233,7 +254,7 @@ export default function RootLayout() {
     : 'dark'
 
   return (
-    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme }}>
+    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSize, setAppFontSize }}>
       <ThemeProvider value={resolvedTheme}>
         <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
         <StatusBar style={statusBarStyle} />

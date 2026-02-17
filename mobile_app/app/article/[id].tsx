@@ -23,8 +23,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol'
 import { TagList } from '@/components/tag-list'
 import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
 import { Pressable, Linking } from 'react-native'
-import Slider from '@react-native-community/slider'
-import { BottomDrawer } from '@/components/bottom-drawer'
+import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -78,19 +77,8 @@ export default function ArticleScreen() {
   }, [headerHidden, insets.top])
 
   // Reading settings
-  const { appTheme: readingTheme, setAppTheme: setReadingTheme } = useAuth()
-  const [fontSize, setFontSize] = useState(18)
+  const { appTheme: readingTheme, appFontSize: fontSize } = useAuth()
   const [showSettings, setShowSettings] = useState(false)
-
-  // Font size steps for the slider
-  const FONT_SIZE_STEPS = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26] as const
-  const FONT_SIZE_LAST_INDEX = FONT_SIZE_STEPS.length - 1
-  const fontSizeStepIndex = Math.min(
-    FONT_SIZE_LAST_INDEX,
-    Math.max(0, Math.round(
-      (fontSize - FONT_SIZE_STEPS[0]) / (FONT_SIZE_STEPS[FONT_SIZE_LAST_INDEX] - FONT_SIZE_STEPS[0]) * FONT_SIZE_LAST_INDEX
-    ))
-  )
 
   const dismissDrawer = useCallback(() => {
     setShowSettings(false)
@@ -790,54 +778,10 @@ export default function ArticleScreen() {
       </ScrollView>
 
       {/* Reading settings drawer */}
-      <BottomDrawer visible={showSettings} onDismiss={dismissDrawer}>
-        {/* Font Size */}
-        <View style={styles.drawerSection}>
-          <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Text Size</ThemedText>
-          <View style={styles.fontSizeSliderRow}>
-            <ThemedText style={[styles.fontSizeSliderLabel, { color: colors.textMuted }]}>A</ThemedText>
-            <Slider
-              style={styles.fontSizeSlider}
-              minimumValue={0}
-              maximumValue={FONT_SIZE_LAST_INDEX}
-              step={1}
-              value={fontSizeStepIndex}
-              onValueChange={(value) => setFontSize(FONT_SIZE_STEPS[Math.round(value)])}
-              minimumTrackTintColor={colors.accent}
-              maximumTrackTintColor={colors.divider}
-              thumbTintColor={colors.accent}
-            />
-            <ThemedText style={[styles.fontSizeSliderLabel, { color: colors.text }]}>A</ThemedText>
-          </View>
-          <ThemedText style={[styles.fontSizeValue, { color: colors.textSecondary }]}>{fontSize}</ThemedText>
-        </View>
-
-        {/* Theme */}
-        <View style={styles.drawerSection}>
-          <ThemedText style={[styles.drawerSectionTitle, { color: colors.textSecondary }]}>Theme</ThemedText>
-          <View style={styles.themeRow}>
-            {([
-              { key: 'auto' as const, label: 'Auto', bg: isDark ? '#1C1A18' : '#FAFAF8', border: true },
-              { key: 'light' as const, label: 'Light', bg: '#FAFAF8', border: true },
-              { key: 'sepia' as const, label: 'Sepia', bg: '#F5ECD7', border: false },
-              { key: 'dark' as const, label: 'Dark', bg: '#1C1A18', border: false },
-            ]).map(t => (
-              <Pressable key={t.key} onPress={() => setReadingTheme(t.key)} style={styles.themeOption}>
-                <View style={[
-                  styles.themeCircle,
-                  { backgroundColor: t.bg },
-                  t.border && { borderWidth: 1, borderColor: colors.divider },
-                  readingTheme === t.key && { borderWidth: 2.5, borderColor: colors.accent },
-                ]} />
-                <ThemedText style={[
-                  styles.themeLabel,
-                  { color: readingTheme === t.key ? colors.text : colors.textMuted },
-                ]}>{t.label}</ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </BottomDrawer>
+      <ReadingSettingsDrawer
+        visible={showSettings}
+        onDismiss={dismissDrawer}
+      />
 
     </View>
   )
@@ -933,55 +877,5 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     opacity: 0.6,
-  },
-  drawerSection: {
-    marginBottom: 24,
-  },
-  drawerSectionTitle: {
-    fontSize: 13,
-    fontFamily: 'SourceSans3_600SemiBold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  fontSizeSliderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  fontSizeSliderLabel: {
-    fontSize: 14,
-    fontFamily: 'SourceSans3_600SemiBold',
-    width: 20,
-    textAlign: 'center',
-  },
-  fontSizeSlider: {
-    flex: 1,
-    height: 40,
-  },
-  fontSizeValue: {
-    fontSize: 14,
-    fontFamily: 'SourceSans3_500Medium',
-    marginTop: 6,
-    textAlign: 'center',
-    opacity: 0.8,
-  },
-  themeRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  themeOption: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  themeCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  themeLabel: {
-    fontSize: 12,
-    fontFamily: 'SourceSans3_500Medium',
   },
 })
