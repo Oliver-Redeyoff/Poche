@@ -16,8 +16,9 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
 - **Unified Theme System**: Light, dark, and sepia themes apply consistently across all screens; `Colors` palette has 3 schemes; `useResolvedColorScheme()` hook replaces direct `useColorScheme()` for color decisions
 - **Global Theme Selection**: Users choose Auto, Light, Sepia, or Dark from the reading settings drawer; persisted to AsyncStorage
+- **Global Font Size**: Reading font size (14–26) in AuthContext (`appFontSize`/`setAppFontSize`), persisted to AsyncStorage (`@poche_app_font_size`); applies to article markdown
 - **Bottom Drawer Component**: Reusable `BottomDrawer` component (`components/bottom-drawer.tsx`) with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
-- **Reading Settings Drawer**: Uses `BottomDrawer`; font size controls (+/-) and theme selector (colored circles); triggered by floating "Aa" button in article view
+- **Reading Settings Drawer**: `ReadingSettingsDrawer` component (`components/reading-settings-drawer.tsx`); font size via `@react-native-community/slider` (configurable steps) and theme selector; opened from tab header (paint palette icon) and article screen (paint palette button)
 - **Account Settings Drawer**: Uses `BottomDrawer`; shows signed-in email, sign out, and delete account; triggered by person icon in tab header (no separate settings screen)
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
@@ -71,6 +72,7 @@ mobile_app/
 │   ├── article-card.tsx   # Article card with TagList, progress bar, delete, animations
 │   ├── tag-list.tsx       # Reusable TagList component for displaying and managing tags
 │   ├── bottom-drawer.tsx  # Reusable bottom sheet drawer with swipe-to-dismiss
+│   ├── reading-settings-drawer.tsx # Font size slider + theme selector (uses AuthContext)
 │   ├── dropdown-menu.tsx  # Reusable positioned dropdown menu component
 │   ├── header.tsx         # Custom header component with logo, back button, and collapsible animation
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
@@ -149,10 +151,11 @@ Authentication screen:
 - Redirects to home on successful authentication
 
 ### app/(tabs)/_layout.tsx
-Tab layout with account settings:
+Tab layout with account and reading settings:
 - Home and Library tabs with custom styling
-- **Header**: Shows Poche logo and person icon button
-- **Account settings drawer**: `BottomDrawer` triggered by person icon; displays signed-in email, Sign Out button, and Delete Account button
+- **Header**: Poche logo and two icon buttons — paint palette (opens `ReadingSettingsDrawer`), person (opens account settings drawer)
+- **Reading settings drawer**: `ReadingSettingsDrawer` (font size + theme); triggered by paint palette icon
+- **Account settings drawer**: `BottomDrawer` triggered by person icon; signed-in email, Sign Out, Delete Account
 - Sign out clears local articles via `clearArticlesFromStorage(userId)` before signing out
 - Delete account with password confirmation (iOS `Alert.prompt`, Android directs to web app)
 
@@ -165,7 +168,15 @@ Reusable bottom sheet drawer component:
 - Adapts colors from current theme via `useResolvedColorScheme()` and `Colors` palette
 - Handles safe area insets for bottom padding
 - **Props**: `visible` (boolean), `onDismiss` (callback), `children` (ReactNode)
-- Used by: reading settings in article detail view, account settings in tab layout
+- Used by: `ReadingSettingsDrawer`, account settings in tab layout
+
+### components/reading-settings-drawer.tsx
+Reading settings bottom drawer (font size + theme):
+- **Props**: `visible`, `onDismiss` (no font size props; uses AuthContext)
+- **Font size**: `@react-native-community/slider`; steps from `FONT_SIZE_STEPS` array (e.g. 14–26), number of steps inferred from array length; value from `appFontSize`, updates via `setAppFontSize` (persisted in AuthContext)
+- **Theme**: Auto/Light/Sepia/Dark options; uses `appTheme`/`setAppTheme` from `useAuth()`
+- Wraps content in `BottomDrawer`; uses `Colors` and `useResolvedColorScheme()` for theming
+- Opened from tab header (paint palette) and article screen (paint palette button)
 
 ### components/tag-list.tsx
 Reusable TagList component for displaying and managing tags:
@@ -234,10 +245,7 @@ Article detail screen with premium reading experience:
   - Filters out low-resolution images (< 50x50 pixels)
   - Handles image load errors gracefully
   - 100% width images with preserved aspect ratio
-- **Reading settings drawer**: Uses reusable `BottomDrawer` component with:
-  - Font size controls (+/- buttons, range 14-26, default 18); dynamically scales all markdown typography
-  - Theme selector (Auto, Light, Sepia, Dark) with colored circles; modifies global `appTheme` via AuthContext
-  - Triggered by floating "Aa" button in bottom-right corner
+- **Reading settings**: Uses `ReadingSettingsDrawer` (font size from AuthContext `appFontSize`, theme from `appTheme`); triggered by paint palette button in header; article typography uses `appFontSize` from `useAuth()`
 - **Link styling**: Links appear in accent color with underline
 - **Tag management**: Uses shared `TagList` component; `handleUpdateTags` uses `updateArticleTagsWithSync` and updates local article state
 - Loads articles from local storage only (offline-first)
@@ -276,7 +284,7 @@ Custom hook for article management with optimistic updates:
 ### File-Based Routing
 Expo Router uses file-based routing similar to Next.js:
 
-- `app/_layout.tsx` - Root layout with Stack navigator, AuthContext provider, registers background sync
+- `app/_layout.tsx` - Root layout with Stack navigator, AuthContext (session, appTheme, appFontSize), registers background sync
 - `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs, account settings drawer
 - `app/(tabs)/index.tsx` - Home tab with Continue Reading and New Articles sections
 - `app/(tabs)/library.tsx` - Library tab with article filter tiles
@@ -356,6 +364,7 @@ API URL is configured via environment variable:
 - **`useResolvedColorScheme()` hook**: Reads `resolvedScheme` from the navigation theme (set by `ThemeProvider`); all components use this instead of system `useColorScheme()` for color decisions
 - **`useThemeColor()` hook**: Updated to use resolved scheme — returns correct colors for light, dark, and sepia
 - **`appTheme` state**: `'auto' | 'light' | 'sepia' | 'dark'` stored in `AuthContext`, persisted to AsyncStorage; 'auto' follows system preference
+- **`appFontSize` state**: Reading font size (number, e.g. 14–26) in AuthContext, persisted to AsyncStorage (`@poche_app_font_size`); default 18; used by article markdown and `ReadingSettingsDrawer`
 - Warm color palette: light background #FAFAF8, dark background #1C1A18, sepia background #F5ECD7
 - Poche coral accent: #EF4056 (light mode), #F06B7E (dark mode), #D44A5C (sepia mode)
 - Theme colors: text, textSecondary, textMuted, background, card, surface, border, divider, accent, accentLight, accentDark, icon, tabIconDefault, tabIconSelected, plus semantic colors
@@ -537,7 +546,9 @@ module.exports = config;
 - ✅ **Unified theme system**: `Colors` palette expanded with `sepia` scheme; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme's `resolvedScheme` property; all components migrated from `useColorScheme()` + `Colors[colorScheme]` to `useResolvedColorScheme()` + `Colors[resolvedScheme]`
 - ✅ **Global theme selection**: `appTheme` (`'auto' | 'light' | 'sepia' | 'dark'`) in AuthContext, persisted to AsyncStorage; navigation `ThemeProvider` uses resolved theme (`PocheLightTheme`, `PocheDarkTheme`, `PocheSepiaTheme`)
 - ✅ **BottomDrawer component**: Reusable bottom sheet (`components/bottom-drawer.tsx`) with Modal, swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation, theme-aware colors
-- ✅ **Reading settings drawer**: Uses `BottomDrawer`; font size (+/-) and theme selector; floating "Aa" trigger button
+- ✅ **ReadingSettingsDrawer component**: Separate component with font size slider (`@react-native-community/slider`, configurable `FONT_SIZE_STEPS`) and theme selector; uses `appFontSize`/`setAppFontSize` and `appTheme`/`setAppTheme` from AuthContext; opened from tab header (paint palette) and article (paint palette button)
+- ✅ **Global font size**: `appFontSize`/`setAppFontSize` in AuthContext (`app/_layout.tsx`), persisted to AsyncStorage; article screen uses `appFontSize` for markdown styles
+- ✅ **Tab header**: Paint palette icon (reading settings) and person icon (account settings)
 - ✅ **Account settings drawer**: Uses `BottomDrawer` in tab layout; person icon trigger; sign out + delete account (replaces separate `settings.tsx` screen)
 - ✅ **Sepia theme**: Full color palette (text #3D3229, background #F5ECD7, card #EDE3CA, accent #D44A5C) with navigation theme and `Colors.sepia` palette
 
