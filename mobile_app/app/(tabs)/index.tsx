@@ -148,7 +148,7 @@ export default function HomeScreen() {
           onPress={() => router.push('/search')}
         >
           <IconSymbol name="magnifyingglass" size={20} color={textSecondary} />
-          <ThemedText style={[styles.searchPlaceholder, { color: textSecondary }]}>
+          <ThemedText fontSize={16} style={[styles.searchPlaceholder, { color: textSecondary }]}>
             Search articles...
           </ThemedText>
         </Pressable>

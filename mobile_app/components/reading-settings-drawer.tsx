@@ -8,8 +8,9 @@ import { useTheme } from '@react-navigation/native'
 import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { Colors } from '@/constants/theme'
 
-const FONT_SIZE_STEPS = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26] as const
-const FONT_SIZE_LAST_INDEX = FONT_SIZE_STEPS.length - 1
+const FONT_SIZE_MULTIPLIER_MIN = 0.4
+const FONT_SIZE_MULTIPLIER_MAX = 2
+const FONT_SIZE_MULTIPLIER_STEP = 0.2
 
 export interface ReadingSettingsDrawerProps {
   visible: boolean
@@ -27,27 +28,15 @@ export function ReadingSettingsDrawer({
   const {
     appTheme: readingTheme,
     setAppTheme: setReadingTheme,
-    appFontSize,
-    setAppFontSize,
+    appFontSizeMultiplier,
+    setAppFontSizeMultiplier,
   } = useAuth()
-
-  const fontSizeStepIndex = Math.min(
-    FONT_SIZE_LAST_INDEX,
-    Math.max(
-      0,
-      Math.round(
-        (appFontSize - FONT_SIZE_STEPS[0]) /
-          (FONT_SIZE_STEPS[FONT_SIZE_LAST_INDEX] - FONT_SIZE_STEPS[0]) *
-          FONT_SIZE_LAST_INDEX
-      )
-    )
-  )
 
   const handleSliderChange = useCallback(
     (value: number) => {
-      setAppFontSize(FONT_SIZE_STEPS[Math.round(value)])
+      setAppFontSizeMultiplier(value)
     },
-    [setAppFontSize]
+    [setAppFontSizeMultiplier]
   )
 
   return (
@@ -63,10 +52,10 @@ export function ReadingSettingsDrawer({
           </ThemedText>
           <Slider
             style={styles.slider}
-            minimumValue={0}
-            maximumValue={FONT_SIZE_LAST_INDEX}
-            step={1}
-            value={fontSizeStepIndex}
+            minimumValue={FONT_SIZE_MULTIPLIER_MIN}
+            maximumValue={FONT_SIZE_MULTIPLIER_MAX}
+            step={FONT_SIZE_MULTIPLIER_STEP}
+            value={appFontSizeMultiplier}
             onValueChange={handleSliderChange}
             minimumTrackTintColor={colors.accent}
             maximumTrackTintColor={colors.divider}
@@ -77,7 +66,7 @@ export function ReadingSettingsDrawer({
           </ThemedText>
         </View>
         <ThemedText style={[styles.fontSizeValue, { color: colors.textSecondary }]}>
-          {appFontSize}
+          {Math.round(appFontSizeMultiplier * 100)}%
         </ThemedText>
       </View>
 

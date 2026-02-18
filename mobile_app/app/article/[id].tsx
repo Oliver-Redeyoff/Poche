@@ -10,7 +10,7 @@ import { Article } from '@poche/shared'
 import { getCachedImagePath } from '../../lib/image-cache'
 import { useTheme } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useAuth } from '../_layout'
+import { useAuth, BASE_FONT_SIZE, type PocheTheme } from '../_layout'
 import { 
   updateReadingProgressLocal, 
   syncReadingProgressToBackend,
@@ -31,8 +31,10 @@ export default function ArticleScreen() {
   const { session } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
-  const theme = useTheme()
+  const theme = useTheme() as PocheTheme
   const isDark = theme.dark
+  const multiplier = theme.fontSizeMultiplier ?? 1
+  const fontSize = Math.round(BASE_FONT_SIZE * multiplier)
   const insets = useSafeAreaInsets()
   
   // Use hook instead of Dimensions.get() to ensure correct values on initial render
@@ -76,8 +78,8 @@ export default function ArticleScreen() {
     returnBtnTop.value = withTiming(headerHidden ? collapsedTop : fullTop, { duration: 250 })
   }, [headerHidden, insets.top])
 
-  // Reading settings
-  const { appTheme: readingTheme, appFontSize: fontSize } = useAuth()
+  // Reading settings (theme comes from AuthContext; fontSize from navigation theme for app-wide consistency)
+  const { appTheme: readingTheme } = useAuth()
   const [showSettings, setShowSettings] = useState(false)
 
   const dismissDrawer = useCallback(() => {
