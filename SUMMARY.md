@@ -148,10 +148,11 @@ Poche/
 - **Collapsible header**: Article detail header slides up when scrolling down, reappears on scroll up (preserves safe area)
 - **Continue reading button**: Floating button to jump back to reading position when scrolled above progress
 - **Unified theme system**: Light, dark, and sepia themes apply consistently across all screens via `useResolvedColorScheme()` hook and `Colors` palette
-- **Global theme selection**: Users can choose Auto, Light, Sepia, or Dark theme from the article reading settings drawer; persisted to AsyncStorage
+- **Global theme selection**: Users can choose Auto, Light, Sepia, or Dark theme from the reading settings drawer; persisted to AsyncStorage
+- **Global font size**: Reading font size (14–26) stored in AuthContext (`appFontSize`/`setAppFontSize`), persisted to AsyncStorage (`@poche_app_font_size`); applies to article markdown
 - **Bottom drawer component**: Reusable `BottomDrawer` component with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
-- **Reading settings drawer**: Bottom drawer with font size controls and theme selector; triggered by floating "Aa" button in article view
-- **Account settings drawer**: Bottom drawer triggered by person icon in header; shows signed-in email, sign out, and delete account
+- **Reading settings drawer**: Separate `ReadingSettingsDrawer` component (font size slider via `@react-native-community/slider` and theme selector); opened from tab header (paint palette icon) or article screen (paint palette button)
+- **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email, sign out, and delete account
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
 - **Link styling**: Links appear in accent color with underline
@@ -363,8 +364,10 @@ The shared package provides common functionality across all projects:
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ **Unified theme system**: `Colors` palette with light, dark, and sepia schemes; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme; all components use resolved scheme instead of system color scheme
 - ✅ **Global theme selection**: Auto/Light/Sepia/Dark via `appTheme` in AuthContext, persisted to AsyncStorage
+- ✅ **Global font size**: `appFontSize`/`setAppFontSize` in AuthContext, persisted to AsyncStorage; article screen uses it for markdown typography
 - ✅ **BottomDrawer component**: Reusable bottom sheet with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation
-- ✅ **Reading settings drawer**: Uses `BottomDrawer`; font size and theme controls in article view
+- ✅ **ReadingSettingsDrawer component**: Font size slider (`@react-native-community/slider`, steps from `FONT_SIZE_STEPS` array) and theme selector; uses AuthContext for `appFontSize` and `appTheme`; opened from tab header (paint palette) and article (paint palette button)
+- ✅ **Tab header**: Two icons — paint palette (reading settings) and person (account settings)
 - ✅ **Account settings drawer**: Uses `BottomDrawer`; sign out and delete account, triggered by person icon in tab header (replaces separate settings screen)
 - ✅ Uses `@poche/shared` package for types, utilities, API helpers, and markdown parsing
 - ✅ Centralized article sync logic (`lib/article-sync.ts`)
