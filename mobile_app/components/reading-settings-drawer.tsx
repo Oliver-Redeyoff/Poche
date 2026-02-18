@@ -8,9 +8,9 @@ import { useTheme } from '@react-navigation/native'
 import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { Colors } from '@/constants/theme'
 
-const FONT_SIZE_MULTIPLIER_MIN = 0.4
-const FONT_SIZE_MULTIPLIER_MAX = 2
-const FONT_SIZE_MULTIPLIER_STEP = 0.2
+const FONT_SIZE_MULTIPLIER_MIN = 0.7
+const FONT_SIZE_MULTIPLIER_MAX = 1.5
+const FONT_SIZE_MULTIPLIER_STEP = 0.1
 
 export interface ReadingSettingsDrawerProps {
   visible: boolean
