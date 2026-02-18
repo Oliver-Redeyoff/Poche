@@ -1,5 +1,6 @@
 import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { StyleProp, ViewStyle } from 'react-native';
+import { useAuth } from '@/app/_layout';
 
 export function IconSymbol({
   name,
@@ -14,6 +15,9 @@ export function IconSymbol({
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
 }) {
+  const { appFontSizeMultiplier } = useAuth();
+  const scaledSize = Math.round(size * appFontSizeMultiplier);
+
   return (
     <SymbolView
       weight={weight}
@@ -22,8 +26,8 @@ export function IconSymbol({
       name={name}
       style={[
         {
-          width: size,
-          height: size,
+          width: scaledSize,
+          height: scaledSize,
         },
         style,
       ]}

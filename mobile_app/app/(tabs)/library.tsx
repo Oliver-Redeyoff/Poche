@@ -200,10 +200,10 @@ export default function LibraryScreen() {
                 ) : (
                   <View style={[styles.tagDot, { backgroundColor: tile.color }]} />
                 )}
-                <ThemedText style={styles.tileTitle} numberOfLines={1}>
+                <ThemedText fontSize={18} style={styles.tileTitle} numberOfLines={1}>
                   {tile.title}
                 </ThemedText>
-                <ThemedText style={[styles.tileCount, { color: textSecondary }]}>
+                <ThemedText fontSize={14} style={[styles.tileCount, { color: textSecondary }]}>
                   {tile.count} {tile.count === 1 ? 'article' : 'articles'}
                 </ThemedText>
               </View>
@@ -262,12 +262,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tileTitle: {
-    fontSize: 18,
     fontFamily: 'Bitter_600SemiBold',
     marginTop: 8,
   },
   tileCount: {
-    fontSize: 14,
     fontFamily: 'SourceSans3_400Regular',
   },
   tagDot: {

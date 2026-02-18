@@ -31,19 +31,24 @@ import { Colors, ResolvedColorScheme } from '@/constants/theme'
 
 const ONBOARDING_COMPLETE_KEY = '@poche_onboarding_complete'
 const APP_THEME_KEY = '@poche_app_theme'
-const APP_FONT_SIZE_KEY = '@poche_app_font_size'
-const DEFAULT_FONT_SIZE = 18
+const APP_FONT_SIZE_MULTIPLIER_KEY = '@poche_app_font_size_multiplier'
+export const BASE_FONT_SIZE = 18
+const DEFAULT_FONT_SIZE_MULTIPLIER = 1
+const FONT_SIZE_MULTIPLIER_MIN = 0.4
+const FONT_SIZE_MULTIPLIER_MAX = 2
+const FONT_SIZE_MULTIPLIER_STEP = 0.2
 
 export type AppTheme = 'auto' | 'light' | 'sepia' | 'dark'
 
 // Prevent splash screen from hiding until fonts are loaded
 SplashScreen.preventAutoHideAsync()
 
-// Extended theme type with resolved color scheme identifier
-type PocheTheme = Theme & { resolvedScheme: ResolvedColorScheme }
+// Base theme type (fontSizeMultiplier is added when providing to ThemeProvider)
+type PocheThemeBase = Theme & { resolvedScheme: ResolvedColorScheme }
+export type PocheTheme = PocheThemeBase & { fontSizeMultiplier: number }
 
 // Custom Poche theme colors using unified theme constants
-const PocheLightTheme: PocheTheme = {
+const PocheLightTheme: PocheThemeBase = {
   dark: false,
   resolvedScheme: 'light',
   colors: {
@@ -57,7 +62,7 @@ const PocheLightTheme: PocheTheme = {
   fonts: DefaultTheme.fonts,
 }
 
-const PocheDarkTheme: PocheTheme = {
+const PocheDarkTheme: PocheThemeBase = {
   dark: true,
   resolvedScheme: 'dark',
   colors: {
@@ -71,7 +76,7 @@ const PocheDarkTheme: PocheTheme = {
   fonts: DarkTheme.fonts,
 }
 
-const PocheSepiaTheme: PocheTheme = {
+const PocheSepiaTheme: PocheThemeBase = {
   dark: false,
   resolvedScheme: 'sepia',
   colors: {
@@ -94,8 +99,8 @@ interface AuthContextType {
   completeOnboarding: () => Promise<void>
   appTheme: AppTheme
   setAppTheme: (theme: AppTheme) => void
-  appFontSize: number
-  setAppFontSize: (size: number) => void
+  appFontSizeMultiplier: number
+  setAppFontSizeMultiplier: (multiplier: number) => void
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -106,8 +111,8 @@ const AuthContext = createContext<AuthContextType>({
   completeOnboarding: async () => {},
   appTheme: 'auto',
   setAppTheme: () => {},
-  appFontSize: DEFAULT_FONT_SIZE,
-  setAppFontSize: () => {},
+  appFontSizeMultiplier: DEFAULT_FONT_SIZE_MULTIPLIER,
+  setAppFontSizeMultiplier: () => {},
 })
 
 export function useAuth() {
@@ -140,16 +145,18 @@ export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
   const [appTheme, setAppThemeState] = useState<AppTheme>('auto')
-  const [appFontSize, setAppFontSizeState] = useState<number>(DEFAULT_FONT_SIZE)
+  const [appFontSizeMultiplier, setAppFontSizeMultiplierState] = useState<number>(DEFAULT_FONT_SIZE_MULTIPLIER)
 
   const setAppTheme = useCallback((theme: AppTheme) => {
     setAppThemeState(theme)
     AsyncStorage.setItem(APP_THEME_KEY, theme).catch(() => {})
   }, [])
 
-  const setAppFontSize = useCallback((size: number) => {
-    setAppFontSizeState(size)
-    AsyncStorage.setItem(APP_FONT_SIZE_KEY, String(size)).catch(() => {})
+  const setAppFontSizeMultiplier = useCallback((multiplier: number) => {
+    const clamped = Math.round(multiplier / FONT_SIZE_MULTIPLIER_STEP) * FONT_SIZE_MULTIPLIER_STEP
+    const value = Math.max(FONT_SIZE_MULTIPLIER_MIN, Math.min(FONT_SIZE_MULTIPLIER_MAX, clamped))
+    setAppFontSizeMultiplierState(value)
+    AsyncStorage.setItem(APP_FONT_SIZE_MULTIPLIER_KEY, String(value)).catch(() => {})
   }, [])
 
   // Load custom fonts - Bitter for display/headers, Source Sans 3 for body
@@ -179,12 +186,13 @@ export default function RootLayout() {
           setAppThemeState(savedTheme as AppTheme)
         }
 
-        // Load saved font size
-        const savedFontSize = await AsyncStorage.getItem(APP_FONT_SIZE_KEY)
-        if (savedFontSize) {
-          const n = parseInt(savedFontSize, 10)
-          if (!isNaN(n) && n >= 14 && n <= 26) {
-            setAppFontSizeState(n)
+        // Load saved font size multiplier
+        const savedMultiplier = await AsyncStorage.getItem(APP_FONT_SIZE_MULTIPLIER_KEY)
+        if (savedMultiplier) {
+          const n = parseFloat(savedMultiplier)
+          if (!isNaN(n) && n >= FONT_SIZE_MULTIPLIER_MIN && n <= FONT_SIZE_MULTIPLIER_MAX) {
+            const rounded = Math.round(n / FONT_SIZE_MULTIPLIER_STEP) * FONT_SIZE_MULTIPLIER_STEP
+            setAppFontSizeMultiplierState(Math.max(FONT_SIZE_MULTIPLIER_MIN, Math.min(FONT_SIZE_MULTIPLIER_MAX, rounded)))
           }
         }
 
@@ -253,9 +261,12 @@ export default function RootLayout() {
     : appTheme === 'dark' ? 'light'
     : 'dark'
 
+  // Theme with app-wide font size multiplier (0.4–2) so all screens scale text
+  const themeWithMultiplier: PocheTheme = { ...resolvedTheme, fontSizeMultiplier: appFontSizeMultiplier }
+
   return (
-    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSize, setAppFontSize }}>
-      <ThemeProvider value={resolvedTheme}>
+    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSizeMultiplier, setAppFontSizeMultiplier }}>
+      <ThemeProvider value={themeWithMultiplier}>
         <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
         <StatusBar style={statusBarStyle} />
       </ThemeProvider>

@@ -135,9 +135,9 @@ export default function TabLayout() {
         onDismiss={() => setShowAccountSettings(false)}
       >
         <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Account</ThemedText>
+            <ThemedText fontSize={13} style={styles.sectionTitle}>Account</ThemedText>
             
-            <ThemedText style={[styles.signedInText, { color: colors.textSecondary }]}>
+            <ThemedText fontSize={15} style={[styles.signedInText, { color: colors.textSecondary }]}>
               Signed in as {session?.user?.email}
             </ThemedText>
 
@@ -219,7 +219,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   signedInText: {
-    fontSize: 15,
     fontFamily: 'SourceSans3_400Regular',
     marginBottom: 4,
   },
