@@ -734,6 +734,7 @@ export default function ArticleScreen() {
         <View style={[styles.header]}>
           {article.title && (
             <ThemedText 
+              fontSize={28}
               style={[
                 styles.title, 
                 { color: colors.text, textDecorationColor: colors.accent, textDecorationStyle: 'solid' }
@@ -845,9 +846,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   title: {
-    fontSize: 28,
     fontFamily: 'Bitter_700Bold',
-    // textDecorationLine: 'underline',
   },
   meta: {
     flexDirection: 'row',
