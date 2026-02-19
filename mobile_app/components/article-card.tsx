@@ -1,4 +1,5 @@
 import { StyleSheet, View, Pressable, Alert, Linking } from 'react-native'
+import { useEffect, useState } from 'react'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { ThemedText } from './themed-text'
@@ -53,6 +54,12 @@ export function ArticleCard({
   const theme = useTheme()
   const tintColor = useThemeColor({}, 'tint')
   const isTile = variant === 'tile'
+  const faviconUrl = article.faviconLocalPath
+  const [hasFaviconError, setHasFaviconError] = useState(false)
+
+  useEffect(() => {
+    setHasFaviconError(false)
+  }, [faviconUrl])
   
   // Calculate remaining reading time based on progress
   const readingProgress = article.readingProgress || 0
@@ -142,7 +149,17 @@ export function ArticleCard({
             />
           ) : (
             <View style={[styles.tileImage, styles.tilePlaceholder]}>
-              <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
+              {faviconUrl && !hasFaviconError ? (
+                <Image
+                  source={{ uri: faviconUrl }}
+                  style={styles.tileFavicon}
+                  contentFit="contain"
+                  transition={150}
+                  onError={() => setHasFaviconError(true)}
+                />
+              ) : (
+                <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
+              )}
             </View>
           )}
           
@@ -295,6 +312,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  tileFavicon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+  },
   tileContent: {
     padding: 12,
     gap: 8,
@@ -411,4 +433,3 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 })
-

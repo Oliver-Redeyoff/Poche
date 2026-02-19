@@ -92,6 +92,43 @@ function getImageCachePath(userId: string, articleId: number, imageUrl: string):
   return `${cacheDir}poche_images/${userId}/${articleId}/${urlHash}.${extension}`
 }
 
+function getArticleHostname(articleUrl: string): string | null {
+  try {
+    const { hostname } = new URL(articleUrl)
+    return hostname || null
+  } catch {
+    return null
+  }
+}
+
+export function getFaviconUrl(articleUrl: string | null): string | null {
+  if (!articleUrl) {
+    return null
+  }
+
+  const hostname = getArticleHostname(articleUrl)
+  if (!hostname) {
+    return null
+  }
+
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`
+}
+
+function getFaviconCachePath(userId: string, articleId: number, articleUrl: string): string | null {
+  const hostname = getArticleHostname(articleUrl)
+  if (!hostname) {
+    return null
+  }
+
+  const cacheDir = FileSystem.documentDirectory
+  if (!cacheDir) {
+    return null
+  }
+
+  const hostnameHash = hostname.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 100)
+  return `${cacheDir}poche_favicons/${userId}/${articleId}/${hostnameHash}.png`
+}
+
 /**
  * Check if a cached version of an image exists and return the path
  * Returns the cached file:// path if exists, otherwise returns the original URL
@@ -207,4 +244,62 @@ export async function processArticlesImages(
   
   // Return articles unchanged
   return articles
+}
+
+/**
+ * Download and cache article favicon locally for offline use.
+ * Returns the local file path when available; otherwise null.
+ */
+export async function cacheArticleFavicon(
+  article: Article,
+  userId: string
+): Promise<string | null> {
+  if (!article.url) {
+    return null
+  }
+
+  const faviconUrl = getFaviconUrl(article.url)
+  const localPath = getFaviconCachePath(userId, article.id, article.url)
+
+  if (!faviconUrl || !localPath) {
+    return null
+  }
+
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(localPath)
+    if (fileInfo.exists) {
+      return localPath
+    }
+
+    const downloaded = await downloadImage(faviconUrl, localPath)
+    return downloaded ? localPath : null
+  } catch (error) {
+    console.error(`Error caching favicon for article ${article.id}:`, error)
+    return null
+  }
+}
+
+/**
+ * Cache favicons for multiple articles and return updated article objects.
+ */
+export async function processArticlesFavicons(
+  articles: Article[],
+  userId: string
+): Promise<Article[]> {
+  const updatedArticles: Article[] = []
+
+  for (const article of articles) {
+    try {
+      const faviconLocalPath = await cacheArticleFavicon(article, userId)
+      updatedArticles.push({
+        ...article,
+        faviconLocalPath: faviconLocalPath ?? article.faviconLocalPath ?? null,
+      })
+    } catch (error) {
+      console.error(`Error processing favicon for article ${article.id}:`, error)
+      updatedArticles.push(article)
+    }
+  }
+
+  return updatedArticles
 }

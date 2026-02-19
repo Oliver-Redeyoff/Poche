@@ -1,7 +1,7 @@
 import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi, ArticleUpdates } from './api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '@poche/shared'
-import { processArticlesImages } from './image-cache'
+import { processArticlesImages, processArticlesFavicons } from './image-cache'
 
 /**
  * Get storage key for articles (per user)
@@ -107,14 +107,17 @@ export async function syncArticles(
     // Load stored articles
     const storedArticles = await loadArticlesFromStorage(userId)
     const storedArticleIds = storedArticles.map(article => article.id)
+    const processedStoredArticles = await processArticlesFavicons(storedArticles, userId)
     
     // Fetch new articles from backend
     const newArticles = await fetchNewArticlesFromBackend(userId, storedArticleIds)
     
     if (newArticles.length === 0) {
+      // Persist stored-article favicon backfills (if any)
+      await saveArticlesToStorage(userId, processedStoredArticles)
       return {
         newArticles: [],
-        allArticles: storedArticles,
+        allArticles: processedStoredArticles,
       }
     }
     
@@ -123,9 +126,12 @@ export async function syncArticles(
     if (options.processImages) {
       processedNewArticles = await processArticlesImages(newArticles, userId)
     }
+
+    // Always cache favicons for offline tile placeholders
+    processedNewArticles = await processArticlesFavicons(processedNewArticles, userId)
     
     // Merge and sort articles
-    const allArticles = mergeAndSortArticles(processedNewArticles, storedArticles)
+    const allArticles = mergeAndSortArticles(processedNewArticles, processedStoredArticles)
     
     // Save to storage
     await saveArticlesToStorage(userId, allArticles)

@@ -49,6 +49,7 @@ export interface Article {
   finishedAt: string | null // When finished (readingProgress = 100)
   createdAt: string
   updatedAt: string
+  faviconLocalPath?: string | null // Local cached favicon path for offline use (mobile)
 }
 
 // Legacy type alias for backward compatibility during migration
@@ -87,4 +88,3 @@ export function convertLegacyArticle(legacy: LegacyArticle): Article {
     updatedAt: legacy.created_time,
   }
 }
-
