@@ -81,10 +81,31 @@ export function useArticleActions({ userId, articles, setArticles }: UseArticleA
     }
   }
 
+  async function markAsRead(articleId: number) {
+    if (!userId) return
+    // Optimistic update
+    setArticles(prev => prev.map(a =>
+      a.id === articleId ? { ...a, readingProgress: 100 } : a
+    ))
+    try {
+      await updateArticleWithSync(userId, articleId, { readingProgress: 100 })
+    } catch (error) {
+      // Revert on error
+      const original = articles.find(a => a.id === articleId)
+      if (original) {
+        setArticles(prev => prev.map(a =>
+          a.id === articleId ? { ...a, readingProgress: original.readingProgress } : a
+        ))
+      }
+      console.error('Error marking as read:', error)
+    }
+  }
+
   return {
     deleteArticle,
     updateArticleTags,
     toggleFavorite,
+    markAsRead,
     markAsUnread
   }
 }
