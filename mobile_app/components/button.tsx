@@ -103,7 +103,7 @@ export function Button({
         />
       )}
       {icon && !loading && <View style={styles.iconLeft}>{icon}</View>}
-      <ThemedText style={[styles.text, getTextStyle(), textStyle]}>
+      <ThemedText fontSize={16} style={[styles.text, getTextStyle(), textStyle]}>
         {displayText}
       </ThemedText>
       {iconRight && <View style={styles.iconRight}>{iconRight}</View>}
@@ -128,7 +128,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   text: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_600SemiBold',
   },
   iconLeft: {

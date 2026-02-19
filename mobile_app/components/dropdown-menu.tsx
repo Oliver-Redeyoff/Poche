@@ -114,7 +114,7 @@ export function DropdownMenu({ trigger, items }: DropdownMenuProps) {
           style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
         >
           {item.icon && <IconSymbol name={item.icon} size={18} color={color} />}
-          <ThemedText style={[styles.itemText, { color }]}>
+          <ThemedText fontSize={16} style={[styles.itemText, { color }]}>
             {item.label}
           </ThemedText>
         </Pressable>
@@ -184,7 +184,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   itemText: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
   },
   separator: {

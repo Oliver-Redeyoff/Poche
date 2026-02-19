@@ -211,7 +211,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionTitle: {
-    fontSize: 13,
     fontFamily: 'SourceSans3_600SemiBold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

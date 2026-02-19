@@ -117,10 +117,10 @@ export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) 
                 }
               ]}
             >
-              <ThemedText style={{ color: tagToColor(tag), fontSize, fontFamily: 'SourceSans3_600SemiBold' }}>
+              <ThemedText fontSize={fontSize} style={{ color: tagToColor(tag), fontFamily: 'SourceSans3_600SemiBold' }}>
                 {tag}
               </ThemedText>
-              <ThemedText style={{ color: tagToColor(tag), fontSize, fontFamily: 'SourceSans3_700Bold', opacity: 0.4, marginLeft: 4 }}>
+              <ThemedText fontSize={fontSize} style={{ color: tagToColor(tag), fontFamily: 'SourceSans3_700Bold', opacity: 0.4, marginLeft: 4 }}>
                 ×
               </ThemedText>
             </Pressable>
@@ -157,8 +157,8 @@ export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) 
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            <ThemedText style={styles.modalTitle}>Add Tag</ThemedText>
-            <ThemedText style={[styles.modalSubtitle, { color: theme.colors.text }]}>
+            <ThemedText fontSize={20} style={styles.modalTitle}>Add Tag</ThemedText>
+            <ThemedText fontSize={14} style={[styles.modalSubtitle, { color: theme.colors.text }]}>
               Enter a new tag for this article
             </ThemedText>
             <TextInput
@@ -178,13 +178,13 @@ export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) 
                 }}
                 style={[styles.modalButton, styles.modalButtonCancel]}
               >
-                <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
+                <ThemedText fontSize={16} style={styles.modalButtonText}>Cancel</ThemedText>
               </Pressable>
               <Pressable
                 onPress={() => addTag(newTagInput)}
                 style={[styles.modalButton, styles.modalButtonAdd]}
               >
-                <ThemedText style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Add</ThemedText>
+                <ThemedText fontSize={16} style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Add</ThemedText>
               </Pressable>
             </View>
           </View>
@@ -251,12 +251,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
     fontFamily: 'Bitter_700Bold',
     marginBottom: 8,
   },
   modalSubtitle: {
-    fontSize: 14,
     marginBottom: 16,
     opacity: 0.7,
   },
@@ -287,7 +285,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239, 64, 86, 0.8)',
   },
   modalButtonText: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_600SemiBold',
   },
 })

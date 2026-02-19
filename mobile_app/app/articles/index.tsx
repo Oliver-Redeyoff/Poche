@@ -123,7 +123,7 @@ export default function ArticlesListScreen() {
           color={filterType === 'favorites' ? '#FFB800' : tintColor} 
         />
       )}
-      <ThemedText style={styles.headerTitle} numberOfLines={1}>
+      <ThemedText fontSize={17} style={styles.headerTitle} numberOfLines={1}>
         {headerTitle}
       </ThemedText>
     </View>
@@ -157,7 +157,7 @@ export default function ArticlesListScreen() {
               size={48} 
               color={textSecondary} 
             />
-            <ThemedText style={[styles.emptyTitle, { color: textColor }]}>
+            <ThemedText fontSize={20} style={[styles.emptyTitle, { color: textColor }]}>
               {filterType === 'favorites' 
                 ? 'No favorites yet' 
                 : filterType === 'tag'
@@ -165,7 +165,7 @@ export default function ArticlesListScreen() {
                 : 'No articles yet'
               }
             </ThemedText>
-            <ThemedText style={[styles.emptySubtitle, { color: textSecondary }]}>
+            <ThemedText fontSize={16} style={[styles.emptySubtitle, { color: textSecondary }]}>
               {filterType === 'favorites'
                 ? 'Tap the heart icon on articles to add them to your favorites'
                 : 'Save articles using the browser extension'
@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: 17,
     fontFamily: 'SourceSans3_600SemiBold',
   },
   tagDot: {
@@ -226,12 +225,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 20,
     fontFamily: 'Bitter_600SemiBold',
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
     textAlign: 'center',
     lineHeight: 24,
