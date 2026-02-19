@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy'
+import { Image as ExpoImage } from 'expo-image'
 import { Article } from '@poche/shared'
 
 // Markdown image regex: ![alt text](url) or ![alt text](url "title")
@@ -127,6 +128,78 @@ function getFaviconCachePath(userId: string, articleId: number, articleUrl: stri
 
   const hostnameHash = hostname.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 100)
   return `${cacheDir}poche_favicons/${userId}/${articleId}/${hostnameHash}.png`
+}
+
+function base64ToBytes(base64: string): Uint8Array | null {
+  try {
+    if (typeof globalThis.atob === 'function') {
+      const binary = globalThis.atob(base64)
+      const bytes = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i)
+      }
+      return bytes
+    }
+
+    const bufferCtor = (globalThis as any).Buffer
+    if (bufferCtor) {
+      return new Uint8Array(bufferCtor.from(base64, 'base64'))
+    }
+  } catch (error) {
+    console.error('Error decoding base64:', error)
+  }
+
+  return null
+}
+
+function thumbHashBytesToAverageRGBA(hash: Uint8Array): { r: number; g: number; b: number; a: number } | null {
+  if (hash.length < 6) {
+    return null
+  }
+
+  const header = hash[0] | (hash[1] << 8) | (hash[2] << 16)
+  const l = (header & 63) / 63
+  const p = ((header >> 6) & 63) / 31.5 - 1
+  const q = ((header >> 12) & 63) / 31.5 - 1
+  const hasAlpha = header >> 23
+  const a = hasAlpha ? (hash[5] & 15) / 15 : 1
+  const b = l - (2 / 3) * p
+  const r = (3 * l - b + q) / 2
+  const g = r - q
+
+  return {
+    r: Math.max(0, Math.min(1, r)),
+    g: Math.max(0, Math.min(1, g)),
+    b: Math.max(0, Math.min(1, b)),
+    a,
+  }
+}
+
+async function getAverageImageColor(imageSource: string): Promise<string | null> {
+  try {
+    const thumbhash = await ExpoImage.generateThumbhashAsync(imageSource)
+    if (!thumbhash) {
+      return null
+    }
+
+    const bytes = base64ToBytes(thumbhash)
+    if (!bytes) {
+      return null
+    }
+
+    const rgba = thumbHashBytesToAverageRGBA(bytes)
+    if (!rgba) {
+      return null
+    }
+
+    const r = Math.round(rgba.r * 255)
+    const g = Math.round(rgba.g * 255)
+    const b = Math.round(rgba.b * 255)
+    return `rgb(${r}, ${g}, ${b})`
+  } catch (error) {
+    console.error(`Error extracting average image color:`, error)
+    return null
+  }
 }
 
 /**
@@ -291,9 +364,14 @@ export async function processArticlesFavicons(
   for (const article of articles) {
     try {
       const faviconLocalPath = await cacheArticleFavicon(article, userId)
+      const colorSource = faviconLocalPath || article.faviconLocalPath || null
+      const faviconBackgroundColor = article.faviconBackgroundColor
+        ?? (colorSource ? await getAverageImageColor(colorSource) : null)
+
       updatedArticles.push({
         ...article,
         faviconLocalPath: faviconLocalPath ?? article.faviconLocalPath ?? null,
+        faviconBackgroundColor,
       })
     } catch (error) {
       console.error(`Error processing favicon for article ${article.id}:`, error)
