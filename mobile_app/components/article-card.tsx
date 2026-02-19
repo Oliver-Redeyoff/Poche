@@ -148,7 +148,13 @@ export function ArticleCard({
               placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
             />
           ) : (
-            <View style={[styles.tileImage, styles.tilePlaceholder]}>
+            <View
+              style={[
+                styles.tileImage,
+                styles.tilePlaceholder,
+                faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+              ]}
+            >
               {faviconUrl && !hasFaviconError ? (
                 <Image
                   source={{ uri: faviconUrl }}
@@ -225,7 +231,7 @@ export function ArticleCard({
             )}
           </View>
 
-          {imageUrl && (
+          {imageUrl ? (
             <Image
               source={{ uri: imageUrl ?? "" }}
               style={styles.articleImage}
@@ -233,6 +239,26 @@ export function ArticleCard({
               transition={200}
               placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
             />
+          ) : (
+            <View
+              style={[
+                styles.articleImage,
+                styles.articleImagePlaceholder,
+                faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+              ]}
+            >
+              {faviconUrl && !hasFaviconError ? (
+                <Image
+                  source={{ uri: faviconUrl }}
+                  style={styles.articleFavicon}
+                  contentFit="contain"
+                  transition={150}
+                  onError={() => setHasFaviconError(true)}
+                />
+              ) : (
+                <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+              )}
+            </View>
           )}
         </View>
       </Pressable>
@@ -417,6 +443,15 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 6,
     backgroundColor: '#f0f0f0',
+  },
+  articleImagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  articleFavicon: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
   },
   articleCardBottom: {
     display: 'flex',
