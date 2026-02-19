@@ -85,7 +85,7 @@ export default function HomeScreen() {
     }
   }
 
-  const { deleteArticle, updateArticleTags, toggleFavorite, markAsUnread } = useArticleActions({
+  const { deleteArticle, updateArticleTags, toggleFavorite, markAsRead, markAsUnread } = useArticleActions({
     userId: session?.user?.id,
     articles,
     setArticles
@@ -179,6 +179,7 @@ export default function HomeScreen() {
                         onDelete={deleteArticle}
                         onUpdateTags={updateArticleTags}
                         onToggleFavorite={toggleFavorite}
+                        onMarkAsRead={markAsRead}
                         onMarkAsUnread={markAsUnread}
                         variant="tile"
                       />
@@ -202,6 +203,7 @@ export default function HomeScreen() {
                       onDelete={deleteArticle}
                       onUpdateTags={updateArticleTags}
                       onToggleFavorite={toggleFavorite}
+                      onMarkAsRead={markAsRead}
                       onMarkAsUnread={markAsUnread}
                     />
                   ))}
@@ -223,6 +225,7 @@ export default function HomeScreen() {
                       onDelete={deleteArticle}
                       onUpdateTags={updateArticleTags}
                       onToggleFavorite={toggleFavorite}
+                      onMarkAsRead={markAsRead}
                       onMarkAsUnread={markAsUnread}
                     />
                   ))}
@@ -279,6 +282,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 12,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sectionTitle: {
     fontFamily: 'Bitter_600SemiBold',

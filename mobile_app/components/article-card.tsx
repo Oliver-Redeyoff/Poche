@@ -17,6 +17,7 @@ interface ArticleCardProps {
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
   onToggleFavorite?: (articleId: number) => Promise<void>
+  onMarkAsRead?: (articleId: number) => Promise<void>
   onMarkAsUnread?: (articleId: number) => Promise<void>
   showProgress?: boolean // Show reading progress bar
   variant?: 'default' | 'tile' // Layout variant
@@ -44,6 +45,7 @@ export function ArticleCard({
   onDelete,
   onUpdateTags,
   onToggleFavorite,
+  onMarkAsRead,
   onMarkAsUnread,
   showProgress = false,
   variant = 'default',
@@ -106,6 +108,12 @@ export function ArticleCard({
       label: 'Open Original',
       icon: 'arrow.up.right.square' as const,
       onPress: () => Linking.openURL(article.url!),
+    }] : []),
+    ...(onMarkAsRead ? [{
+      key: 'mark-read',
+      label: 'Mark as Read',
+      icon: 'book.fill' as const,
+      onPress: () => onMarkAsRead(article.id),
     }] : []),
     ...(onMarkAsUnread ? [{
       key: 'mark-unread',

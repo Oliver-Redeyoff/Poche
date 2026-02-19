@@ -350,6 +350,23 @@ export default function ArticleScreen() {
     }
   }, [article, session?.user])
 
+  const markAsRead = useCallback(async () => {
+    if (!article || !session?.user) return
+    try {
+      await updateArticleWithSync(session.user.id, article.id, { readingProgress: 100 })
+      setArticle({ ...article, readingProgress: 100 })
+      setReadingProgress(100)
+      readingProgressRef.current = 100
+      lastSyncedProgress.current = 100
+      progressBarWidth.value = withTiming(1, { duration: 300 })
+      lastLocalSaveProgress.current = 100
+      hasReachedEnd.current = true
+      setShowReturnButton(false)
+    } catch (error) {
+      Alert.alert('Error', 'Failed to mark article as read')
+    }
+  }, [article, session?.user])
+
   const returnToProgress = useCallback(() => {
     const scrollPosition = (readingProgressRef.current / 100) * (contentHeightRef.current - screenHeight)
     scrollViewRef.current?.scrollTo({ y: scrollPosition, animated: true })
@@ -364,6 +381,12 @@ export default function ArticleScreen() {
       onPress: () => Linking.openURL(article.url!),
     }] : []),
     {
+      key: 'mark-read',
+      label: 'Mark as Read',
+      icon: 'book.fill' as const,
+      onPress: markAsRead,
+    },
+    {
       key: 'mark-unread',
       label: 'Mark as Unread',
       icon: 'book.closed' as const,
@@ -376,7 +399,7 @@ export default function ArticleScreen() {
       destructive: true,
       onPress: deleteArticle,
     },
-  ], [article?.url, markAsUnread, deleteArticle])
+  ], [article?.url, markAsRead, markAsUnread, deleteArticle])
 
   const handleUpdateTags = useCallback(async (tags: string) => {
     if (!article || !session?.user) return
