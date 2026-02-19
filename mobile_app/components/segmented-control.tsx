@@ -48,7 +48,7 @@ export function SegmentedControl<T extends string>({
             ]}
             onPress={() => onValueChange(option.value)}
           >
-            <ThemedText style={[
+            <ThemedText fontSize={15} style={[
               styles.optionText,
               { color: isSelected ? textColor : colors.textMuted }
             ]}>
@@ -83,7 +83,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   optionText: {
-    fontSize: 15,
     fontFamily: 'SourceSans3_600SemiBold',
   },
 })

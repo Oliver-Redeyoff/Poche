@@ -173,7 +173,7 @@ export default function LibraryScreen() {
           onPress={() => router.push('/search')}
         >
           <IconSymbol name="magnifyingglass" size={20} color={textSecondary} />
-          <ThemedText style={[styles.searchPlaceholder, { color: textSecondary }]}>
+          <ThemedText fontSize={16} style={[styles.searchPlaceholder, { color: textSecondary }]}>
             Search articles...
           </ThemedText>
         </Pressable>
@@ -234,7 +234,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   searchPlaceholder: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
   },
   tileGrid: {

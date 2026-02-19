@@ -156,10 +156,10 @@ export default function HomeScreen() {
         {hasNoArticles ? (
           <View style={styles.emptyState}>
             <IconSymbol name="doc.text" size={48} color={textSecondary} />
-            <ThemedText style={[styles.emptyTitle, { color: textColor }]}>
+            <ThemedText fontSize={20} style={[styles.emptyTitle, { color: textColor }]}>
               No articles yet
             </ThemedText>
-            <ThemedText style={[styles.emptySubtitle, { color: textSecondary }]}>
+            <ThemedText fontSize={16} style={[styles.emptySubtitle, { color: textSecondary }]}>
               Save articles using the Poche browser extension to see them here
             </ThemedText>
           </View>
@@ -169,7 +169,7 @@ export default function HomeScreen() {
             {hasContinueReading && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <ThemedText style={styles.sectionTitle}>Continue Reading</ThemedText>
+                  <ThemedText fontSize={20} style={styles.sectionTitle}>Continue Reading</ThemedText>
                 </View>
                 <View style={styles.tileGrid}>
                   {continueReadingArticles.map(article => (
@@ -192,7 +192,7 @@ export default function HomeScreen() {
             {hasNewArticles && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <ThemedText style={styles.sectionTitle}>New Articles</ThemedText>
+                  <ThemedText fontSize={20} style={styles.sectionTitle}>New Articles</ThemedText>
                 </View>
                 <View style={styles.verticalList}>
                   {newArticles.map(article => (
@@ -213,7 +213,7 @@ export default function HomeScreen() {
             {hasRecentlyRead && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <ThemedText style={styles.sectionTitle}>Recently Read</ThemedText>
+                  <ThemedText fontSize={20} style={styles.sectionTitle}>Recently Read</ThemedText>
                 </View>
                 <View style={styles.verticalList}>
                   {recentlyReadArticles.map(article => (
@@ -234,10 +234,10 @@ export default function HomeScreen() {
             {!hasContinueReading && !hasNewArticles && !hasRecentlyRead && (
               <View style={styles.emptyState}>
                 <IconSymbol name="checkmark.circle" size={48} color={tintColor} />
-                <ThemedText style={[styles.emptyTitle, { color: textColor }]}>
+                <ThemedText fontSize={20} style={[styles.emptyTitle, { color: textColor }]}>
                   All caught up!
                 </ThemedText>
-                <ThemedText style={[styles.emptySubtitle, { color: textSecondary }]}>
+                <ThemedText fontSize={16} style={[styles.emptySubtitle, { color: textSecondary }]}>
                   You've read all your articles. Save more using the browser extension.
                 </ThemedText>
               </View>
@@ -268,7 +268,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   searchPlaceholder: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
   },
   section: {
@@ -282,7 +281,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 20,
     fontFamily: 'Bitter_600SemiBold',
   },
   verticalList: {
@@ -304,12 +302,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 20,
     fontFamily: 'Bitter_600SemiBold',
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
     textAlign: 'center',
     lineHeight: 24,

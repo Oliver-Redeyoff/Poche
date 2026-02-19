@@ -129,15 +129,15 @@ export default function Auth() {
       <View style={[styles.container, { paddingTop: topPadding }]}>
         {/* Header */}
         <View style={styles.forgotHeader}>
-          <ThemedText style={styles.forgotTitle}>Reset Password</ThemedText>
-          <ThemedText style={[styles.forgotSubtitle, { color: colors.textSecondary }]}>
+          <ThemedText fontSize={24} style={styles.forgotTitle}>Reset Password</ThemedText>
+          <ThemedText fontSize={15} style={[styles.forgotSubtitle, { color: colors.textSecondary }]}>
             Enter your email and we'll send you a link to reset your password.
           </ThemedText>
         </View>
 
         {/* Email Input */}
         <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Email</ThemedText>
+          <ThemedText fontSize={14} style={styles.label}>Email</ThemedText>
           <TextInput
             onChangeText={setEmail}
             value={email}
@@ -186,7 +186,7 @@ export default function Auth() {
 
       {/* Email Input */}
       <View style={styles.inputGroup}>
-        <ThemedText style={styles.label}>Email</ThemedText>
+        <ThemedText fontSize={14} style={styles.label}>Email</ThemedText>
         <TextInput
           onChangeText={setEmail}
           value={email}
@@ -201,7 +201,7 @@ export default function Auth() {
 
       {/* Password Input */}
       <View style={styles.inputGroup}>
-        <ThemedText style={styles.label}>Password</ThemedText>
+        <ThemedText fontSize={14} style={styles.label}>Password</ThemedText>
         <TextInput
           onChangeText={setPassword}
           value={password}
@@ -217,7 +217,7 @@ export default function Auth() {
       {/* Confirm Password (Sign Up only) */}
       {mode === 'signup' && (
         <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Confirm Password</ThemedText>
+          <ThemedText fontSize={14} style={styles.label}>Confirm Password</ThemedText>
           <TextInput
             onChangeText={setConfirmPassword}
             value={confirmPassword}
@@ -270,7 +270,6 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 8,
     marginLeft: 4,
-    fontSize: 14,
     fontFamily: 'SourceSans3_500Medium',
   },
   input: {
@@ -287,13 +286,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   forgotTitle: {
-    fontSize: 24,
     fontFamily: 'Bitter_600SemiBold',
     marginBottom: 8,
     textAlign: 'center',
   },
   forgotSubtitle: {
-    fontSize: 15,
     fontFamily: 'SourceSans3_400Regular',
     textAlign: 'center',
     lineHeight: 22,

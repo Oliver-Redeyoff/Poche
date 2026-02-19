@@ -625,7 +625,7 @@ export default function ArticleScreen() {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <ThemedText style={[styles.loadingText, { color: colors.textMuted }]}>
+        <ThemedText fontSize={16} style={[styles.loadingText, { color: colors.textMuted }]}>
           Loading article...
         </ThemedText>
       </View>
@@ -635,7 +635,7 @@ export default function ArticleScreen() {
   if (!article) {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ThemedText style={{ color: colors.textMuted }}>Article not found</ThemedText>
+        <ThemedText fontSize={16} style={{ color: colors.textMuted }}>Article not found</ThemedText>
       </View>
     )
   }
@@ -715,7 +715,7 @@ export default function ArticleScreen() {
             style={[styles.returnButton, { backgroundColor: colors.accent }]}
           >
             <IconSymbol name="chevron.down" size={14} color="#FFFFFF" />
-            <ThemedText style={styles.returnButtonText}>Continue reading</ThemedText>
+            <ThemedText fontSize={14} style={styles.returnButtonText}>Continue reading</ThemedText>
           </Pressable>
         </Animated.View>
       )}
@@ -747,7 +747,7 @@ export default function ArticleScreen() {
           {/* Meta information */}
           <View style={styles.meta}>
             {(article.siteName || article.author) && (
-              <ThemedText style={styles.siteName}>
+              <ThemedText fontSize={15} style={styles.siteName}>
                 {article.siteName || article.author}
                 {readingTime && ` • ${readingTime} min read`}
               </ThemedText>
@@ -828,7 +828,6 @@ const styles = StyleSheet.create({
   },
   returnButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
     fontFamily: 'SourceSans3_600SemiBold',
   },
   scrollView: {
@@ -855,7 +854,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   siteName: {
-    fontSize: 15,
     fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.8)',
   },

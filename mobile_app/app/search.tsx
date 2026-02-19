@@ -102,7 +102,7 @@ export default function SearchScreen() {
           )}
         </View>
         <Pressable onPress={() => router.back()} style={styles.cancelButton}>
-          <ThemedText style={[styles.cancelText, { color: tintColor }]}>
+          <ThemedText fontSize={17} style={[styles.cancelText, { color: tintColor }]}>
             Cancel
           </ThemedText>
         </Pressable>
@@ -118,26 +118,26 @@ export default function SearchScreen() {
         {!hasQuery ? (
           <View style={styles.emptyState}>
             <IconSymbol name="magnifyingglass" size={48} color={textSecondary} />
-            <ThemedText style={[styles.emptyTitle, { color: textSecondary }]}>
+            <ThemedText fontSize={20} style={[styles.emptyTitle, { color: textSecondary }]}>
               Search your articles
             </ThemedText>
-            <ThemedText style={[styles.emptySubtitle, { color: textSecondary }]}>
+            <ThemedText fontSize={16} style={[styles.emptySubtitle, { color: textSecondary }]}>
               Find articles by title, author, site, or tags
             </ThemedText>
           </View>
         ) : results.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol name="doc.text.magnifyingglass" size={48} color={textSecondary} />
-            <ThemedText style={[styles.emptyTitle, { color: textColor }]}>
+            <ThemedText fontSize={20} style={[styles.emptyTitle, { color: textColor }]}>
               No results found
             </ThemedText>
-            <ThemedText style={[styles.emptySubtitle, { color: textSecondary }]}>
+            <ThemedText fontSize={16} style={[styles.emptySubtitle, { color: textSecondary }]}>
               Try a different search term
             </ThemedText>
           </View>
         ) : (
           <View style={styles.resultsList}>
-            <ThemedText style={[styles.resultsCount, { color: textSecondary }]}>
+            <ThemedText fontSize={14} style={[styles.resultsCount, { color: textSecondary }]}>
               {results.length} {results.length === 1 ? 'result' : 'results'}
             </ThemedText>
             {results.map(article => (
@@ -188,7 +188,6 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   cancelText: {
-    fontSize: 17,
     fontFamily: 'SourceSans3_500Medium',
   },
   scrollView: {
@@ -205,12 +204,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 20,
     fontFamily: 'Bitter_600SemiBold',
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
     textAlign: 'center',
     lineHeight: 24,
@@ -220,7 +217,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   resultsCount: {
-    fontSize: 14,
     fontFamily: 'SourceSans3_500Medium',
     marginBottom: 4,
   },

@@ -167,7 +167,7 @@ export default function Onboarding() {
               pressed && styles.skipButtonPressed,
             ]}
           >
-            <ThemedText style={[styles.skipText, { color: textSecondary }]}>
+            <ThemedText fontSize={16} style={[styles.skipText, { color: textSecondary }]}>
               Skip
             </ThemedText>
           </Pressable>
@@ -193,11 +193,11 @@ export default function Onboarding() {
               </View>
 
               {/* Text Content */}
-              <ThemedText style={styles.title}>{slide.title}</ThemedText>
-              <ThemedText style={[styles.subtitle, { color: colors.accent }]}>
+              <ThemedText fontSize={28} style={styles.title}>{slide.title}</ThemedText>
+              <ThemedText fontSize={18} style={[styles.subtitle, { color: colors.accent }]}>
                 {slide.subtitle}
               </ThemedText>
-              <ThemedText style={[styles.description, { color: textSecondary }]}>
+              <ThemedText fontSize={16} style={[styles.description, { color: textSecondary }]}>
                 {slide.description}
               </ThemedText>
             </View>
@@ -247,7 +247,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   skipText: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_500Medium',
   },
   slide: {
@@ -268,19 +267,16 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontSize: 28,
     fontFamily: 'Bitter_700Bold',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 18,
     fontFamily: 'SourceSans3_600SemiBold',
     textAlign: 'center',
     marginBottom: 16,
   },
   description: {
-    fontSize: 16,
     fontFamily: 'SourceSans3_400Regular',
     textAlign: 'center',
     lineHeight: 24,

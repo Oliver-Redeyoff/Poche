@@ -149,12 +149,12 @@ export function ArticleCard({
           {/* Content section */}
           <View style={styles.tileContent}>
             {article.title && (
-              <ThemedText style={styles.tileTitle} numberOfLines={2}>
+              <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
                 {article.title}
               </ThemedText>
             )}
             <View style={styles.tileFooter}>
-              <ThemedText style={styles.tileMeta} numberOfLines={1}>
+              <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
                 {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
               </ThemedText>
               {/* Progress bar */}
@@ -167,7 +167,7 @@ export function ArticleCard({
                     ]} 
                   />
                 </View>
-                <ThemedText style={styles.tileProgressText}>{readingProgress}%</ThemedText>
+                <ThemedText fontSize={12} style={styles.tileProgressText}>{readingProgress}%</ThemedText>
               </View>
             </View>
           </View>
@@ -195,12 +195,12 @@ export function ArticleCard({
         <View style={styles.articleCardTop}>
           <View style={styles.articleCardText}>
             {article.title && (
-              <ThemedText style={styles.articleTitle} numberOfLines={2}>
+              <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
                 {article.title}
               </ThemedText>
             )}
             {article.siteName && (
-              <ThemedText style={styles.articleUrlAndDate}>
+              <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
                 {article.siteName} • {showProgress && remainingTime 
                   ? `${remainingTime} min left` 
                   : readingTime}
@@ -266,7 +266,7 @@ export function ArticleCard({
               ]} 
             />
           </View>
-          <ThemedText style={styles.progressText}>
+          <ThemedText fontSize={12} style={styles.progressText}>
             {readingProgress}%
           </ThemedText>
         </View>
@@ -300,7 +300,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tileTitle: {
-    fontSize: 15,
     fontFamily: 'Bitter_600SemiBold',
     lineHeight: 20,
   },
@@ -308,7 +307,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tileMeta: {
-    fontSize: 13,
     fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.75)',
   },
@@ -328,7 +326,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   tileProgressText: {
-    fontSize: 12,
     fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.75)',
     minWidth: 28,
@@ -363,7 +360,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   articleTitle: {
-    fontSize: 16,
     fontFamily: 'Bitter_700Bold',
   },
   progressContainer: {
@@ -384,7 +380,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   progressText: {
-    fontSize: 12,
     fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.75)',
     minWidth: 32,
@@ -392,7 +387,6 @@ const styles = StyleSheet.create({
   },
   articleUrlAndDate: {
     marginBottom: 4,
-    fontSize: 14,
     fontFamily: 'SourceSans3_500Medium',
     color: 'rgba(120, 120, 120, 0.75)',
   },

@@ -43,11 +43,11 @@ export function ReadingSettingsDrawer({
     <BottomDrawer visible={visible} onDismiss={onDismiss}>
       {/* Font Size */}
       <View style={styles.section}>
-        <ThemedText style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+        <ThemedText fontSize={13} style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Text Size
         </ThemedText>
         <View style={styles.fontSizeRow}>
-          <ThemedText style={[styles.fontSizeLabel, { color: colors.textMuted }]}>
+          <ThemedText fontSize={14} style={[styles.fontSizeLabel, { color: colors.textMuted }]}>
             A
           </ThemedText>
           <Slider
@@ -61,18 +61,18 @@ export function ReadingSettingsDrawer({
             maximumTrackTintColor={colors.divider}
             thumbTintColor={colors.accent}
           />
-          <ThemedText style={[styles.fontSizeLabel, { color: colors.text }]}>
+          <ThemedText fontSize={14} style={[styles.fontSizeLabel, { color: colors.text }]}>
             A
           </ThemedText>
         </View>
-        <ThemedText style={[styles.fontSizeValue, { color: colors.textSecondary }]}>
+        <ThemedText fontSize={14} style={[styles.fontSizeValue, { color: colors.textSecondary }]}>
           {Math.round(appFontSizeMultiplier * 100)}%
         </ThemedText>
       </View>
 
       {/* Theme */}
       <View style={styles.section}>
-        <ThemedText style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+        <ThemedText fontSize={13} style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Theme
         </ThemedText>
         <View style={styles.themeRow}>
@@ -124,6 +124,7 @@ export function ReadingSettingsDrawer({
                 ]}
               />
               <ThemedText
+                fontSize={12}
                 style={[
                   styles.themeLabel,
                   {
@@ -147,7 +148,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 13,
     fontFamily: 'SourceSans3_600SemiBold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   fontSizeLabel: {
-    fontSize: 14,
     fontFamily: 'SourceSans3_600SemiBold',
     width: 20,
     textAlign: 'center',
@@ -169,7 +168,6 @@ const styles = StyleSheet.create({
     height: 40,
   },
   fontSizeValue: {
-    fontSize: 14,
     fontFamily: 'SourceSans3_500Medium',
     marginTop: 6,
     textAlign: 'center',
@@ -190,7 +188,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   themeLabel: {
-    fontSize: 12,
     fontFamily: 'SourceSans3_500Medium',
   },
 })

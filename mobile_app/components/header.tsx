@@ -70,7 +70,7 @@ export function Header({
               hitSlop={8}
             >
               <IconSymbol name="chevron.left" size={22} color={textColor} />
-              <ThemedText style={styles.backText}>Back</ThemedText>
+              <ThemedText fontSize={20} style={styles.backText}>Back</ThemedText>
             </Pressable>
           ) : showLogo ? (
             <View style={styles.logo}>
@@ -78,7 +78,7 @@ export function Header({
                 source={require('@/assets/images/icon.png')}
                 style={styles.logoImage}
               />
-              <ThemedText style={styles.logoText}>Poche</ThemedText>
+              <ThemedText fontSize={26} style={styles.logoText}>Poche</ThemedText>
             </View>
           ) : (
             <View style={styles.placeholder} />
@@ -88,7 +88,7 @@ export function Header({
         {/* Center section */}
         <View style={styles.centerSection}>
           {centerElement || (title && (
-            <ThemedText style={styles.title}>{title}</ThemedText>
+            <ThemedText fontSize={17} style={styles.title}>{title}</ThemedText>
           ))}
         </View>
 
@@ -133,12 +133,10 @@ const styles = StyleSheet.create({
     height: 24,
   },
   logoText: {
-    fontSize: 26,
     letterSpacing: -1,
     fontFamily: 'Bitter_600SemiBold',
   },
   title: {
-    fontSize: 17,
     fontFamily: 'SourceSans3_600SemiBold',
   },
   backButton: {
@@ -147,7 +145,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   backText: {
-    fontSize: 20,
     fontFamily: 'SourceSans3_600SemiBold',
   },
   pressed: {

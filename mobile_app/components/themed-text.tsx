@@ -21,12 +21,14 @@ export function ThemedText({
   const theme = useTheme() as PocheTheme;
   const multiplier = theme.fontSizeMultiplier ?? 1;
 
+  const effectiveFontSize = (fontSize ?? BASE_FONT_SIZE) * multiplier;
+
   return (
     <Text
       style={[
         { color },
         style,
-        { fontSize: fontSize ? fontSize*multiplier : undefined }
+        { fontSize: effectiveFontSize },
       ]}
       {...rest}
     />
