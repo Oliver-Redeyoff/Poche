@@ -224,125 +224,125 @@ export function ArticleCard({
 
   // Default variant
   return (
-    <Animated.View
-      style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card }]}
-      entering={FadeIn.duration(200)}
-      exiting={FadeOut.duration(200)}
-      layout={LinearTransition.duration(200)}
-    >
-      <View style={[styles.articleCardWrapperInner]}>
-        {/* Top part of article card */}
-        <DropdownMenu
-          openOnLongPress
-          items={dropdownItems}
-          trigger={
-            <Pressable
-              onPress={handleCardPress}
-              style={({ pressed }) => [
-                styles.articleCard,
-                pressed && styles.articleCardPressed,
-              ]}
-            >
-              <View style={styles.articleCardTop}>
-                <View style={styles.articleCardText}>
-                  {article.title && (
-                    <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
-                      {article.title}
-                    </ThemedText>
-                  )}
-                  {article.siteName && (
-                    <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
-                      {article.siteName} • {showProgress && remainingTime
-                        ? `${remainingTime} min left`
-                        : readingTime}
-                    </ThemedText>
-                  )}
-                </View>
+    <DropdownMenu
+      openOnLongPress
+      items={dropdownItems}
+      trigger={
+        <Animated.View
+          style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card }]}
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          layout={LinearTransition.duration(200)}
+        >
+          <View style={[styles.articleCardWrapperInner]}>
+            {/* Top part of article card */}
+                <Pressable
+                  onPress={handleCardPress}
+                  style={({ pressed }) => [
+                    styles.articleCard,
+                    pressed && styles.articleCardPressed,
+                  ]}
+                >
+                  <View style={styles.articleCardTop}>
+                    <View style={styles.articleCardText}>
+                      {article.title && (
+                        <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
+                          {article.title}
+                        </ThemedText>
+                      )}
+                      {article.siteName && (
+                        <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
+                          {article.siteName} • {showProgress && remainingTime
+                            ? `${remainingTime} min left`
+                            : readingTime}
+                        </ThemedText>
+                      )}
+                    </View>
 
-                {imageUrl ? (
-                  <Image
-                    source={{ uri: imageUrl ?? "" }}
-                    style={styles.articleImage}
-                    contentFit="cover"
-                    transition={200}
-                    placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-                  />
-                ) : (
-                  <View
-                    style={[
-                      styles.articleImage,
-                      styles.articleImagePlaceholder,
-                      faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
-                    ]}
-                  >
-                    {faviconUrl && !hasFaviconError ? (
+                    {imageUrl ? (
                       <Image
-                        source={{ uri: faviconUrl }}
-                        style={styles.articleFavicon}
-                        contentFit="contain"
-                        transition={150}
-                        onError={() => setHasFaviconError(true)}
+                        source={{ uri: imageUrl ?? "" }}
+                        style={styles.articleImage}
+                        contentFit="cover"
+                        transition={200}
+                        placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                       />
                     ) : (
-                      <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+                      <View
+                        style={[
+                          styles.articleImage,
+                          styles.articleImagePlaceholder,
+                          faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+                        ]}
+                      >
+                        {faviconUrl && !hasFaviconError ? (
+                          <Image
+                            source={{ uri: faviconUrl }}
+                            style={styles.articleFavicon}
+                            contentFit="contain"
+                            transition={150}
+                            onError={() => setHasFaviconError(true)}
+                          />
+                        ) : (
+                          <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+                        )}
+                      </View>
                     )}
                   </View>
-                )}
-              </View>
-            </Pressable>
-          }
-        />
+                </Pressable>
 
-        {/* Bottom part of article card - tags and actions (outside main pressable) */}
-        <View style={styles.articleCardBottom}>
-          <View style={styles.articleTagList}>
-            <TagList
-              tags={article.tags}
-              onUpdateTags={(tags) => onUpdateTags(article.id, tags)}
-              size="small"
-            />
-          </View>
-
-          {/* Icon list */}
-          <View style={styles.articleIconList}>
-            {onToggleFavorite && (
-              <Pressable
-                onPress={handleToggleFavorite}
-                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-              >
-                <IconSymbol
-                  name={article.isFavorite ? 'star.fill' : 'star'}
-                  size={20}
-                  color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'}
+            {/* Bottom part of article card - tags and actions (outside main pressable) */}
+            <View style={styles.articleCardBottom}>
+              <View style={styles.articleTagList}>
+                <TagList
+                  tags={article.tags}
+                  onUpdateTags={(tags) => onUpdateTags(article.id, tags)}
+                  size="small"
                 />
-              </Pressable>
-            )}
-            <DropdownMenu
-              trigger={
-                <View style={{ padding: 2 }}>
-                  <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
-                </View>
-              }
-              items={dropdownItems}
-            />
+              </View>
+
+              {/* Icon list */}
+              <View style={styles.articleIconList}>
+                {onToggleFavorite && (
+                  <Pressable
+                    onPress={handleToggleFavorite}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+                  >
+                    <IconSymbol
+                      name={article.isFavorite ? 'star.fill' : 'star'}
+                      size={20}
+                      color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'}
+                    />
+                  </Pressable>
+                )}
+                <DropdownMenu
+                  trigger={
+                    <View style={{ padding: 2 }}>
+                      <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
+                    </View>
+                  }
+                  items={dropdownItems}
+                />
+              </View>
+            </View>
+
           </View>
-        </View>
 
-      </View>
+          {/* Progress bar */}
+          <View style={styles.progressContainer}>
+            <View style={[styles.progressBar]}>
+              <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${readingProgress}%`, backgroundColor: tintColor }
+                  ]}
+              />
+            </View>
+          </View>
 
-      {/* Progress bar */}
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBar]}>
-          <View
-              style={[
-                styles.progressFill,
-                { width: `${readingProgress}%`, backgroundColor: tintColor }
-              ]}
-          />
-        </View>
-      </View>
-
-    </Animated.View>
+        </Animated.View>
+      }
+    />
   )
 }
 

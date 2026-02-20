@@ -178,6 +178,7 @@ export default function HomeScreen() {
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
+                    style={styles.continueReadingScrollView}
                     contentContainerStyle={[
                       styles.tileGrid,
                     ]}
@@ -298,11 +299,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 12,
   },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   sectionTitle: {
     fontFamily: 'Bitter_600SemiBold',
   },
@@ -318,6 +314,10 @@ const styles = StyleSheet.create({
   },
   continueReadingRail: {
     position: 'relative',
+    overflow: 'visible',
+  },
+  continueReadingScrollView: {
+    overflow: 'visible',
   },
   verticalList: {
     paddingHorizontal: 16,
@@ -329,6 +329,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: GRID_PADDING,
     paddingRight: GRID_PADDING,
     gap: TILE_GAP,
+    overflow: 'visible',
   },
   emptyState: {
     flex: 1,
