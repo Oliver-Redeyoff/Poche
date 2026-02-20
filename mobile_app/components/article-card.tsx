@@ -343,7 +343,6 @@ const styles = StyleSheet.create({
   },
   tileCardPressed: {
     opacity: 0.8,
-    transform: [{ scale: 0.98 }],
   },
   tileImage: {
     width: '100%',
