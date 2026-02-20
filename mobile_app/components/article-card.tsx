@@ -188,18 +188,18 @@ export function ArticleCard({
               <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
                 {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
               </ThemedText>
-              {/* Progress bar */}
-              <View style={styles.tileProgressContainer}>
-                <View style={[styles.tileProgressBar, { backgroundColor: 'rgba(120, 120, 120, 0.15)' }]}>
-                  <View 
-                    style={[
-                      styles.tileProgressFill, 
-                      { width: `${readingProgress}%`, backgroundColor: tintColor }
-                    ]} 
-                  />
-                </View>
-                <ThemedText fontSize={12} style={styles.tileProgressText}>{readingProgress}%</ThemedText>
-              </View>
+            </View>
+          </View>
+
+          {/* Progress bar */}
+          <View style={styles.tileProgressContainer}>
+            <View style={[styles.tileProgressBar]}>
+              <View
+                  style={[
+                    styles.tileProgressFill,
+                    { width: `${readingProgress}%`, backgroundColor: tintColor }
+                  ]}
+              />
             </View>
           </View>
         </Pressable>
@@ -215,111 +215,111 @@ export function ArticleCard({
       exiting={FadeOut.duration(200)}
       layout={LinearTransition.duration(200)}
     >
-      {/* Top part of article card */}
-      <Pressable
-        onPress={() => router.push(`/article/${article.id}`)}
-        style={({ pressed }) => [
-          styles.articleCard,
-          pressed && styles.articleCardPressed,
-        ]}
-      >
-        <View style={styles.articleCardTop}>
-          <View style={styles.articleCardText}>
-            {article.title && (
-              <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
-                {article.title}
-              </ThemedText>
-            )}
-            {article.siteName && (
-              <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
-                {article.siteName} • {showProgress && remainingTime 
-                  ? `${remainingTime} min left` 
-                  : readingTime}
-              </ThemedText>
-            )}
-          </View>
-
-          {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl ?? "" }}
-              style={styles.articleImage}
-              contentFit="cover"
-              transition={200}
-              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-            />
-          ) : (
-            <View
-              style={[
-                styles.articleImage,
-                styles.articleImagePlaceholder,
-                faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
-              ]}
-            >
-              {faviconUrl && !hasFaviconError ? (
-                <Image
-                  source={{ uri: faviconUrl }}
-                  style={styles.articleFavicon}
-                  contentFit="contain"
-                  transition={150}
-                  onError={() => setHasFaviconError(true)}
-                />
-              ) : (
-                <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+      <View style={[styles.articleCardWrapperInner]}>
+        {/* Top part of article card */}
+        <Pressable
+          onPress={() => router.push(`/article/${article.id}`)}
+          style={({ pressed }) => [
+            styles.articleCard,
+            pressed && styles.articleCardPressed,
+          ]}
+        >
+          <View style={styles.articleCardTop}>
+            <View style={styles.articleCardText}>
+              {article.title && (
+                <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
+                  {article.title}
+                </ThemedText>
+              )}
+              {article.siteName && (
+                <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
+                  {article.siteName} • {showProgress && remainingTime
+                    ? `${remainingTime} min left`
+                    : readingTime}
+                </ThemedText>
               )}
             </View>
-          )}
-        </View>
-      </Pressable>
 
-      {/* Bottom part of article card - tags and actions (outside main pressable) */}
-      <View style={styles.articleCardBottom}>
-        <View style={styles.articleTagList}>
-          <TagList
-            tags={article.tags}
-            onUpdateTags={(tags) => onUpdateTags(article.id, tags)}
-            size="small"
-          />
-        </View>
-
-        {/* Icon list */}
-        <View style={styles.articleIconList}>
-          {onToggleFavorite && (
-            <Pressable
-              onPress={handleToggleFavorite}
-              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-            >
-              <IconSymbol 
-                name={article.isFavorite ? 'star.fill' : 'star'} 
-                size={20} 
-                color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'} 
+            {imageUrl ? (
+              <Image
+                source={{ uri: imageUrl ?? "" }}
+                style={styles.articleImage}
+                contentFit="cover"
+                transition={200}
+                placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
               />
-            </Pressable>
-          )}
-          <DropdownMenu
-            trigger={
-              <View style={{ padding: 2 }}>
-                <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
+            ) : (
+              <View
+                style={[
+                  styles.articleImage,
+                  styles.articleImagePlaceholder,
+                  faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+                ]}
+              >
+                {faviconUrl && !hasFaviconError ? (
+                  <Image
+                    source={{ uri: faviconUrl }}
+                    style={styles.articleFavicon}
+                    contentFit="contain"
+                    transition={150}
+                    onError={() => setHasFaviconError(true)}
+                  />
+                ) : (
+                  <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+                )}
               </View>
-            }
-            items={dropdownItems}
-          />
+            )}
+          </View>
+        </Pressable>
+
+        {/* Bottom part of article card - tags and actions (outside main pressable) */}
+        <View style={styles.articleCardBottom}>
+          <View style={styles.articleTagList}>
+            <TagList
+              tags={article.tags}
+              onUpdateTags={(tags) => onUpdateTags(article.id, tags)}
+              size="small"
+            />
+          </View>
+
+          {/* Icon list */}
+          <View style={styles.articleIconList}>
+            {onToggleFavorite && (
+              <Pressable
+                onPress={handleToggleFavorite}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+              >
+                <IconSymbol
+                  name={article.isFavorite ? 'star.fill' : 'star'}
+                  size={20}
+                  color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'}
+                />
+              </Pressable>
+            )}
+            <DropdownMenu
+              trigger={
+                <View style={{ padding: 2 }}>
+                  <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
+                </View>
+              }
+              items={dropdownItems}
+            />
+          </View>
         </View>
+
       </View>
 
       {/* Progress bar */}
-      {showProgress && readingProgress > 0 && (
+      {readingProgress > 0 && readingProgress < 100 && (
         <View style={styles.progressContainer}>
-          <View style={[styles.progressBar, { backgroundColor: theme.colors.border }]}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { width: `${readingProgress}%`, backgroundColor: tintColor }
-              ]} 
+          <View style={[styles.progressBar]}>
+            <View
+                style={[
+                  styles.progressFill,
+                  { width: `${readingProgress}%`, backgroundColor: tintColor }
+                ]}
             />
           </View>
-          <ThemedText fontSize={12} style={styles.progressText}>
-            {readingProgress}%
-          </ThemedText>
         </View>
       )}
 
@@ -330,7 +330,7 @@ export function ArticleCard({
 const styles = StyleSheet.create({
   // Tile variant styles
   tileCard: {
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   tileCardPressed: {
@@ -367,31 +367,25 @@ const styles = StyleSheet.create({
     color: 'rgba(120, 120, 120, 0.75)',
   },
   tileProgressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    width: '100%',
   },
   tileProgressBar: {
     flex: 1,
     height: 4,
-    borderRadius: 2,
     overflow: 'hidden',
   },
   tileProgressFill: {
     height: '100%',
     borderRadius: 2,
   },
-  tileProgressText: {
-    fontFamily: 'SourceSans3_500Medium',
-    color: 'rgba(120, 120, 120, 0.75)',
-    minWidth: 28,
-    textAlign: 'right',
-  },
   // Default variant styles
   articleCardWrapper: {
-    padding: 12,
-    borderRadius: 18,
+    borderRadius: 12,
     boxShadow: '0px 8px 24px rgba(120, 120, 120, 0.05)',
+    overflow: "hidden"
+  },
+  articleCardWrapperInner: {
+    padding: 12,
   },
   articleCard: {
     display: 'flex',
@@ -419,11 +413,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Bitter_700Bold',
   },
   progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     width: '100%',
-    marginTop: 8,
+    marginTop: 4,
   },
   progressBar: {
     flex: 1,
@@ -434,12 +425,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  progressText: {
-    fontFamily: 'SourceSans3_500Medium',
-    color: 'rgba(120, 120, 120, 0.75)',
-    minWidth: 32,
-    textAlign: 'right',
   },
   articleUrlAndDate: {
     marginBottom: 4,

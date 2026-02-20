@@ -55,8 +55,8 @@ export function Header({
   }))
 
   return (
-    <Animated.View style={[{ overflow: 'hidden' }, wrapperAnimStyle]}>
-      <Animated.View style={[slideAnimStyle, { paddingTop: insets.top, backgroundColor }, style]}>
+    <Animated.View style={[{ overflow: 'hidden', backgroundColor }, wrapperAnimStyle]}>
+      <Animated.View style={[slideAnimStyle, { paddingTop: insets.top }, style]}>
         <View style={[styles.content, { borderBottomColor: borderColor }]}>
           {/* Left section */}
           <View style={styles.leftSection}>
