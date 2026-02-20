@@ -115,17 +115,17 @@ export function ArticleCard({
       icon: 'arrow.up.right.square' as const,
       onPress: () => Linking.openURL(article.url!),
     }] : []),
-    ...(onMarkAsRead ? [{
-      key: 'mark-read',
-      label: 'Mark as Read',
-      icon: 'book.fill' as const,
-      onPress: () => onMarkAsRead(article.id),
-    }] : []),
     ...(onMarkAsUnread ? [{
       key: 'mark-unread',
       label: 'Mark as Unread',
       icon: 'book.closed' as const,
       onPress: () => onMarkAsUnread(article.id),
+    }] : []),
+    ...(onMarkAsRead ? [{
+      key: 'mark-read',
+      label: 'Mark as Read',
+      icon: 'book.fill' as const,
+      onPress: () => onMarkAsRead(article.id),
     }] : []),
     {
       key: 'delete',
