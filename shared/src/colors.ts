@@ -81,7 +81,7 @@ const lightColors: Colors = {
 
   // Border Colors
   border: {
-    primary: '#F5EBE4',      // Default border
+    primary: '#ebe1da',      // Default border
     secondary: '#E8D5C4',    // Sand - subtle borders
     focus: '#EF4056',        // Brand color for focus states
   },
