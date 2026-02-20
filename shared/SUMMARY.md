@@ -94,6 +94,8 @@ interface Article {
   finishedAt: string | null;     // When finished (progress = 100)
   createdAt: string;
   updatedAt: string;
+  faviconLocalPath?: string | null;       // Local cached favicon path (mobile)
+  faviconBackgroundColor?: string | null; // Extracted favicon placeholder color (mobile)
 }
 ```
 
@@ -326,4 +328,3 @@ Potential additions:
 - Reading time calculation utility
 - Article serialization/deserialization helpers
 - Tag autocomplete utilities
-

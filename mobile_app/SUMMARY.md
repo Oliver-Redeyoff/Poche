@@ -12,6 +12,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Account Deletion**: Delete account from account settings drawer with password confirmation (iOS Alert.prompt)
 - **Tab Navigation**: Home and Library tabs with native iOS blur effects
 - **Home Page**: "Continue Reading" section (in-progress articles), "New Articles" section (unread articles), and "Recently Read" section (3 most recently finished articles at 100% progress)
+- **Continue Reading Rail**: Horizontally scrollable tile rail with swipe affordance (peek + edge hint + "Swipe for more" hint)
 - **Library Page**: Tile grid for All Articles, Favorites, and tag-based filtering with article counts
 - **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
 - **Unified Theme System**: Light, dark, and sepia themes apply consistently across all screens; `Colors` palette has 3 schemes; `useResolvedColorScheme()` hook replaces direct `useColorScheme()` for color decisions
@@ -23,6 +24,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
+- **Offline Favicon Caching**: Favicons are downloaded during sync and saved locally per article for offline card placeholders, with extracted background colors
 - **Background Sync**: Periodic background task to sync latest articles and cache images
 - **Instant Loading**: Articles from local storage appear immediately
 - **Search**: Full-screen search across all articles by title, site name, tags, and content
@@ -118,6 +120,7 @@ First-time user onboarding experience:
 ### app/(tabs)/index.tsx
 Home tab that:
 - Displays "Continue Reading" section with in-progress articles (1-99% progress)
+- Renders Continue Reading as a horizontal rail with swipe affordance cues
 - Displays "New Articles" section with unread articles (0% progress)
 - Displays "Recently Read" section with 3 most recently finished articles (100% progress), sorted by `updatedAt`
 - Shows "all caught up" empty state only when all three sections are empty
@@ -204,12 +207,14 @@ Reusable positioned dropdown menu component:
 Article card component:
 - Renders individual article card with title, site name, reading time, and optional image
 - Handles navigation to article detail page
+- Uses locally cached favicon placeholders (with extracted background colors) when no article image exists
 - **Favorite toggle**: Star icon (outline when not favorited, filled gold when favorited)
-- **Dropdown menu**: Ellipsis icon opens `DropdownMenu` with Open Original, Mark as Unread, and Delete (destructive) options
+- **Dropdown menu**: Ellipsis icon opens `DropdownMenu` with Open Original, Mark as Read, Mark as Unread, and Delete (destructive) options
 - Entry and exit animations using react-native-reanimated
 - **Tag management**: Uses shared `TagList` component (tag logic removed from ArticleCard)
 - **Reading time**: Calculates and displays reading time based on article wordCount
-- Updates parent state and storage on deletion, tag changes, favorites, and mark-as-unread
+- **Progress bars always visible**: Shows progress bars without percentage labels in tile and default variants
+- Updates parent state and storage on deletion, tag changes, favorites, and read/unread actions
 
 ### components/markdown.tsx
 Custom markdown-to-React-Native renderer:
@@ -228,9 +233,9 @@ Article detail screen with premium reading experience:
 - Uses custom `Markdown` component for rendering
 - **Header actions**:
   - Favorite toggle button (star icon, gold when favorited)
-  - Dropdown menu (ellipsis icon) via `DropdownMenu` component with: Open Original, Mark as Unread, Delete (destructive)
+  - Dropdown menu (ellipsis icon) via `DropdownMenu` component with: Open Original, Mark as Read, Mark as Unread, Delete (destructive)
 - **Reading progress bar**: Animated thin progress bar below header using Reanimated `useSharedValue` + `withTiming` (300ms); fills smoothly as user scrolls
-- **Collapsible header**: Header slides up and collapses when scrolling down (past 80px), reappears on scroll up; safe area inset height is preserved so content doesn't appear behind the Dynamic Island; content fades out with opacity animation
+- **Collapsible header**: Header slides up and collapses when scrolling down (past 80px), reappears on scroll up; header/progress use an absolute overlay so ScrollView height does not change while collapsing
 - **"Continue reading" button**: Floating pill button appears when user scrolls 15%+ above their current reading progress; uses `FadeIn`/`FadeOut` with hysteresis (shows at 15% gap, hides at 5% gap) to prevent flicker; scrolls smoothly back to progress position on press; hidden when progress is 100%; position animates in sync with collapsible header
 - **Reading progress tracking**:
   - Tracks scroll position and calculates progress (0-100%)
@@ -261,7 +266,7 @@ API client using `@poche/shared` helpers:
 
 ### lib/article-sync.ts
 Centralized article sync logic:
-- `syncArticles()` - Sync articles from backend and cache images
+- `syncArticles()` - Sync articles from backend, cache content images, and cache/backfill article favicons (with background color extraction)
 - `loadArticlesFromStorage()` - Load articles from AsyncStorage
 - `saveArticlesToStorage()` - Save articles to AsyncStorage
 - `clearArticlesFromStorage(userId)` - Clear all locally stored articles for a user (used on logout)
@@ -276,6 +281,7 @@ Custom hook for article management with optimistic updates:
 - `deleteArticle(articleId)` - Delete article with sync to backend
 - `updateArticleTags(articleId, tags)` - Update article tags with sync
 - `toggleFavorite(articleId)` - Toggle favorite status with optimistic update and rollback on error
+- `markAsRead(articleId)` - Set reading progress to 100 with optimistic update and rollback on error
 - `markAsUnread(articleId)` - Reset reading progress to 0 with optimistic update and rollback on error
 - Used by Home, Library, Search, and Articles List screens to reduce code duplication
 
@@ -327,10 +333,13 @@ API URL is configured via environment variable:
 - `startedAt` (timestamp) - When first opened
 - `finishedAt` (timestamp) - When finished reading
 - `createdAt`, `updatedAt` (timestamps)
+- `faviconLocalPath` (optional string) - Local path to cached favicon for offline placeholders
+- `faviconBackgroundColor` (optional string) - Extracted color used as favicon placeholder background
 
 ### Local Storage
 - Articles cached in AsyncStorage with key `@poche_articles_{userId}`
 - Incremental sync: Only fetches new articles not already in local storage
+- Existing stored articles are backfilled with cached favicons/background colors on sync
 - Offline support: Article detail view loads only from local storage
 - **Cleared on logout**: `clearArticlesFromStorage()` removes all articles for user
 
@@ -536,13 +545,18 @@ module.exports = config;
 - ✅ **Recently Read section**: Home tab shows 3 most recently finished articles (100% progress), sorted by `updatedAt`
 - ✅ **All caught up logic**: Empty state only when Continue Reading, New Articles, and Recently Read are all empty
 - ✅ **DropdownMenu component**: Reusable positioned dropdown with smart placement (above/below, left/right aligned), dark mode, auto-separators before destructive items
-- ✅ **Article detail dropdown**: Header uses favorite toggle + ellipsis dropdown (Open Original, Mark as Unread, Delete) instead of multiple icon buttons
-- ✅ **ArticleCard dropdown**: Ellipsis dropdown replaces direct delete button, includes Open Original, Mark as Unread, Delete
+- ✅ **Article detail dropdown**: Header includes Open Original, Mark as Read, Mark as Unread, Delete
+- ✅ **ArticleCard dropdown**: Ellipsis dropdown replaces direct delete button, includes Open Original, Mark as Read, Mark as Unread, Delete
+- ✅ **Mark as Read**: Sets reading progress to 100, available in article detail and article cards via `useArticleActions` hook
 - ✅ **Mark as Unread**: Resets reading progress to 0, available in article detail and article cards via `useArticleActions` hook
 - ✅ **Icon mappings**: Added ellipsis, book.closed icons to `icon-symbol.tsx`
 - ✅ **Reading progress bar**: Animated Reanimated bar below header (`useSharedValue` + `withTiming` 300ms), resets on mark-as-unread
 - ✅ **Collapsible header**: `hidden` prop on Header component; slides up + fades out via Reanimated (250ms); preserves safe area inset height; driven by scroll direction detection in article screen (10px threshold, only after 80px scroll)
+- ✅ **Absolute header overlay**: Article header/progress are overlaid (absolute) to keep ScrollView layout stable while collapsing
 - ✅ **Continue reading button**: Floating pill below header; appears 15%+ above progress with hysteresis (hides at 5%); animated position tracks header collapse; hidden at 100% progress
+- ✅ **Continue Reading horizontal rail**: Home tab Continue Reading section uses horizontal tiles with swipe affordance hints
+- ✅ **Favicon placeholders**: Article cards use cached local favicon + extracted background color when no article image is available
+- ✅ **Always-visible card progress bars**: Card progress bars now always render without percentage text
 - ✅ **Unified theme system**: `Colors` palette expanded with `sepia` scheme; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme's `resolvedScheme` property; all components migrated from `useColorScheme()` + `Colors[colorScheme]` to `useResolvedColorScheme()` + `Colors[resolvedScheme]`
 - ✅ **Global theme selection**: `appTheme` (`'auto' | 'light' | 'sepia' | 'dark'`) in AuthContext, persisted to AsyncStorage; navigation `ThemeProvider` uses resolved theme (`PocheLightTheme`, `PocheDarkTheme`, `PocheSepiaTheme`)
 - ✅ **BottomDrawer component**: Reusable bottom sheet (`components/bottom-drawer.tsx`) with Modal, swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation, theme-aware colors
@@ -577,6 +591,7 @@ The article detail view uses a custom `Markdown` component (`components/markdown
 ### Image Caching Architecture
 - `lib/image-cache.ts` contains utilities for extracting, downloading, and caching images
 - Images are stored in `${FileSystem.documentDirectory}article-images/{userId}/{articleId}/`
+- Favicons are stored in `${FileSystem.documentDirectory}poche_favicons/{userId}/{articleId}/` and colorized placeholders are derived from generated thumbhash averages
 - Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function
 
 ### React Native iOS Text Rendering Patch
