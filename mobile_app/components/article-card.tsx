@@ -382,7 +382,6 @@ const styles = StyleSheet.create({
   },
   tileTitle: {
     fontFamily: 'Bitter_600SemiBold',
-    lineHeight: 20,
   },
   tileFooter: {
     gap: 6,

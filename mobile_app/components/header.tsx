@@ -6,6 +6,7 @@ import { router } from 'expo-router'
 import { ThemedText } from './themed-text'
 import { IconSymbol } from './ui/icon-symbol'
 import { useThemeColor } from '@/hooks/use-theme-color'
+import { useAuth } from '@/app/_layout'
 
 interface HeaderProps {
   /** Show the Poche logo on the left */
@@ -33,6 +34,7 @@ export function Header({
   style,
   hidden = false,
 }: HeaderProps) {
+  const { appFontSizeMultiplier } = useAuth()
   const insets = useSafeAreaInsets()
   const textColor = useThemeColor({}, 'text')
   const borderColor = useThemeColor({}, 'border')
@@ -75,7 +77,7 @@ export function Header({
             <View style={styles.logo}>
               <Image
                 source={require('@/assets/images/icon.png')}
-                style={styles.logoImage}
+                style={{ width: 24 * appFontSizeMultiplier, height: 24 * appFontSizeMultiplier }}
               />
               <ThemedText fontSize={26} style={styles.logoText}>Poche</ThemedText>
             </View>
@@ -113,9 +115,9 @@ const styles = StyleSheet.create({
   leftSection: {
     flex: 1,
     alignItems: 'flex-start',
+    overflow: "visible",
   },
   centerSection: {
-    flex: 2,
     alignItems: 'center',
   },
   rightSection: {
@@ -126,10 +128,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-  },
-  logoImage: {
-    width: 24,
-    height: 24,
   },
   logoText: {
     letterSpacing: -1,
