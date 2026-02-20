@@ -51,6 +51,8 @@ export interface Article {
   updatedAt: string
   faviconLocalPath?: string | null // Local cached favicon path for offline use (mobile)
   faviconBackgroundColor?: string | null // Color extracted from favicon for tile placeholder background (mobile)
+  previewImageUrl?: string | null // Remote link preview image URL from article metadata (mobile)
+  previewImageLocalPath?: string | null // Local cached link preview image path for offline use (mobile)
 }
 
 // Legacy type alias for backward compatibility during migration

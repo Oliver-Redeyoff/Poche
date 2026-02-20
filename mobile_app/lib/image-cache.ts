@@ -130,6 +130,76 @@ function getFaviconCachePath(userId: string, articleId: number, articleUrl: stri
   return `${cacheDir}poche_favicons/${userId}/${articleId}/${hostnameHash}.png`
 }
 
+function getLinkPreviewCachePath(userId: string, articleId: number, imageUrl: string): string | null {
+  const cacheDir = FileSystem.documentDirectory
+  if (!cacheDir) {
+    return null
+  }
+
+  const imageHash = imageUrl.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 100)
+  const extension = imageUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i)?.[1] || 'jpg'
+  return `${cacheDir}poche_link_previews/${userId}/${articleId}/${imageHash}.${extension}`
+}
+
+function extractMetaImageContent(html: string, key: string): string | null {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const patterns = [
+    new RegExp(`<meta[^>]*property=["']${escapedKey}["'][^>]*content=["']([^"']+)["'][^>]*>`, 'i'),
+    new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${escapedKey}["'][^>]*>`, 'i'),
+    new RegExp(`<meta[^>]*name=["']${escapedKey}["'][^>]*content=["']([^"']+)["'][^>]*>`, 'i'),
+    new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${escapedKey}["'][^>]*>`, 'i'),
+  ]
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern)
+    if (match?.[1]) {
+      return match[1].trim()
+    }
+  }
+
+  return null
+}
+
+function resolvePreviewImageUrl(candidateUrl: string, articleUrl: string): string | null {
+  try {
+    const resolvedUrl = new URL(candidateUrl, articleUrl).toString()
+    if (resolvedUrl.startsWith('http://') || resolvedUrl.startsWith('https://')) {
+      return resolvedUrl
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}
+
+async function fetchLinkPreviewImageUrl(articleUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(articleUrl)
+    if (!response.ok) {
+      return null
+    }
+
+    const html = await response.text()
+    const metaKeys = ['og:image:secure_url', 'og:image', 'twitter:image:src', 'twitter:image']
+    for (const key of metaKeys) {
+      const content = extractMetaImageContent(html, key)
+      if (!content) {
+        continue
+      }
+
+      const resolved = resolvePreviewImageUrl(content, articleUrl)
+      if (resolved) {
+        return resolved
+      }
+    }
+  } catch (error) {
+    console.error(`Error fetching link preview image from ${articleUrl}:`, error)
+  }
+
+  return null
+}
+
 function base64ToBytes(base64: string): Uint8Array | null {
   try {
     if (typeof globalThis.atob === 'function') {
@@ -375,6 +445,76 @@ export async function processArticlesFavicons(
       })
     } catch (error) {
       console.error(`Error processing favicon for article ${article.id}:`, error)
+      updatedArticles.push(article)
+    }
+  }
+
+  return updatedArticles
+}
+
+/**
+ * Cache article link preview image (e.g. og:image/twitter:image) for offline use.
+ */
+export async function cacheArticleLinkPreview(
+  article: Article,
+  userId: string
+): Promise<{ previewImageUrl: string | null; previewImageLocalPath: string | null }> {
+  if (!article.url) {
+    return {
+      previewImageUrl: article.previewImageUrl ?? null,
+      previewImageLocalPath: article.previewImageLocalPath ?? null,
+    }
+  }
+
+  const previewImageUrl = article.previewImageUrl ?? await fetchLinkPreviewImageUrl(article.url)
+  if (!previewImageUrl) {
+    return { previewImageUrl: null, previewImageLocalPath: null }
+  }
+
+  const localPath = getLinkPreviewCachePath(userId, article.id, previewImageUrl)
+  if (!localPath) {
+    return { previewImageUrl, previewImageLocalPath: null }
+  }
+
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(localPath)
+    if (fileInfo.exists) {
+      return { previewImageUrl, previewImageLocalPath: localPath }
+    }
+
+    const downloaded = await downloadImage(previewImageUrl, localPath)
+    return {
+      previewImageUrl,
+      previewImageLocalPath: downloaded ? localPath : null,
+    }
+  } catch (error) {
+    console.error(`Error caching link preview for article ${article.id}:`, error)
+    return {
+      previewImageUrl,
+      previewImageLocalPath: article.previewImageLocalPath ?? null,
+    }
+  }
+}
+
+/**
+ * Cache link preview images for multiple articles and return updated article objects.
+ */
+export async function processArticlesLinkPreviews(
+  articles: Article[],
+  userId: string
+): Promise<Article[]> {
+  const updatedArticles: Article[] = []
+
+  for (const article of articles) {
+    try {
+      const preview = await cacheArticleLinkPreview(article, userId)
+      updatedArticles.push({
+        ...article,
+        previewImageUrl: preview.previewImageUrl ?? article.previewImageUrl ?? null,
+        previewImageLocalPath: preview.previewImageLocalPath ?? article.previewImageLocalPath ?? null,
+      })
+    } catch (error) {
+      console.error(`Error processing link preview for article ${article.id}:`, error)
       updatedArticles.push(article)
     }
   }

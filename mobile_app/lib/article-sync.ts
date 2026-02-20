@@ -1,7 +1,7 @@
 import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi, ArticleUpdates } from './api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '@poche/shared'
-import { processArticlesImages, processArticlesFavicons } from './image-cache'
+import { processArticlesImages, processArticlesFavicons, processArticlesLinkPreviews } from './image-cache'
 
 /**
  * Get storage key for articles (per user)
@@ -129,6 +129,8 @@ export async function syncArticles(
 
     // Always cache favicons for offline tile placeholders
     processedNewArticles = await processArticlesFavicons(processedNewArticles, userId)
+    // Cache link preview images (og:image/twitter:image) for richer offline cards
+    processedNewArticles = await processArticlesLinkPreviews(processedNewArticles, userId)
     
     // Merge and sort articles
     const allArticles = mergeAndSortArticles(processedNewArticles, processedStoredArticles)
