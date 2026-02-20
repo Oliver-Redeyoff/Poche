@@ -749,7 +749,7 @@ export default function ArticleScreen() {
       <ScrollView 
         ref={scrollViewRef}
         style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0, backgroundColor: colors.background }]}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight + 24 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight }]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
