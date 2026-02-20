@@ -1,4 +1,4 @@
-import { StyleSheet, View, Pressable, Alert, Linking } from 'react-native'
+import {StyleSheet, View, Pressable, Alert, Linking, StyleProp, ViewStyle} from 'react-native'
 import { useEffect, useState } from 'react'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
@@ -13,6 +13,7 @@ import { useThemeColor } from '@/hooks/use-theme-color'
 import { useTheme } from '@react-navigation/native'
 
 interface ArticleCardProps {
+  style?: StyleProp<ViewStyle>
   article: Article
   onDelete: (articleId: number) => Promise<void>
   onUpdateTags: (articleId: number, tags: string) => Promise<void>
@@ -41,6 +42,7 @@ function calculateReadingTime(wordCount: number | null | undefined): string {
 }
 
 export function ArticleCard({
+  style,
   article,
   onDelete,
   onUpdateTags,
@@ -134,6 +136,7 @@ export function ArticleCard({
   if (isTile) {
     return (
       <Animated.View
+        style={[style]}
         entering={FadeIn.duration(200)}
         exiting={FadeOut.duration(200)}
         layout={LinearTransition.duration(200)}
@@ -146,48 +149,50 @@ export function ArticleCard({
             pressed && styles.tileCardPressed,
           ]}
         >
-          {/* Image section */}
-          {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl }}
-              style={styles.tileImage}
-              contentFit="cover"
-              transition={200}
-              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-            />
-          ) : (
-            <View
-              style={[
-                styles.tileImage,
-                styles.tilePlaceholder,
-                faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
-              ]}
-            >
-              {faviconUrl && !hasFaviconError ? (
-                <Image
-                  source={{ uri: faviconUrl }}
-                  style={styles.tileFavicon}
-                  contentFit="contain"
-                  transition={150}
-                  onError={() => setHasFaviconError(true)}
-                />
-              ) : (
-                <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
-              )}
-            </View>
-          )}
-          
-          {/* Content section */}
-          <View style={styles.tileContent}>
-            {article.title && (
-              <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
-                {article.title}
-              </ThemedText>
+          <View>
+            {/* Image section */}
+            {imageUrl ? (
+              <Image
+                source={{ uri: imageUrl }}
+                style={styles.tileImage}
+                contentFit="cover"
+                transition={200}
+                placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.tileImage,
+                  styles.tilePlaceholder,
+                  faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+                ]}
+              >
+                {faviconUrl && !hasFaviconError ? (
+                  <Image
+                    source={{ uri: faviconUrl }}
+                    style={styles.tileFavicon}
+                    contentFit="contain"
+                    transition={150}
+                    onError={() => setHasFaviconError(true)}
+                  />
+                ) : (
+                  <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
+                )}
+              </View>
             )}
-            <View style={styles.tileFooter}>
-              <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
-                {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
-              </ThemedText>
+            
+            {/* Content section */}
+            <View style={styles.tileContent}>
+              {article.title && (
+                <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
+                  {article.title}
+                </ThemedText>
+              )}
+              <View style={styles.tileFooter}>
+                <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
+                  {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
+                </ThemedText>
+              </View>
             </View>
           </View>
 
@@ -330,6 +335,9 @@ export function ArticleCard({
 const styles = StyleSheet.create({
   // Tile variant styles
   tileCard: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
     borderRadius: 12,
     overflow: 'hidden',
   },
