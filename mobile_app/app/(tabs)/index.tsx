@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { StyleSheet, View, ScrollView, RefreshControl, Pressable, useWindowDimensions } from 'react-native'
+import { StyleSheet, View, ScrollView, RefreshControl, Pressable, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { useFocusEffect } from '@react-navigation/native'
@@ -23,15 +23,15 @@ export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions()
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
-  
+
   const textColor = useThemeColor({}, 'text')
   const textSecondary = useThemeColor({}, 'icon')
   const tintColor = useThemeColor({}, 'tint')
   const cardColor = useThemeColor({}, 'card')
 
   const topPadding = headerHeight
-  // Calculate tile width for 2-column grid
-  const tileWidth = (screenWidth - (GRID_PADDING * 2) - TILE_GAP) / 2
+  // Wider cards for horizontal rail so the next item peeks in and signals scrollability
+  const tileWidth = Math.min(300, Math.max(210, Math.floor(screenWidth * 0.74)))
 
   // Initial load and sync when session changes
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function HomeScreen() {
   async function syncNewArticles() {
     try {
       if (!session?.user) return
-      
+
       const result = await syncArticles(session.user.id, { processImages: true })
       if (!result.error || result.allArticles.length > 0) {
         setArticles(result.allArticles)
@@ -98,7 +98,7 @@ export default function HomeScreen() {
       return status === 'reading'
     })
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 3)
+    // .slice(0, 3)
 
   // Get new articles (progress = 0)
   const newArticles = articles
@@ -143,7 +143,7 @@ export default function HomeScreen() {
         }
       >
         {/* Search Bar */}
-        <Pressable 
+        <Pressable
           style={[styles.searchBar, { backgroundColor: cardColor }]}
           onPress={() => router.push('/search')}
         >
@@ -169,12 +169,27 @@ export default function HomeScreen() {
             {hasContinueReading && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <ThemedText fontSize={20} style={styles.sectionTitle}>Continue Reading</ThemedText>
+                  <View>
+                    <ThemedText fontSize={20} style={styles.sectionTitle}>Continue Reading</ThemedText>
+                  </View>
                 </View>
-                <View style={styles.tileGrid}>
-                  {continueReadingArticles.map(article => (
-                    <View key={article.id} style={{ width: tileWidth }}>
+
+                <View style={styles.continueReadingRail}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={[
+                      styles.tileGrid,
+                    ]}
+                    snapToInterval={tileWidth + TILE_GAP * 1.5}
+                    snapToAlignment="center"
+                    decelerationRate="fast"
+                    scrollEventThrottle={16}
+                  >
+                    {continueReadingArticles.map(article => (
                       <ArticleCard
+                        key={article.id}
+                        style={{ width: tileWidth }}
                         article={article}
                         onDelete={deleteArticle}
                         onUpdateTags={updateArticleTags}
@@ -183,8 +198,8 @@ export default function HomeScreen() {
                         onMarkAsUnread={markAsUnread}
                         variant="tile"
                       />
-                    </View>
-                  ))}
+                    ))}
+                  </ScrollView>
                 </View>
               </View>
             )}
@@ -291,14 +306,28 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'Bitter_600SemiBold',
   },
+  swipeHintRow: {
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  swipeHintText: {
+    fontFamily: 'SourceSans3_500Medium',
+    letterSpacing: 0.2,
+  },
+  continueReadingRail: {
+    position: 'relative',
+  },
   verticalList: {
     paddingHorizontal: 16,
     gap: 12,
   },
   tileGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'stretch',
     paddingHorizontal: GRID_PADDING,
+    paddingRight: GRID_PADDING,
     gap: TILE_GAP,
   },
   emptyState: {
