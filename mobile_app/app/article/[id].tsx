@@ -669,61 +669,64 @@ export default function ArticleScreen() {
   const readingTime = article.wordCount 
     ? Math.max(1, Math.ceil(article.wordCount / 200))
     : null
+  const overlayHeight = insets.top + 56 + 3
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Header 
-        showLogo
-        showBack
-        hidden={headerHidden}
-        rightElement={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Pressable
-              onPress={() => {setShowSettings(true)}}
-              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
-            >
-              <IconSymbol 
-                name="paintpalette"
-                size={28} 
-                color={theme.colors.text} 
+      <View style={styles.topOverlay}>
+        <Header 
+          showLogo
+          showBack
+          hidden={headerHidden}
+          rightElement={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Pressable
+                onPress={() => {setShowSettings(true)}}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+              >
+                <IconSymbol 
+                  name="paintpalette"
+                  size={28} 
+                  color={theme.colors.text} 
+                />
+              </Pressable>
+
+              <Pressable
+                onPress={toggleFavorite}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+              >
+                <IconSymbol 
+                  name={article.isFavorite ? 'star.fill' : 'star'} 
+                  size={28} 
+                  color={article.isFavorite ? '#FFD700' : theme.colors.text} 
+                />
+              </Pressable>
+
+              <DropdownMenu
+                trigger={
+                  <View style={{ opacity: 1, padding: 4 }}>
+                    <IconSymbol name="ellipsis" size={28} color={theme.colors.text} />
+                  </View>
+                }
+                items={moreMenuItems}
               />
-            </Pressable>
-
-            <Pressable
-              onPress={toggleFavorite}
-              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
-            >
-              <IconSymbol 
-                name={article.isFavorite ? 'star.fill' : 'star'} 
-                size={28} 
-                color={article.isFavorite ? '#FFD700' : theme.colors.text} 
-              />
-            </Pressable>
-
-            <DropdownMenu
-              trigger={
-                <View style={{ opacity: 1, padding: 4 }}>
-                  <IconSymbol name="ellipsis" size={28} color={theme.colors.text} />
-                </View>
-              }
-              items={moreMenuItems}
-            />
-          </View>
-        }
-      />
-
-      {/* Reading progress bar */}
-      <View 
-        style={styles.progressBarTrack} 
-        onLayout={(e: LayoutChangeEvent) => { progressTrackWidth.value = e.nativeEvent.layout.width }}
-      >
-        <Animated.View 
-          style={[
-            styles.progressBarFill, 
-            { backgroundColor: colors.accent },
-            progressBarStyle,
-          ]} 
+            </View>
+          }
         />
+
+        {/* Reading progress bar */}
+        <View 
+          style={styles.progressBarTrack} 
+          onLayout={(e: LayoutChangeEvent) => { progressTrackWidth.value = e.nativeEvent.layout.width }}
+        >
+          <Animated.View 
+            style={[
+              styles.progressBarFill, 
+              { backgroundColor: colors.accent },
+              progressBarStyle,
+            ]} 
+          />
+        </View>
       </View>
 
       {/* Return to progress button */}
@@ -746,7 +749,7 @@ export default function ArticleScreen() {
       <ScrollView 
         ref={scrollViewRef}
         style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0, backgroundColor: colors.background }]}
-        contentContainerStyle={[styles.scrollContent]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight + 24 }]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
@@ -825,6 +828,13 @@ const styles = StyleSheet.create({
     height: 3,
     backgroundColor: 'transparent',
   },
+  topOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
   progressBarFill: {
     height: '100%',
   },
@@ -858,13 +868,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 24,
   },
   header: {
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
     marginHorizontal: 20,
+    paddingTop: 24,
     paddingBottom: 12,
   },
   title: {

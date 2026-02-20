@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   menu: {
     position: 'absolute',
     minWidth: MENU_MIN_WIDTH,
-    borderRadius: 14,
+    borderRadius: 12,
     paddingVertical: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
