@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import { IconSymbol } from './ui/icon-symbol'
 import { TagList } from './tag-list'
 import { DropdownMenu, DropdownMenuItem } from './dropdown-menu'
-import { Article } from '@poche/shared'
+import { Article, getArticleStatus } from '@poche/shared'
 import { extractFirstImageUrl } from '../lib/image-cache'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useTheme } from '@react-navigation/native'
@@ -69,6 +69,7 @@ export function ArticleCard({
   
   // Calculate remaining reading time based on progress
   const readingProgress = article.readingProgress || 0
+  const readStatus = getArticleStatus(readingProgress)
   const remainingTime = readingProgress > 0 && article.wordCount
     ? Math.max(1, Math.ceil((article.wordCount * (100 - readingProgress) / 100) / 200))
     : null
@@ -208,15 +209,22 @@ export function ArticleCard({
 
                 {/* Content section */}
                 <View style={styles.tileContent}>
-                  {article.title && (
-                    <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
-                      {article.title}
-                    </ThemedText>
-                  )}
-                  <View style={styles.tileFooter}>
-                    <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
-                      {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
-                    </ThemedText>
+                  <View style={styles.tileTitleRow}>
+                    {readStatus === 'new' && (
+                      <View style={[styles.unreadDot, { backgroundColor: tintColor }]} pointerEvents="none" />
+                    )}
+                    <View style={styles.tileTitleBlock}>
+                      {article.title && (
+                        <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
+                          {article.title}
+                        </ThemedText>
+                      )}
+                      <View style={styles.tileFooter}>
+                        <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
+                          {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
+                        </ThemedText>
+                      </View>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -249,19 +257,24 @@ export function ArticleCard({
                   ]}
                 >
                   <View style={styles.articleCardTop}>
-                    <View style={styles.articleCardText}>
-                      {article.title && (
-                        <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
-                          {article.title}
-                        </ThemedText>
+                    <View style={styles.articleCardTextRow}>
+                      {readStatus === 'new' && (
+                        <View style={[styles.unreadDotDefault, { backgroundColor: tintColor }]} pointerEvents="none" />
                       )}
-                      {article.siteName && (
-                        <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
-                          {article.siteName} • {showProgress && remainingTime
-                            ? `${remainingTime} min left`
-                            : readingTime}
-                        </ThemedText>
-                      )}
+                      <View style={styles.articleCardText}>
+                        {article.title && (
+                          <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
+                            {article.title}
+                          </ThemedText>
+                        )}
+                        {article.siteName && (
+                          <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
+                            {article.siteName} • {showProgress && remainingTime
+                              ? `${remainingTime} min left`
+                              : readingTime}
+                          </ThemedText>
+                        )}
+                      </View>
                     </View>
 
                     {imageUrl ? (
@@ -355,11 +368,27 @@ export function ArticleCard({
 const styles = StyleSheet.create({
   // Tile variant styles
   tileCard: {
+    position: 'relative',
     flex: 1,
     flexDirection: 'column',
     justifyContent: 'space-between',
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  tileTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  tileTitleBlock: {
+    flex: 1,
+    minWidth: 0,
   },
   tileCardPressed: {
     opacity: 0.8,
@@ -425,9 +454,23 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   articleCardTop: {
+    position: 'relative',
     flexDirection: 'row',
     gap: 12,
     marginBottom: 8,
+  },
+  articleCardTextRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+  },
+  unreadDotDefault: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
   },
   articleCardText: {
     flex: 1,

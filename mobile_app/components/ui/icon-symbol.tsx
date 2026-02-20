@@ -39,6 +39,8 @@ const MAPPING = {
   // Reading status
   'book.closed': 'menu-book',
   'book.fill': 'auto-stories',
+  'checkmark.circle': 'check-circle',
+  'checkmark.circle.fill': 'check-circle',
   'person': 'person',
   'paintpalette': 'palette'
 } as IconMapping;
