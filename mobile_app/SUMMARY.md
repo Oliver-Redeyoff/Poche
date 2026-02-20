@@ -12,7 +12,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Account Deletion**: Delete account from account settings drawer with password confirmation (iOS Alert.prompt)
 - **Tab Navigation**: Home and Library tabs with native iOS blur effects
 - **Home Page**: "Continue Reading" section (in-progress articles), "New Articles" section (unread articles), and "Recently Read" section (3 most recently finished articles at 100% progress)
-- **Continue Reading Rail**: Horizontally scrollable tile rail with swipe affordance (peek + edge hint + "Swipe for more" hint)
+- **Continue Reading Rail**: Horizontally scrollable tile rail with peeked next card and snap scrolling
 - **Library Page**: Tile grid for All Articles, Favorites, and tag-based filtering with article counts
 - **Reading Progress Tracking**: Automatic scroll-based progress (0-100%) with local storage and backend sync
 - **Unified Theme System**: Light, dark, and sepia themes apply consistently across all screens; `Colors` palette has 3 schemes; `useResolvedColorScheme()` hook replaces direct `useColorScheme()` for color decisions
@@ -76,7 +76,7 @@ mobile_app/
 │   ├── tag-list.tsx       # Reusable TagList component for displaying and managing tags
 │   ├── bottom-drawer.tsx  # Reusable bottom sheet drawer with swipe-to-dismiss
 │   ├── reading-settings-drawer.tsx # Font size slider + theme selector (uses AuthContext)
-│   ├── dropdown-menu.tsx  # Reusable positioned dropdown menu component
+│   ├── dropdown-menu.tsx  # Reusable native context menu wrapper
 │   ├── header.tsx         # Custom header component with logo, back button, and collapsible animation
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
 │   ├── themed-text.tsx    # Themed text component
@@ -121,7 +121,7 @@ First-time user onboarding experience:
 ### app/(tabs)/index.tsx
 Home tab that:
 - Displays "Continue Reading" section with in-progress articles (1-99% progress)
-- Renders Continue Reading as a horizontal rail with swipe affordance cues
+- Renders Continue Reading as a horizontal rail with peek + snap behavior
 - Displays "New Articles" section with unread articles (0% progress)
 - Displays "Recently Read" section with 3 most recently finished articles (100% progress), sorted by `updatedAt`
 - Shows "all caught up" empty state only when all three sections are empty
@@ -192,16 +192,11 @@ Reusable TagList component for displaying and managing tags:
 - Used by both `ArticleCard` and article detail view (`article/[id].tsx`)
 
 ### components/dropdown-menu.tsx
-Reusable positioned dropdown menu component:
-- Renders a trigger element that opens a dropdown menu on press
-- **Smart positioning**: Measures trigger position with `measureInWindow`, then measures menu with `onLayout` to determine optimal placement
-  - Vertical: prefers below trigger, flips above if not enough space
-  - Horizontal: prefers right-aligned with trigger, flips left-aligned if it would go off-screen, clamps to edges with 8px padding
-- Menu renders invisibly off-screen first (`top: -9999, opacity: 0`) to measure its actual size, then positions and reveals
-- Dark/light mode adaptive colors (`#2C2C2E` dark / `#FFFFFF` light)
-- Auto-inserts separators before destructive items
-- **Props**: `trigger` (ReactNode), `items` (array of `DropdownMenuItem` with `key`, `label`, optional `icon`, optional `destructive`, `onPress`)
-- Uses `Modal` for overlay (renders above all content, handles Android back button)
+Reusable native context menu wrapper:
+- Uses `@expo/ui/swift-ui` `ContextMenu` on native with `Host`, `ContextMenu.Trigger`, `ContextMenu.Items`, `Button`, and `Divider`
+- Supports `openOnLongPress` via `activationMethod` (`longPress` vs `singlePress`)
+- Renders SF Symbol icons via icon mapping and marks destructive actions with `role="destructive"`
+- **Props**: `trigger` (ReactNode), `items` (array of `DropdownMenuItem` with `key`, `label`, optional `icon`, optional `destructive`, `onPress`), `openOnLongPress?`
 - Used by article detail view and `ArticleCard` component
 
 ### components/article-card.tsx
@@ -212,6 +207,7 @@ Article card component:
 - Uses locally cached favicon placeholders (with extracted background colors) when no preview/content image exists
 - **Favorite toggle**: Star icon (outline when not favorited, filled gold when favorited)
 - **Dropdown menu**: Ellipsis icon opens `DropdownMenu` with Open Original, Mark as Read, Mark as Unread, and Delete (destructive) options
+- **Long-press actions**: Card root uses `openOnLongPress` so pressing and holding any card opens actions directly
 - Entry and exit animations using react-native-reanimated
 - **Tag management**: Uses shared `TagList` component (tag logic removed from ArticleCard)
 - **Reading time**: Calculates and displays reading time based on article wordCount
@@ -548,9 +544,10 @@ module.exports = config;
 - ✅ **Article detail updates**: TagList integration, delete button in header, improved scroll restoration (opacity: 0), removed unused imports
 - ✅ **Recently Read section**: Home tab shows 3 most recently finished articles (100% progress), sorted by `updatedAt`
 - ✅ **All caught up logic**: Empty state only when Continue Reading, New Articles, and Recently Read are all empty
-- ✅ **DropdownMenu component**: Reusable positioned dropdown with smart placement (above/below, left/right aligned), dark mode, auto-separators before destructive items
+- ✅ **DropdownMenu component**: Reusable native context menu wrapper using `@expo/ui/swift-ui` on native
 - ✅ **Article detail dropdown**: Header includes Open Original, Mark as Read, Mark as Unread, Delete
 - ✅ **ArticleCard dropdown**: Ellipsis dropdown replaces direct delete button, includes Open Original, Mark as Read, Mark as Unread, Delete
+- ✅ **Long-press card menu**: Article cards open actions on long press using `openOnLongPress`
 - ✅ **Mark as Read**: Sets reading progress to 100, available in article detail and article cards via `useArticleActions` hook
 - ✅ **Mark as Unread**: Resets reading progress to 0, available in article detail and article cards via `useArticleActions` hook
 - ✅ **Icon mappings**: Added ellipsis, book.closed icons to `icon-symbol.tsx`
@@ -558,7 +555,7 @@ module.exports = config;
 - ✅ **Collapsible header**: `hidden` prop on Header component; slides up + fades out via Reanimated (250ms); preserves safe area inset height; driven by scroll direction detection in article screen (10px threshold, only after 80px scroll)
 - ✅ **Absolute header overlay**: Article header/progress are overlaid (absolute) to keep ScrollView layout stable while collapsing
 - ✅ **Continue reading button**: Floating pill below header; appears 15%+ above progress with hysteresis (hides at 5%); animated position tracks header collapse; hidden at 100% progress
-- ✅ **Continue Reading horizontal rail**: Home tab Continue Reading section uses horizontal tiles with swipe affordance hints
+- ✅ **Continue Reading horizontal rail**: Home tab Continue Reading section uses horizontal tiles with peek + snap behavior
 - ✅ **Favicon placeholders**: Article cards use cached local favicon + extracted background color when no article image is available
 - ✅ **Link preview caching**: `syncArticles()` fetches and caches `og:image`/`twitter:image` metadata per new article
 - ✅ **Article card thumbnail priority**: `previewImageUrl` first, then markdown content image, then favicon, then default icon

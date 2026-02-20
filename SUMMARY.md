@@ -141,7 +141,7 @@ Poche/
 - View saved articles linked to user account
 - **Tab-based navigation**: Home and Library tabs with native iOS blur effects
 - **Home page**: "Continue Reading" section (in-progress articles), "New Articles" section, and "Recently Read" section (finished articles)
-- **Continue Reading rail**: Horizontally scrollable cards with swipe affordance (peeked next card + edge hint)
+- **Continue Reading rail**: Horizontally scrollable cards with peeked next card and snap scrolling to signal horizontal swipe
 - **Library page**: Tile grid for All Articles, Favorites, and tag-based filtering
 - **Search**: Full-screen search across all articles by title, site name, tags, and content
 - **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%) with scroll restoration guard (ignores events during restoration)
@@ -164,7 +164,7 @@ Poche/
 - **Background article sync**: Periodic background task to sync latest articles and cache images
 - **Instant article loading**: Articles from local storage appear immediately with scroll restoration (content hidden until last-read position is set)
 - **Article animations**: Smooth entry/exit animations for articles
-- **Dropdown menu**: Reusable `DropdownMenu` component with smart positioning (above/below, left/right aligned to avoid going off-screen)
+- **Dropdown menu**: Reusable `DropdownMenu` wrapper around native context menus (`@expo/ui/swift-ui` on native, web fallback component)
 - **Article actions menu**: Ellipsis dropdown in article detail header and article cards with Open Original, Mark as Read, Mark as Unread, Delete options
 - **Favorite toggle**: Star icon on article cards and detail view to favorite/unfavorite articles
 - **Mark as Read / Unread**: Set reading progress to 100% or reset to 0 from dropdown menus
@@ -361,7 +361,7 @@ The shared package provides common functionality across all projects:
 - ✅ Instant article loading from local storage with scroll restoration (content hidden until last-read position set)
 - ✅ Article entry and exit animations
 - ✅ Article actions via dropdown menu (Open Original, Mark as Read, Mark as Unread, Delete) in both article detail and article cards
-- ✅ Reusable `DropdownMenu` component with smart positioning (measures trigger + menu, avoids screen edges)
+- ✅ Reusable `DropdownMenu` component backed by native context menus (`@expo/ui/swift-ui` on native)
 - ✅ Modular ArticleCard component
 - ✅ Reusable `TagList` component for tag management (add/remove with animations) used by ArticleCard and article detail view
 - ✅ Mark as Unread functionality (resets reading progress to 0) with optimistic updates
@@ -387,7 +387,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
 - ✅ **Tab-based navigation**: Home and Library tabs with Expo Router
 - ✅ **Home page**: "Continue Reading" (in-progress), "New Articles", and "Recently Read" (finished) sections
-- ✅ **Continue Reading horizontal rail**: Horizontally scrollable cards with swipe affordance hints
+- ✅ **Continue Reading horizontal rail**: Horizontally scrollable cards with peek + snap behavior
 - ✅ **Library page**: Tile grid for All Articles, Favorites, and tags with counts
 - ✅ **Reading progress tracking**: Scroll-based progress (0-100%) with debounced backend sync; scroll events ignored during restoration to prevent false updates
 - ✅ **Smart data refresh**: Screens reload from storage on focus to reflect changes
