@@ -104,6 +104,10 @@ export function ArticleCard({
     }
   }
 
+  const handleCardPress = () => {
+    router.push(`/article/${article.id}`)
+  }
+
   const dropdownItems: DropdownMenuItem[] = [
     ...(article.url ? [{
       key: 'open-original',
@@ -141,73 +145,79 @@ export function ArticleCard({
         exiting={FadeOut.duration(200)}
         layout={LinearTransition.duration(200)}
       >
-        <Pressable
-          onPress={() => router.push(`/article/${article.id}`)}
-          style={({ pressed }) => [
-            styles.tileCard,
-            { backgroundColor: theme.colors.card },
-            pressed && styles.tileCardPressed,
-          ]}
-        >
-          <View>
-            {/* Image section */}
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.tileImage}
-                contentFit="cover"
-                transition={200}
-                placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.tileImage,
-                  styles.tilePlaceholder,
-                  faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
-                ]}
-              >
-                {faviconUrl && !hasFaviconError ? (
+        <DropdownMenu
+          openOnLongPress
+          items={dropdownItems}
+          trigger={
+            <Pressable
+              onPress={handleCardPress}
+              style={({ pressed }) => [
+                styles.tileCard,
+                { backgroundColor: theme.colors.card },
+                pressed && styles.tileCardPressed,
+              ]}
+            >
+              <View>
+                {/* Image section */}
+                {imageUrl ? (
                   <Image
-                    source={{ uri: faviconUrl }}
-                    style={styles.tileFavicon}
-                    contentFit="contain"
-                    transition={150}
-                    onError={() => setHasFaviconError(true)}
+                    source={{ uri: imageUrl }}
+                    style={styles.tileImage}
+                    contentFit="cover"
+                    transition={200}
+                    placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                   />
                 ) : (
-                  <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
+                  <View
+                    style={[
+                      styles.tileImage,
+                      styles.tilePlaceholder,
+                      faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+                    ]}
+                  >
+                    {faviconUrl && !hasFaviconError ? (
+                      <Image
+                        source={{ uri: faviconUrl }}
+                        style={styles.tileFavicon}
+                        contentFit="contain"
+                        transition={150}
+                        onError={() => setHasFaviconError(true)}
+                      />
+                    ) : (
+                      <IconSymbol name="doc.text" size={32} color="rgba(120, 120, 120, 0.3)" />
+                    )}
+                  </View>
                 )}
-              </View>
-            )}
-            
-            {/* Content section */}
-            <View style={styles.tileContent}>
-              {article.title && (
-                <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
-                  {article.title}
-                </ThemedText>
-              )}
-              <View style={styles.tileFooter}>
-                <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
-                  {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
-                </ThemedText>
-              </View>
-            </View>
-          </View>
 
-          {/* Progress bar */}
-          <View style={styles.tileProgressContainer}>
-            <View style={[styles.tileProgressBar]}>
-              <View
-                  style={[
-                    styles.tileProgressFill,
-                    { width: `${readingProgress}%`, backgroundColor: tintColor }
-                  ]}
-              />
-            </View>
-          </View>
-        </Pressable>
+                {/* Content section */}
+                <View style={styles.tileContent}>
+                  {article.title && (
+                    <ThemedText fontSize={15} style={styles.tileTitle} numberOfLines={2}>
+                      {article.title}
+                    </ThemedText>
+                  )}
+                  <View style={styles.tileFooter}>
+                    <ThemedText fontSize={13} style={styles.tileMeta} numberOfLines={1}>
+                      {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
+                    </ThemedText>
+                  </View>
+                </View>
+              </View>
+
+              {/* Progress bar */}
+              <View style={styles.tileProgressContainer}>
+                <View style={[styles.tileProgressBar]}>
+                  <View
+                      style={[
+                        styles.tileProgressFill,
+                        { width: `${readingProgress}%`, backgroundColor: tintColor }
+                      ]}
+                  />
+                </View>
+              </View>
+            </Pressable>
+          }
+        />
       </Animated.View>
     )
   }
@@ -222,60 +232,66 @@ export function ArticleCard({
     >
       <View style={[styles.articleCardWrapperInner]}>
         {/* Top part of article card */}
-        <Pressable
-          onPress={() => router.push(`/article/${article.id}`)}
-          style={({ pressed }) => [
-            styles.articleCard,
-            pressed && styles.articleCardPressed,
-          ]}
-        >
-          <View style={styles.articleCardTop}>
-            <View style={styles.articleCardText}>
-              {article.title && (
-                <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
-                  {article.title}
-                </ThemedText>
-              )}
-              {article.siteName && (
-                <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
-                  {article.siteName} • {showProgress && remainingTime
-                    ? `${remainingTime} min left`
-                    : readingTime}
-                </ThemedText>
-              )}
-            </View>
+        <DropdownMenu
+          openOnLongPress
+          items={dropdownItems}
+          trigger={
+            <Pressable
+              onPress={handleCardPress}
+              style={({ pressed }) => [
+                styles.articleCard,
+                pressed && styles.articleCardPressed,
+              ]}
+            >
+              <View style={styles.articleCardTop}>
+                <View style={styles.articleCardText}>
+                  {article.title && (
+                    <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
+                      {article.title}
+                    </ThemedText>
+                  )}
+                  {article.siteName && (
+                    <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
+                      {article.siteName} • {showProgress && remainingTime
+                        ? `${remainingTime} min left`
+                        : readingTime}
+                    </ThemedText>
+                  )}
+                </View>
 
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl ?? "" }}
-                style={styles.articleImage}
-                contentFit="cover"
-                transition={200}
-                placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.articleImage,
-                  styles.articleImagePlaceholder,
-                  faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
-                ]}
-              >
-                {faviconUrl && !hasFaviconError ? (
+                {imageUrl ? (
                   <Image
-                    source={{ uri: faviconUrl }}
-                    style={styles.articleFavicon}
-                    contentFit="contain"
-                    transition={150}
-                    onError={() => setHasFaviconError(true)}
+                    source={{ uri: imageUrl ?? "" }}
+                    style={styles.articleImage}
+                    contentFit="cover"
+                    transition={200}
+                    placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                   />
                 ) : (
-                  <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+                  <View
+                    style={[
+                      styles.articleImage,
+                      styles.articleImagePlaceholder,
+                      faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+                    ]}
+                  >
+                    {faviconUrl && !hasFaviconError ? (
+                      <Image
+                        source={{ uri: faviconUrl }}
+                        style={styles.articleFavicon}
+                        contentFit="contain"
+                        transition={150}
+                        onError={() => setHasFaviconError(true)}
+                      />
+                    ) : (
+                      <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+                    )}
+                  </View>
                 )}
               </View>
-            )}
-          </View>
-        </Pressable>
+            </Pressable>
+          }
+        />
 
         {/* Bottom part of article card - tags and actions (outside main pressable) */}
         <View style={styles.articleCardBottom}>
@@ -315,18 +331,16 @@ export function ArticleCard({
       </View>
 
       {/* Progress bar */}
-      {readingProgress > 0 && readingProgress < 100 && (
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressBar]}>
-            <View
-                style={[
-                  styles.progressFill,
-                  { width: `${readingProgress}%`, backgroundColor: tintColor }
-                ]}
-            />
-          </View>
+      <View style={styles.progressContainer}>
+        <View style={[styles.progressBar]}>
+          <View
+              style={[
+                styles.progressFill,
+                { width: `${readingProgress}%`, backgroundColor: tintColor }
+              ]}
+          />
         </View>
-      )}
+      </View>
 
     </Animated.View>
   )
