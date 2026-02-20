@@ -141,11 +141,12 @@ Poche/
 - View saved articles linked to user account
 - **Tab-based navigation**: Home and Library tabs with native iOS blur effects
 - **Home page**: "Continue Reading" section (in-progress articles), "New Articles" section, and "Recently Read" section (finished articles)
+- **Continue Reading rail**: Horizontally scrollable cards with swipe affordance (peeked next card + edge hint)
 - **Library page**: Tile grid for All Articles, Favorites, and tag-based filtering
 - **Search**: Full-screen search across all articles by title, site name, tags, and content
 - **Reading progress tracking**: Automatic scroll-based progress tracking (0-100%) with scroll restoration guard (ignores events during restoration)
 - **Reading progress bar**: Animated bar below header showing current reading progress
-- **Collapsible header**: Article detail header slides up when scrolling down, reappears on scroll up (preserves safe area)
+- **Collapsible header**: Article detail header slides up when scrolling down, reappears on scroll up (preserves safe area); header/progress overlay is absolute so ScrollView height remains stable while collapsing
 - **Continue reading button**: Floating button to jump back to reading position when scrolled above progress
 - **Unified theme system**: Light, dark, and sepia themes apply consistently across all screens via `useResolvedColorScheme()` hook and `Colors` palette
 - **Global theme selection**: Users can choose Auto, Light, Sepia, or Dark theme from the reading settings drawer; persisted to AsyncStorage
@@ -158,13 +159,14 @@ Poche/
 - **Link styling**: Links appear in accent color with underline
 - **Offline article access**: Articles stored locally in AsyncStorage
 - **Offline image caching**: Images downloaded and stored locally for offline viewing
+- **Offline favicon caching**: Favicons are cached locally during sync and stored on each article (`faviconLocalPath` + extracted `faviconBackgroundColor`) for offline card placeholders
 - **Background article sync**: Periodic background task to sync latest articles and cache images
 - **Instant article loading**: Articles from local storage appear immediately with scroll restoration (content hidden until last-read position is set)
 - **Article animations**: Smooth entry/exit animations for articles
 - **Dropdown menu**: Reusable `DropdownMenu` component with smart positioning (above/below, left/right aligned to avoid going off-screen)
-- **Article actions menu**: Ellipsis dropdown in article detail header and article cards with Open Original, Mark as Unread, Delete options
+- **Article actions menu**: Ellipsis dropdown in article detail header and article cards with Open Original, Mark as Read, Mark as Unread, Delete options
 - **Favorite toggle**: Star icon on article cards and detail view to favorite/unfavorite articles
-- **Mark as Unread**: Reset reading progress to 0 from dropdown menu
+- **Mark as Read / Unread**: Set reading progress to 100% or reset to 0 from dropdown menus
 - **Tag management**: Reusable `TagList` component for add/remove tags with animations (used by ArticleCard and article detail view)
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
@@ -276,6 +278,7 @@ The shared package provides common functionality across all projects:
 
 ### Types (`types.ts`)
 - `User`, `AuthResponse`, `Article`, `LegacyArticle`
+- `Article` includes mobile-only cached favicon metadata: `faviconLocalPath?`, `faviconBackgroundColor?`
 - `ArticleStatus` - Reading status type (`'new'` | `'reading'` | `'finished'`)
 - `ArticleUpdates` - Interface for article PATCH requests
 
@@ -355,11 +358,12 @@ The shared package provides common functionality across all projects:
 - ✅ Background article syncing with image caching
 - ✅ Instant article loading from local storage with scroll restoration (content hidden until last-read position set)
 - ✅ Article entry and exit animations
-- ✅ Article actions via dropdown menu (Open Original, Mark as Unread, Delete) in both article detail and article cards
+- ✅ Article actions via dropdown menu (Open Original, Mark as Read, Mark as Unread, Delete) in both article detail and article cards
 - ✅ Reusable `DropdownMenu` component with smart positioning (measures trigger + menu, avoids screen edges)
 - ✅ Modular ArticleCard component
 - ✅ Reusable `TagList` component for tag management (add/remove with animations) used by ArticleCard and article detail view
 - ✅ Mark as Unread functionality (resets reading progress to 0) with optimistic updates
+- ✅ Mark as Read functionality (sets reading progress to 100) with optimistic updates
 - ✅ Reading time display based on article word count
 - ✅ Custom Poche color theme (warm tones, coral accent)
 - ✅ **Unified theme system**: `Colors` palette with light, dark, and sepia schemes; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme; all components use resolved scheme instead of system color scheme
@@ -381,9 +385,11 @@ The shared package provides common functionality across all projects:
 - ✅ **Onboarding experience**: First-time user onboarding with swipeable slides
 - ✅ **Tab-based navigation**: Home and Library tabs with Expo Router
 - ✅ **Home page**: "Continue Reading" (in-progress), "New Articles", and "Recently Read" (finished) sections
+- ✅ **Continue Reading horizontal rail**: Horizontally scrollable cards with swipe affordance hints
 - ✅ **Library page**: Tile grid for All Articles, Favorites, and tags with counts
 - ✅ **Reading progress tracking**: Scroll-based progress (0-100%) with debounced backend sync; scroll events ignored during restoration to prevent false updates
 - ✅ **Smart data refresh**: Screens reload from storage on focus to reflect changes
+- ✅ **Offline favicon pipeline**: `syncArticles()` caches per-article favicons and extracted background colors for offline placeholders
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
