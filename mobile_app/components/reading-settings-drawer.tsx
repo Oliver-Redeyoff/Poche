@@ -42,7 +42,7 @@ export function ReadingSettingsDrawer({
   return (
     <BottomDrawer visible={visible} onDismiss={onDismiss}>
       {/* Font Size */}
-      <View style={styles.section}>
+      <View>
         <ThemedText fontSize={13} style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Text Size
         </ThemedText>
@@ -65,9 +65,6 @@ export function ReadingSettingsDrawer({
             A
           </ThemedText>
         </View>
-        <ThemedText fontSize={14} style={[styles.fontSizeValue, { color: colors.textSecondary }]}>
-          {Math.round(appFontSizeMultiplier * 100)}%
-        </ThemedText>
       </View>
 
       {/* Theme */}
@@ -144,9 +141,6 @@ export function ReadingSettingsDrawer({
 }
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
   sectionTitle: {
     fontFamily: 'SourceSans3_600SemiBold',
     textTransform: 'uppercase',
