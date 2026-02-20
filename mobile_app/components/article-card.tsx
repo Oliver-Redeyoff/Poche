@@ -53,7 +53,9 @@ export function ArticleCard({
   variant = 'default',
 }: ArticleCardProps) {
   const router = useRouter()
-  const imageUrl = extractFirstImageUrl(article.content || null)
+  const previewImageUrl = article.previewImageUrl
+  const contentImageUrl = extractFirstImageUrl(article.content || null)
+  const imageUrl = previewImageUrl || contentImageUrl || null
   const readingTime = calculateReadingTime(article.wordCount)
   const theme = useTheme()
   const tintColor = useThemeColor({}, 'tint')
@@ -385,6 +387,7 @@ const styles = StyleSheet.create({
   },
   tileFooter: {
     gap: 6,
+    alignItems: 'flex-start',
   },
   tileMeta: {
     fontFamily: 'SourceSans3_500Medium',
