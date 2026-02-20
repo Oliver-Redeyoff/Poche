@@ -50,13 +50,12 @@ export function Header({
   }))
 
   const slideAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: (animProgress.value - 1) * contentHeight }],
     opacity: animProgress.value,
   }))
 
   return (
-    <Animated.View style={[{ overflow: 'hidden', backgroundColor }, wrapperAnimStyle]}>
-      <Animated.View style={[slideAnimStyle, { paddingTop: insets.top }, style]}>
+    <Animated.View style={[{ overflow: 'hidden', backgroundColor}, wrapperAnimStyle]}>
+      <Animated.View style={[slideAnimStyle, style, { paddingTop: insets.top }]}>
         <View style={[styles.content, { borderBottomColor: borderColor }]}>
           {/* Left section */}
           <View style={styles.leftSection}>
