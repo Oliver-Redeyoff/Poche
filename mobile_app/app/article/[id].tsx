@@ -381,16 +381,16 @@ export default function ArticleScreen() {
       onPress: () => Linking.openURL(article.url!),
     }] : []),
     {
-      key: 'mark-read',
-      label: 'Mark as Read',
-      icon: 'book.fill' as const,
-      onPress: markAsRead,
-    },
-    {
       key: 'mark-unread',
       label: 'Mark as Unread',
       icon: 'book.closed' as const,
       onPress: markAsUnread,
+    },
+    {
+      key: 'mark-read',
+      label: 'Mark as Read',
+      icon: 'book.fill' as const,
+      onPress: markAsRead,
     },
     {
       key: 'delete',
