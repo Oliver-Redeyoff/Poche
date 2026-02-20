@@ -25,6 +25,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
 - **Offline Favicon Caching**: Favicons are downloaded during sync and saved locally per article for offline card placeholders, with extracted background colors
+- **Offline Link Preview Caching**: New articles fetch Open Graph/Twitter preview images (`og:image`, `twitter:image`) and cache them locally for offline card thumbnails
 - **Background Sync**: Periodic background task to sync latest articles and cache images
 - **Instant Loading**: Articles from local storage appear immediately
 - **Search**: Full-screen search across all articles by title, site name, tags, and content
@@ -207,7 +208,8 @@ Reusable positioned dropdown menu component:
 Article card component:
 - Renders individual article card with title, site name, reading time, and optional image
 - Handles navigation to article detail page
-- Uses locally cached favicon placeholders (with extracted background colors) when no article image exists
+- **Image priority**: Uses `previewImageUrl` first, then first image extracted from markdown content, then favicon placeholder, then default icon
+- Uses locally cached favicon placeholders (with extracted background colors) when no preview/content image exists
 - **Favorite toggle**: Star icon (outline when not favorited, filled gold when favorited)
 - **Dropdown menu**: Ellipsis icon opens `DropdownMenu` with Open Original, Mark as Read, Mark as Unread, and Delete (destructive) options
 - Entry and exit animations using react-native-reanimated
@@ -266,7 +268,7 @@ API client using `@poche/shared` helpers:
 
 ### lib/article-sync.ts
 Centralized article sync logic:
-- `syncArticles()` - Sync articles from backend, cache content images, and cache/backfill article favicons (with background color extraction)
+- `syncArticles()` - Sync articles from backend, cache content images, cache/backfill article favicons (with background color extraction), and cache link preview images from Open Graph/Twitter metadata
 - `loadArticlesFromStorage()` - Load articles from AsyncStorage
 - `saveArticlesToStorage()` - Save articles to AsyncStorage
 - `clearArticlesFromStorage(userId)` - Clear all locally stored articles for a user (used on logout)
@@ -335,6 +337,8 @@ API URL is configured via environment variable:
 - `createdAt`, `updatedAt` (timestamps)
 - `faviconLocalPath` (optional string) - Local path to cached favicon for offline placeholders
 - `faviconBackgroundColor` (optional string) - Extracted color used as favicon placeholder background
+- `previewImageUrl` (optional string) - Remote Open Graph/Twitter preview image URL
+- `previewImageLocalPath` (optional string) - Local cached preview image path for offline cards
 
 ### Local Storage
 - Articles cached in AsyncStorage with key `@poche_articles_{userId}`
@@ -556,6 +560,8 @@ module.exports = config;
 - ✅ **Continue reading button**: Floating pill below header; appears 15%+ above progress with hysteresis (hides at 5%); animated position tracks header collapse; hidden at 100% progress
 - ✅ **Continue Reading horizontal rail**: Home tab Continue Reading section uses horizontal tiles with swipe affordance hints
 - ✅ **Favicon placeholders**: Article cards use cached local favicon + extracted background color when no article image is available
+- ✅ **Link preview caching**: `syncArticles()` fetches and caches `og:image`/`twitter:image` metadata per new article
+- ✅ **Article card thumbnail priority**: `previewImageUrl` first, then markdown content image, then favicon, then default icon
 - ✅ **Always-visible card progress bars**: Card progress bars now always render without percentage text
 - ✅ **Unified theme system**: `Colors` palette expanded with `sepia` scheme; `ResolvedColorScheme` type; `useResolvedColorScheme()` hook reads from navigation theme's `resolvedScheme` property; all components migrated from `useColorScheme()` + `Colors[colorScheme]` to `useResolvedColorScheme()` + `Colors[resolvedScheme]`
 - ✅ **Global theme selection**: `appTheme` (`'auto' | 'light' | 'sepia' | 'dark'`) in AuthContext, persisted to AsyncStorage; navigation `ThemeProvider` uses resolved theme (`PocheLightTheme`, `PocheDarkTheme`, `PocheSepiaTheme`)
@@ -590,8 +596,9 @@ The article detail view uses a custom `Markdown` component (`components/markdown
 
 ### Image Caching Architecture
 - `lib/image-cache.ts` contains utilities for extracting, downloading, and caching images
-- Images are stored in `${FileSystem.documentDirectory}article-images/{userId}/{articleId}/`
+- Content images are stored in `${FileSystem.cacheDirectory}poche_images/{userId}/{articleId}/`
 - Favicons are stored in `${FileSystem.documentDirectory}poche_favicons/{userId}/{articleId}/` and colorized placeholders are derived from generated thumbhash averages
+- Link preview images are stored in `${FileSystem.documentDirectory}poche_link_previews/{userId}/{articleId}/`
 - Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function
 
 ### React Native iOS Text Rendering Patch

@@ -160,6 +160,7 @@ Poche/
 - **Offline article access**: Articles stored locally in AsyncStorage
 - **Offline image caching**: Images downloaded and stored locally for offline viewing
 - **Offline favicon caching**: Favicons are cached locally during sync and stored on each article (`faviconLocalPath` + extracted `faviconBackgroundColor`) for offline card placeholders
+- **Offline link preview caching**: New articles fetch Open Graph/Twitter preview images and cache them locally (`previewImageUrl` + `previewImageLocalPath`) for richer card thumbnails
 - **Background article sync**: Periodic background task to sync latest articles and cache images
 - **Instant article loading**: Articles from local storage appear immediately with scroll restoration (content hidden until last-read position is set)
 - **Article animations**: Smooth entry/exit animations for articles
@@ -279,6 +280,7 @@ The shared package provides common functionality across all projects:
 ### Types (`types.ts`)
 - `User`, `AuthResponse`, `Article`, `LegacyArticle`
 - `Article` includes mobile-only cached favicon metadata: `faviconLocalPath?`, `faviconBackgroundColor?`
+- `Article` includes mobile-only cached link preview metadata: `previewImageUrl?`, `previewImageLocalPath?`
 - `ArticleStatus` - Reading status type (`'new'` | `'reading'` | `'finished'`)
 - `ArticleUpdates` - Interface for article PATCH requests
 
@@ -390,6 +392,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Reading progress tracking**: Scroll-based progress (0-100%) with debounced backend sync; scroll events ignored during restoration to prevent false updates
 - ✅ **Smart data refresh**: Screens reload from storage on focus to reflect changes
 - ✅ **Offline favicon pipeline**: `syncArticles()` caches per-article favicons and extracted background colors for offline placeholders
+- ✅ **Offline link preview pipeline**: `syncArticles()` fetches `og:image`/`twitter:image`, caches preview images locally, and stores `previewImageUrl` + `previewImageLocalPath` on articles
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
