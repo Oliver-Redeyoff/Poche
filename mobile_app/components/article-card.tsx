@@ -146,6 +146,7 @@ export function ArticleCard({
         layout={LinearTransition.duration(200)}
       >
         <DropdownMenu
+          style={{ flex: 1 }}
           openOnLongPress
           items={dropdownItems}
           trigger={
@@ -189,6 +190,20 @@ export function ArticleCard({
                   </View>
                 )}
 
+                {/* Progress bar */}
+                {readingProgress > 0 && readingProgress < 100 && (
+                  <View style={styles.tileProgressContainer}>
+                    <View style={[styles.tileProgressBar]}>
+                      <View
+                        style={[
+                          styles.tileProgressFill,
+                          { width: `${readingProgress}%`, backgroundColor: tintColor }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                )}
+
                 {/* Content section */}
                 <View style={styles.tileContent}>
                   {article.title && (
@@ -201,18 +216,6 @@ export function ArticleCard({
                       {article.siteName || 'Article'} • {remainingTime ? `${remainingTime} min left` : readingTime}
                     </ThemedText>
                   </View>
-                </View>
-              </View>
-
-              {/* Progress bar */}
-              <View style={styles.tileProgressContainer}>
-                <View style={[styles.tileProgressBar]}>
-                  <View
-                      style={[
-                        styles.tileProgressFill,
-                        { width: `${readingProgress}%`, backgroundColor: tintColor }
-                      ]}
-                  />
                 </View>
               </View>
             </Pressable>
@@ -329,17 +332,18 @@ export function ArticleCard({
           </View>
 
           {/* Progress bar */}
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar]}>
-              <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${readingProgress}%`, backgroundColor: tintColor }
-                  ]}
-              />
+          {readingProgress > 0 && readingProgress < 100 && (
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressBar]}>
+                <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${readingProgress}%`, backgroundColor: tintColor }
+                    ]}
+                />
+              </View>
             </View>
-          </View>
-
+          )}
         </Animated.View>
       }
     />

@@ -37,9 +37,9 @@ function toSystemIcon(icon?: IconSymbolName): string | undefined {
   return mapping[icon]
 }
 
-export function DropdownMenu({ trigger, items, openOnLongPress = false }: DropdownMenuProps) {
+export function DropdownMenu({ style, trigger, items, openOnLongPress = false }: DropdownMenuProps) {
   return (
-    <Host>
+    <Host style={style}>
       <ContextMenu activationMethod={openOnLongPress ? 'longPress' : 'singlePress'}>
         <ContextMenu.Items>
           {items.map((item, index) => (
