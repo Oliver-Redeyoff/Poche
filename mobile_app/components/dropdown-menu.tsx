@@ -40,22 +40,23 @@ function toSystemIcon(icon?: IconSymbolName): string | undefined {
 export function DropdownMenu({ trigger, items, openOnLongPress = false }: DropdownMenuProps) {
   return (
     <Host matchContents>
-      <ContextMenu>
+      <ContextMenu activationMethod={openOnLongPress ? 'longPress' : 'singlePress'}>
         <ContextMenu.Items>
           {items.map((item, index) => (
             <Fragment key={item.key}>
               {item.destructive && index > 0 && !items[index - 1].destructive ? <Divider /> : null}
               <Button
-                label={item.label}
                 systemImage={toSystemIcon(item.icon)}
                 role={item.destructive ? 'destructive' : undefined}
                 onPress={item.onPress}
-              />
+              >
+                {item.label}
+              </Button>
             </Fragment>
           ))}
         </ContextMenu.Items>
 
-        <ContextMenu.Trigger isContextMenuButton={openOnLongPress}>
+        <ContextMenu.Trigger>
           {trigger}
         </ContextMenu.Trigger>
       </ContextMenu>
