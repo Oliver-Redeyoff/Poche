@@ -615,10 +615,11 @@ export default function ArticleScreen() {
         <Image
           source={{ uri: imageSrc }}
           style={{
-            width: '100%',
+            // width: '100%',
             aspectRatio: 16 / 9,
+            borderRadius: 12,
           }}
-          contentFit="contain"
+          // contentFit="contain"
           transition={200}
           onLoad={(event) => {
             setIsLoading(false)
