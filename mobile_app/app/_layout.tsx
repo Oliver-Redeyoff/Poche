@@ -3,7 +3,7 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react'
-import { View, Image, Alert, NativeModules, Platform } from 'react-native'
+import { View, Image, Alert, AppState, NativeModules, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Header } from '@/components/header'
 import {
@@ -139,6 +139,22 @@ async function markOnboardingComplete(): Promise<void> {
   }
 }
 
+// If Share Extension just saved an article (iOS), sync and show feedback
+async function checkShareExtensionJustSaved(session: AuthResponse | null): Promise<void> {
+  if (!session || Platform.OS !== 'ios' || !NativeModules.PendingShareModule?.getShareExtensionJustSaved) {
+    return
+  }
+  try {
+    const justSaved = await NativeModules.PendingShareModule.getShareExtensionJustSaved()
+    if (justSaved) {
+      await syncArticles(session.user.id, { processImages: true })
+      Alert.alert('Saved to Poche', 'Link has been saved to your library.')
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
 
@@ -205,17 +221,7 @@ export default function RootLayout() {
         setSession(existingSession)
 
         // If opened from Share Extension after it saved an article, sync and show feedback (iOS only)
-        if (existingSession && Platform.OS === 'ios' && NativeModules.PendingShareModule?.getShareExtensionJustSaved) {
-          try {
-            const justSaved = await NativeModules.PendingShareModule.getShareExtensionJustSaved()
-            if (justSaved) {
-              await syncArticles(existingSession.user.id, { processImages: true })
-              Alert.alert('Saved to Poche', 'Link has been saved to your library.')
-            }
-          } catch {
-            // ignore
-          }
-        }
+        await checkShareExtensionJustSaved(existingSession)
 
         // Register background sync if user is logged in
         if (existingSession) {
@@ -232,6 +238,15 @@ export default function RootLayout() {
     
     initialize()
   }, [])
+
+  // When app comes to foreground, check if Share Extension just saved (iOS)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return
+      checkShareExtensionJustSaved(session).catch(() => {})
+    })
+    return () => subscription.remove()
+  }, [session])
 
   // Hide splash screen once fonts are loaded
   useEffect(() => {
