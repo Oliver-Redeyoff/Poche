@@ -141,7 +141,7 @@ export default function HomeScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={[styles.loadingState, { paddingTop: topPadding + 80 }]}>
-          <ActivityIndicator size="large" color={tintColor} />
+          <ActivityIndicator color={tintColor} />
           <ThemedText fontSize={16} style={[styles.loadingText, { color: textColor }]}>
             Loading your articles...
           </ThemedText>
