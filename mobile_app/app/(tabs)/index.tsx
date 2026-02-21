@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { StyleSheet, View, ScrollView, RefreshControl, Pressable, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { StyleSheet, View, ScrollView, RefreshControl, Pressable, useWindowDimensions, ActivityIndicator } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useHeaderHeight } from '@react-navigation/elements'
 import { useFocusEffect } from '@react-navigation/native'
@@ -17,12 +17,13 @@ const TILE_GAP = 12
 const GRID_PADDING = 16
 
 export default function HomeScreen() {
-  const { session } = useAuth()
+  const { session, isNewLogin, clearNewLogin } = useAuth()
   const router = useRouter()
   const headerHeight = useHeaderHeight()
   const { width: screenWidth } = useWindowDimensions()
   const [articles, setArticles] = useState<Article[]>([])
   const [refreshing, setRefreshing] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(false)
 
   const textColor = useThemeColor({}, 'text')
   const textSecondary = useThemeColor({}, 'icon')
@@ -33,14 +34,23 @@ export default function HomeScreen() {
   // Wider cards for horizontal rail so the next item peeks in and signals scrollability
   const tileWidth = Math.min(300, Math.max(210, Math.floor(screenWidth * 0.74)))
 
-  // Initial load and sync when session changes
+  // Initial load and sync when session changes. Only show loading UI when user just logged in.
   useEffect(() => {
     if (session?.user) {
-      loadStoredArticles().then(() => {
-        syncNewArticles()
-      })
+      if (isNewLogin) {
+        setIsInitialLoading(true)
+        loadStoredArticles()
+          .then(() => syncNewArticles())
+          .finally(() => {
+            setIsInitialLoading(false)
+            clearNewLogin()
+          })
+      } else {
+        loadStoredArticles().then(() => syncNewArticles())
+      }
     } else {
       setArticles([])
+      setIsInitialLoading(false)
     }
   }, [session])
 
@@ -126,6 +136,19 @@ export default function HomeScreen() {
   const hasContinueReading = continueReadingArticles.length > 0
   const hasNewArticles = newArticles.length > 0
   const hasRecentlyRead = recentlyReadArticles.length > 0
+
+  if (isInitialLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={[styles.loadingState, { paddingTop: topPadding + 80 }]}>
+          <ActivityIndicator size="large" color={tintColor} />
+          <ThemedText fontSize={16} style={[styles.loadingText, { color: textColor }]}>
+            Loading your articles...
+          </ThemedText>
+        </View>
+      </ThemedView>
+    )
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -248,19 +271,6 @@ export default function HomeScreen() {
                 </View>
               </View>
             )}
-
-            {/* If no articles in any section, show a message */}
-            {!hasContinueReading && !hasNewArticles && !hasRecentlyRead && (
-              <View style={styles.emptyState}>
-                <IconSymbol name="checkmark.circle" size={48} color={tintColor} />
-                <ThemedText fontSize={20} style={[styles.emptyTitle, { color: textColor }]}>
-                  All caught up!
-                </ThemedText>
-                <ThemedText fontSize={16} style={[styles.emptySubtitle, { color: textSecondary }]}>
-                  You've read all your articles. Save more using the browser extension.
-                </ThemedText>
-              </View>
-            )}
           </>
         )}
       </ScrollView>
@@ -331,8 +341,18 @@ const styles = StyleSheet.create({
     gap: TILE_GAP,
     overflow: 'visible',
   },
+  loadingState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 80,
+    gap: 12,
+  },
+  loadingText: {
+    fontFamily: 'SourceSans3_400Regular',
+    textAlign: 'center',
+  },
   emptyState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
@@ -346,6 +366,5 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontFamily: 'SourceSans3_400Regular',
     textAlign: 'center',
-    lineHeight: 24,
   },
 })

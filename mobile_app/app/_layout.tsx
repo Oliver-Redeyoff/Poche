@@ -94,7 +94,9 @@ const PocheSepiaTheme: PocheThemeBase = {
 // Auth context to share session state across the app
 interface AuthContextType {
   session: AuthResponse | null
-  setSession: (session: AuthResponse | null) => void
+  setSession: (session: AuthResponse | null, options?: { isNewLogin?: boolean }) => void
+  isNewLogin: boolean
+  clearNewLogin: () => void
   isLoading: boolean
   hasCompletedOnboarding: boolean
   completeOnboarding: () => Promise<void>
@@ -107,6 +109,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   session: null,
   setSession: () => {},
+  isNewLogin: false,
+  clearNewLogin: () => {},
   isLoading: true,
   hasCompletedOnboarding: true,
   completeOnboarding: async () => {},
@@ -158,8 +162,20 @@ async function checkShareExtensionJustSaved(session: AuthResponse | null): Promi
 export default function RootLayout() {
   const colorScheme = useColorScheme()
 
-  const [session, setSession] = useState<AuthResponse | null>(null)
+  const [session, setSessionState] = useState<AuthResponse | null>(null)
+  const [isNewLogin, setIsNewLogin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+
+  const setSession = useCallback((newSession: AuthResponse | null, options?: { isNewLogin?: boolean }) => {
+    setSessionState(newSession)
+    if (newSession === null || options?.isNewLogin !== true) {
+      setIsNewLogin(false)
+    } else {
+      setIsNewLogin(true)
+    }
+  }, [])
+
+  const clearNewLogin = useCallback(() => setIsNewLogin(false), [])
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
   const [appTheme, setAppThemeState] = useState<AppTheme>('auto')
   const [appFontSizeMultiplier, setAppFontSizeMultiplierState] = useState<number>(DEFAULT_FONT_SIZE_MULTIPLIER)
@@ -299,7 +315,7 @@ export default function RootLayout() {
   const themeWithMultiplier: PocheTheme = { ...resolvedTheme, fontSizeMultiplier: appFontSizeMultiplier }
 
   return (
-    <AuthContext.Provider value={{ session, setSession, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSizeMultiplier, setAppFontSizeMultiplier }}>
+    <AuthContext.Provider value={{ session, setSession, isNewLogin, clearNewLogin, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSizeMultiplier, setAppFontSizeMultiplier }}>
       <ThemeProvider value={themeWithMultiplier}>
         <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
         <StatusBar style={statusBarStyle} />
