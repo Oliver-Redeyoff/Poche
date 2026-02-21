@@ -96,9 +96,10 @@ Poche/
 │   ├── Dockerfile      # Container build
 │   └── ...
 ├── mobile_app/          # React Native mobile application
-│   ├── app/            # Expo Router file-based routing
+│   ├── app/            # Expo Router file-based routing (includes share.tsx for share deep link)
 │   ├── components/     # React components
 │   ├── lib/            # API client, sync utilities
+│   ├── ios/ShareExtension/  # iOS Share Extension ("Save to Poche"), App Group for token/API URL
 │   ├── metro.config.js # Metro bundler config for @poche/shared
 │   ├── app.config.js   # Expo config with env variables
 │   └── ...
@@ -171,6 +172,7 @@ Poche/
 - **Tag management**: Reusable `TagList` component for add/remove tags with animations (used by ArticleCard and article detail view)
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
+- **Share intent (Save to Poche)**: Users can share a web page from Safari (iOS) or the system share sheet (Android) to Poche. **iOS**: Share Extension appears as "Save to Poche"; extension reads auth token and API URL from App Group, POSTs URL to backend to save the article, then opens the main app which syncs and shows "Saved to Poche". **Android**: App receives share intent and opens with `poche://share?url=...` (in-app save from share route not yet implemented). Root layout shares credentials with the extension (iOS) and checks "just saved" on cold start and when app returns to foreground (AppState).
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -209,6 +211,8 @@ Poche/
 5. **Backend extracts article** using domain-specific extraction (Readability, Defuddle, or raw DOM per domain)
 6. **Article saved** to PostgreSQL with userId
 7. **User views saved articles** in the mobile app (markdown rendered) or extension
+
+**Alternative (mobile share):** User can share a page from Safari (iOS) or share sheet (Android) to Poche. On iOS, the Share Extension saves the article via the API and opens the app; the app syncs and shows "Saved to Poche." On Android, the app opens with the shared URL (in-app save from share not yet wired).
 
 ## Development
 
@@ -393,6 +397,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Smart data refresh**: Screens reload from storage on focus to reflect changes
 - ✅ **Offline favicon pipeline**: `syncArticles()` caches per-article favicons and extracted background colors for offline placeholders
 - ✅ **Offline link preview pipeline**: `syncArticles()` fetches `og:image`/`twitter:image`, caches preview images locally, and stores `previewImageUrl` + `previewImageLocalPath` on articles
+- ✅ **Share intent (Save to Poche)**: iOS Share Extension with App Group; extension saves article via API and opens app; app shows "Saved to Poche" on cold start and when app comes to foreground (AppState). Android share target opens app with `poche://share?url=...` (save from share route not yet implemented). Native `PendingShareModule` for credentials and "just saved" flag; `share.tsx` route for deep link redirect.
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend

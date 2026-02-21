@@ -37,6 +37,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Reading Time**: Display estimated reading time based on article word count
 - **Clear Data on Logout**: Locally stored articles are cleared when user signs out
 - **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
+- **Share intent (Save to Poche)**: Share a web page from Safari (iOS) or system share sheet (Android) to Poche. **iOS**: Share Extension "Save to Poche" reads token and API URL from App Group, POSTs URL to backend, sets "just saved" flag, opens app; app checks flag on cold start and when returning to foreground (AppState), syncs and shows "Saved to Poche". **Android**: App receives share and opens with `poche://share?url=...` (in-app save from share route not yet implemented). Root layout writes/clears share credentials (iOS) and registers `share` route.
 
 ## Architecture
 
@@ -67,6 +68,7 @@ mobile_app/
 │   │   └── index.tsx      # Filtered article list (by tag, favorites, or all)
 │   ├── article/[id].tsx   # Article detail screen with markdown rendering & progress tracking
 │   ├── search.tsx         # Full-screen search with filtering across all articles
+│   ├── share.tsx          # Share deep-link route (redirects to onboarding/auth/tabs)
 │   ├── auth.tsx           # Authentication screen (login/signup/forgot password)
 │   └── onboarding.tsx     # First-time user onboarding experience
 ├── components/            # React components
@@ -96,11 +98,20 @@ mobile_app/
 │   └── theme.ts          # Colors (light/dark/sepia palettes), ResolvedColorScheme type, Fonts
 ├── patches/              # React Native patches (applied via patch-package)
 │   └── react-native+0.81.5.patch  # iOS text rendering fix
+├── ios/
+│   ├── Poche/            # Main app target
+│   │   ├── PendingShareModule.swift  # Native module: getShareExtensionJustSaved, setShareCredentials, clearShareCredentials (App Group)
+│   │   └── PendingShareModule.m      # Objective-C bridge for PendingShareModule
+│   └── ShareExtension/   # iOS Share Extension ("Save to Poche")
+│       ├── ShareViewController.swift # Share UI (spinner + status), POST to API, open app
+│       ├── Info.plist
+│       └── ShareExtension.entitlements  # App Group group.org.name.Poche
 ├── metro.config.js       # Metro bundler config for @poche/shared
 ├── app.config.js         # Expo config with environment variables
 ├── eas.json              # EAS Build configuration with env vars
 ├── .env.example          # Example environment variables
 ├── package.json          # Dependencies (includes @poche/shared)
+├── SHARE_FEATURE_REVIEW.md  # Review of share-intent code and Android gap
 └── SUMMARY.md            # This file
 ```
 
@@ -142,6 +153,11 @@ Filtered article list screen:
 - Displays filtered articles in a scrollable list
 - Shows appropriate empty states for each filter type
 - Handles article deletion and tag updates
+
+### app/share.tsx
+Share deep-link route (opened when user shares to Poche via `poche://share`):
+- Shows a spinner and redirects to `/onboarding`, `/auth`, or `/(tabs)` based on `hasCompletedOnboarding` and `session`
+- No URL handling; on iOS the Share Extension saves the article before opening the app
 
 ### app/auth.tsx
 Authentication screen:
@@ -288,13 +304,14 @@ Custom hook for article management with optimistic updates:
 ### File-Based Routing
 Expo Router uses file-based routing similar to Next.js:
 
-- `app/_layout.tsx` - Root layout with Stack navigator, AuthContext (session, appTheme, appFontSize), registers background sync
+- `app/_layout.tsx` - Root layout with Stack navigator, AuthContext (session, appTheme, appFontSize), registers background sync, Share Extension credentials (iOS), share "just saved" check on init and AppState foreground
 - `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs, account settings drawer
 - `app/(tabs)/index.tsx` - Home tab with Continue Reading and New Articles sections
 - `app/(tabs)/library.tsx` - Library tab with article filter tiles
 - `app/articles/index.tsx` - Filtered article list screen
 - `app/article/[id].tsx` - Article detail screen with reading progress tracking
 - `app/search.tsx` - Full-screen search across all articles
+- `app/share.tsx` - Share deep-link route (redirects by auth state)
 - `app/auth.tsx` - Authentication screen
 
 ## API Integration
@@ -363,6 +380,7 @@ API URL is configured via environment variable:
 7. Articles loaded → From local storage immediately, then synced from backend
 8. User can view articles → With offline support
 9. **User signs out** → Local articles cleared, session cleared
+10. **Share from Safari (iOS)** → User taps Share → "Save to Poche" → Extension POSTs URL to API, sets "just saved" flag, opens app → App (on init or when coming to foreground) calls `getShareExtensionJustSaved()`, syncs, shows "Saved to Poche"
 
 ## UI/UX Features
 
@@ -462,9 +480,11 @@ Key dependencies:
 - Native tab bar with blur effect
 - SF Symbols icons
 - Native navigation transitions
+- **Share Extension** ("Save to Poche"): App Group `group.org.name.Poche` for token/API URL and "just saved" flag; extension POSTs to `/api/articles` and opens app with `poche://share`; `PendingShareModule` (Swift + ObjC) bridges App Group to JS
 
 ### Android
 - Material Design elements
+- **Share target**: App appears in share sheet for `text/plain`; MainActivity rewrites intent to `poche://share?url=...`. In-app save from share route not yet implemented (see SHARE_FEATURE_REVIEW.md).
 - Android-specific styling
 - Edge-to-edge support
 
@@ -568,6 +588,7 @@ module.exports = config;
 - ✅ **Tab header**: Paint palette icon (reading settings) and person icon (account settings)
 - ✅ **Account settings drawer**: Uses `BottomDrawer` in tab layout; person icon trigger; sign out + delete account (replaces separate `settings.tsx` screen)
 - ✅ **Sepia theme**: Full color palette (text #3D3229, background #F5ECD7, card #EDE3CA, accent #D44A5C) with navigation theme and `Colors.sepia` palette
+- ✅ **Share intent (Save to Poche)**: iOS Share Extension with status UI ("Saving to Poche…", "Saved!", "Opening Poche…", "No link found"); extension saves via API using token/API URL from App Group; native `PendingShareModule` (getShareExtensionJustSaved, setShareCredentials, clearShareCredentials); `share.tsx` route; "just saved" check on cold start and when app comes to foreground (AppState). Android: share target opens app with `poche://share?url=...` (in-app save not yet implemented — see SHARE_FEATURE_REVIEW.md).
 
 ## Technical Notes
 
@@ -613,6 +634,7 @@ A patch is applied to React Native to fix a text cut-off issue on iOS with the n
 ## Future Enhancements
 
 Potential features:
+- **Android share**: Save article when app opens via share intent (read `url` in `share.tsx`, call `saveArticle` when logged in)
 - Article organization (folders/categories)
 - Article sharing
 - Push notifications for new articles
