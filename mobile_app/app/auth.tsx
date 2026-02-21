@@ -62,7 +62,7 @@ export default function Auth() {
     try {
       const response = await signIn(email, password)
       // Update the shared auth context - this triggers navigation via Stack.Protected
-      setSession(response)
+      setSession(response, { isNewLogin: true })
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Sign In Error', error.message)
@@ -79,7 +79,7 @@ export default function Auth() {
     try {
       const response = await signUp(email, password)
       // Update the shared auth context - this triggers navigation via Stack.Protected
-      setSession(response)
+      setSession(response, { isNewLogin: true })
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Sign Up Error', error.message)
