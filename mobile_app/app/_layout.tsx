@@ -2,8 +2,8 @@ import { DarkTheme, DefaultTheme, ThemeProvider, Theme } from '@react-navigation
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react'
-import { View, Image, Pressable } from 'react-native'
+import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react'
+import { View, Image, Alert, NativeModules, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Header } from '@/components/header'
 import {
@@ -21,11 +21,12 @@ import {
   SourceSans3_700Bold,
 } from '@expo-google-fonts/source-sans-3'
 import * as SplashScreen from 'expo-splash-screen'
-import { getSession, AuthResponse } from '@/lib/api'
+import { getSession, AuthResponse, API_URL } from '@/lib/api'
 import { useColorScheme } from '@/hooks/use-color-scheme'
 // Import background sync to ensure task is defined
 import '@/lib/background-sync'
 import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/background-sync'
+import { syncArticles } from '@/lib/article-sync'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors, ResolvedColorScheme } from '@/constants/theme'
 
@@ -146,7 +147,6 @@ export default function RootLayout() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
   const [appTheme, setAppThemeState] = useState<AppTheme>('auto')
   const [appFontSizeMultiplier, setAppFontSizeMultiplierState] = useState<number>(DEFAULT_FONT_SIZE_MULTIPLIER)
-
   const setAppTheme = useCallback((theme: AppTheme) => {
     setAppThemeState(theme)
     AsyncStorage.setItem(APP_THEME_KEY, theme).catch(() => {})
@@ -203,7 +203,20 @@ export default function RootLayout() {
         // Then check session
         const existingSession = await getSession()
         setSession(existingSession)
-        
+
+        // If opened from Share Extension after it saved an article, sync and show feedback (iOS only)
+        if (existingSession && Platform.OS === 'ios' && NativeModules.PendingShareModule?.getShareExtensionJustSaved) {
+          try {
+            const justSaved = await NativeModules.PendingShareModule.getShareExtensionJustSaved()
+            if (justSaved) {
+              await syncArticles(existingSession.user.id, { processImages: true })
+              Alert.alert('Saved to Poche', 'Link has been saved to your library.')
+            }
+          } catch {
+            // ignore
+          }
+        }
+
         // Register background sync if user is logged in
         if (existingSession) {
           registerBackgroundSync()
@@ -227,12 +240,18 @@ export default function RootLayout() {
     }
   }, [fontsLoaded])
 
-  // Handle session changes for background sync
+  // Handle session changes for background sync and Share Extension credentials (iOS)
   useEffect(() => {
     if (session) {
       registerBackgroundSync()
+      if (Platform.OS === 'ios' && NativeModules.PendingShareModule?.setShareCredentials) {
+        NativeModules.PendingShareModule.setShareCredentials(session.token, API_URL)
+      }
     } else {
       unregisterBackgroundSync()
+      if (Platform.OS === 'ios' && NativeModules.PendingShareModule?.clearShareCredentials) {
+        NativeModules.PendingShareModule.clearShareCredentials()
+      }
     }
   }, [session])
 
@@ -298,6 +317,14 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
         animation: 'default',
       }}
     >
+      <Stack.Screen
+        name="share"
+        options={{
+          headerShown: false,
+          animation: 'none',
+        }}
+      />
+
       {/* Onboarding - shown first if not completed */}
       <Stack.Protected guard={!hasCompletedOnboarding}>
         <Stack.Screen
@@ -351,4 +378,3 @@ function RootStack({ session, isLoading, hasCompletedOnboarding }: { session: Au
     </Stack>
   )
 }
-

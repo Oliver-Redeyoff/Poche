@@ -1,8 +1,11 @@
 package org.name.Poche
 import expo.modules.splashscreen.SplashScreenManager
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Patterns
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -13,6 +16,8 @@ import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    normalizeIncomingIntent(intent)
+
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
@@ -21,6 +26,44 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    normalizeIncomingIntent(intent)
+    super.onNewIntent(intent)
+    setIntent(intent)
+  }
+
+  private fun normalizeIncomingIntent(intent: Intent?) {
+    if (intent == null) {
+      return
+    }
+
+    if (intent.action != Intent.ACTION_SEND || intent.type != "text/plain") {
+      return
+    }
+
+    val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+    val url = extractUrl(sharedText) ?: return
+
+    intent.action = Intent.ACTION_VIEW
+    intent.data = Uri.parse("poche://share?url=${Uri.encode(url)}")
+  }
+
+  private fun extractUrl(text: String?): String? {
+    if (text.isNullOrBlank()) {
+      return null
+    }
+
+    val matcher = Patterns.WEB_URL.matcher(text)
+    while (matcher.find()) {
+      val candidate = matcher.group() ?: continue
+      if (candidate.startsWith("http://") || candidate.startsWith("https://")) {
+        return candidate
+      }
+    }
+
+    return null
   }
 
   /**
