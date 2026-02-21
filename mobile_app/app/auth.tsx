@@ -29,9 +29,10 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   
-  const borderColor = useThemeColor({}, 'icon')
-  const backgroundColor = useThemeColor({}, 'background')
+  const borderColor = useThemeColor({}, 'border')
   const textColor = useThemeColor({}, 'text')
+  const cardColor = useThemeColor({}, 'card')
+  const iconColor = useThemeColor({}, 'icon')
 
   const topPadding = headerHeight
 
@@ -142,11 +143,11 @@ export default function Auth() {
             onChangeText={setEmail}
             value={email}
             placeholder="your@email.com"
-            placeholderTextColor={borderColor}
+            placeholderTextColor={iconColor}
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
-            style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+            style={[styles.input, { borderColor, backgroundColor: cardColor, color: textColor }]}
           />
         </View>
 
@@ -191,11 +192,11 @@ export default function Auth() {
           onChangeText={setEmail}
           value={email}
           placeholder="your@email.com"
-          placeholderTextColor={borderColor}
+          placeholderTextColor={iconColor}
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
-          style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+          style={[styles.input, { borderColor, backgroundColor: cardColor, color: textColor }]}
         />
       </View>
 
@@ -207,10 +208,10 @@ export default function Auth() {
           value={password}
           secureTextEntry={true}
           placeholder="Password"
-          placeholderTextColor={borderColor}
+          placeholderTextColor={iconColor}
           autoCapitalize="none"
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-          style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+          style={[styles.input, { borderColor, backgroundColor: cardColor, color: textColor }]}
         />
       </View>
 
@@ -223,10 +224,10 @@ export default function Auth() {
             value={confirmPassword}
             secureTextEntry={true}
             placeholder="Confirm password"
-            placeholderTextColor={borderColor}
+            placeholderTextColor={iconColor}
             autoCapitalize="none"
             autoComplete="new-password"
-            style={[styles.input, { borderColor, backgroundColor, color: textColor }]}
+            style={[styles.input, { borderColor, backgroundColor: cardColor, color: textColor }]}
           />
         </View>
       )}
@@ -260,6 +261,7 @@ export default function Auth() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    marginTop: 40,
   },
   modeSwitch: {
     marginBottom: 24,
