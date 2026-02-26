@@ -268,7 +268,7 @@ export default function ArticleScreen() {
       } else {
         syncTimeoutRef.current = setTimeout(() => {
           if (article && progress > lastSyncedProgress.current) {
-            syncReadingProgressToBackend(article.id, progress)
+            syncReadingProgressToBackend(article.id, readingProgressRef.current)
             lastSyncedProgress.current = progress
           }
         }, 3000)
