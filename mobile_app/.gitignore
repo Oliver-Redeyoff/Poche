@@ -131,6 +131,10 @@ docs/pages/versions/*/react-native/*.diff
 # iOS
 **/ios/.xcode.env.local
 
+# EAS local credentials (do not commit)
+credentials.json
+ios/certs/
+
 # TypeScript state
 tsconfig.tsbuildinfo
 
