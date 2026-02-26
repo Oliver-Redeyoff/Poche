@@ -238,15 +238,17 @@ export function ArticleCard({
   // Default variant
   return (
     <Animated.View
+      style={[style]}
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(200)}
       layout={LinearTransition.duration(200)}
     >
       <DropdownMenu
         openOnLongPress
+        style={[styles.articleCardWrapperOuter, { backgroundColor: theme.colors.card }]}
         items={dropdownItems}
         trigger={
-          <View style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card }]}>
+          <View style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card, borderColor: tintColor }]}>
             <View style={[styles.articleCardWrapperInner]}>
               {/* Top part of article card */}
                   <Pressable
@@ -436,12 +438,17 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   // Default variant styles
+  articleCardWrapperOuter: {
+    borderRadius: 12,
+  },
   articleCardWrapper: {
     borderRadius: 12,
     boxShadow: '0px 8px 24px rgba(120, 120, 120, 0.05)',
-    overflow: "hidden"
+    overflow: "hidden",
+    // borderWidth: 1,
   },
   articleCardWrapperInner: {
+    // flex: 1,
     padding: 12,
   },
   articleCard: {
