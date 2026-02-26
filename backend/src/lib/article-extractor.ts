@@ -179,10 +179,10 @@ export async function extractArticle(url: string): Promise<ExtractedArticle> {
       const defuddleResult = defuddle.parse();
       title = defuddleResult?.title || null;
       htmlContent = defuddleResult?.content || null;
-      excerpt = defuddleResult?.excerpt || null;
-      author = defuddleResult?.byline || null;
-      siteName = defuddleResult?.siteName || null;
-      textContent = defuddleResult?.textContent || null;
+      // excerpt = defuddleResult?.excerpt || null;
+      // author = defuddleResult?.byline || null;
+      // siteName = defuddleResult?.siteName || null;
+      // textContent = defuddleResult?.textContent || null;
     } 
     // Raw DOM
     else {
