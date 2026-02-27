@@ -9,7 +9,7 @@ index ef50487..63c8e11 100644
 -  CGSize size = [layoutManager usedRectForTextContainer:textContainer].size;
 +  // Workaround for text cut-off issue on iOS: https://github.com/facebook/react-native/issues/53450
 +  CGFloat epsilon = 0.001;
-+  size = (CGSize){
++  CGSize size = (CGSize){
 +    ceil((size.width + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor,
 +    ceil((size.height + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor};
  
