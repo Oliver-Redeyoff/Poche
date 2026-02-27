@@ -1,0 +1,17 @@
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm b/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm
+index ef50487..63c8e11 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm
++++ b/node_modules/react-native/ReactCommon/react/renderer/textlayoutmanager/platform/ios/react/renderer/textlayoutmanager/RCTTextLayoutManager.mm
+@@ -370,7 +370,11 @@ - (TextMeasurement)_measureTextStorage:(NSTextStorage *)textStorage
+                                  }
+                                }];
+ 
+-  CGSize size = [layoutManager usedRectForTextContainer:textContainer].size;
++  // Workaround for text cut-off issue on iOS: https://github.com/facebook/react-native/issues/53450
++  CGFloat epsilon = 0.001;
++  size = (CGSize){
++    ceil((size.width + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor,
++    ceil((size.height + epsilon) * layoutContext.pointScaleFactor) / layoutContext.pointScaleFactor};
+ 
+   if (textDidWrap) {
+     size.width = textContainer.size.width;
