@@ -7,18 +7,21 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to"
       }
     },
     "preview": {
       "distribution": "internal",
+      "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to"
       }
     },
     "production": {
       "autoIncrement": true,
+      "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to"
       }

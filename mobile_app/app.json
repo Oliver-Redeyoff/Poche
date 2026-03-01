@@ -48,7 +48,6 @@
           }
         }
       ],
-      "expo-sqlite",
       "expo-apple-authentication",
       "expo-background-task",
       [
