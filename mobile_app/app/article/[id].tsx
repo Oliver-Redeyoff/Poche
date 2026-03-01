@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
+import { StyleSheet, ScrollView, Text, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
@@ -24,6 +24,7 @@ import { TagList } from '@/components/tag-list'
 import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
 import { Pressable, Linking } from 'react-native'
 import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
+import { Button, ContextMenu, Divider, Host, Menu } from '@expo/ui/swift-ui'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -704,10 +705,11 @@ export default function ArticleScreen() {
               </Pressable>
 
               <DropdownMenu
+                triggerType="press"
                 trigger={
-                  <View style={{ opacity: 1, padding: 4 }}>
+                  <Pressable style={{ opacity: 1, padding: 4 }}>
                     <IconSymbol name="ellipsis" size={28} color={theme.colors.text} />
-                  </View>
+                  </Pressable>
                 }
                 items={moreMenuItems}
               />

@@ -142,8 +142,8 @@ final class ShareViewController: UIViewController {
           let apiUrl = defaults.string(forKey: Self.shareApiUrlKey),
           !token.isEmpty,
           !apiUrl.isEmpty else {
-      setStatus("Opening Poche...")
-      openApp(extensionJustSaved: false)
+      setStatus("Sign in to Poche first")
+      completeRequest(after: 1.5)
       return
     }
 
@@ -154,7 +154,8 @@ final class ShareViewController: UIViewController {
   private func saveArticleViaAPI(sharedUrl: String, token: String, apiUrl: String) {
     let endpoint = apiUrl.hasSuffix("/") ? apiUrl + "api/articles" : apiUrl + "/api/articles"
     guard let url = URL(string: endpoint) else {
-      openApp(extensionJustSaved: false)
+      setStatus("Save failed")
+      completeRequest(after: 1.5)
       return
     }
 
@@ -168,45 +169,16 @@ final class ShareViewController: UIViewController {
       guard let self else { return }
       let http = response as? HTTPURLResponse
       let saved = http?.statusCode == 201 || http?.statusCode == 409
+      if saved, let defaults = UserDefaults(suiteName: Self.appGroupId) {
+        defaults.set(true, forKey: Self.shareJustSavedKey)
+        defaults.synchronize()
+      }
       DispatchQueue.main.async {
-        self.setStatus(saved ? "Saved!" : "Opening Poche...")
-        self.openApp(extensionJustSaved: saved)
+        self.setStatus(saved ? "Saved!" : "Save failed")
+        self.completeRequest(after: 1.0)
       }
     }
     task.resume()
-  }
-
-  private func openApp(extensionJustSaved: Bool) {
-    if extensionJustSaved, let defaults = UserDefaults(suiteName: Self.appGroupId) {
-      defaults.set(true, forKey: Self.shareJustSavedKey)
-      defaults.synchronize()
-    }
-
-    let deepLink = URL(string: "poche://share")!
-    extensionContext?.open(deepLink, completionHandler: { [weak self] success in
-      guard let self else { return }
-      if success {
-        self.completeRequest(after: 0.35)
-      } else {
-        self.openURLViaResponderChain(deepLink)
-      }
-    })
-  }
-
-  private func openURLViaResponderChain(_ url: URL) {
-    var responder: UIResponder? = self
-    let selector = sel_registerName("openURL:")
-
-    while let currentResponder = responder {
-      if currentResponder.responds(to: selector) {
-        _ = currentResponder.perform(selector, with: url)
-        completeRequest(after: 0.35)
-        return
-      }
-      responder = currentResponder.next
-    }
-
-    completeRequest()
   }
 
   private func completeRequest(after delay: TimeInterval) {

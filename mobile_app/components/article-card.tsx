@@ -150,7 +150,7 @@ export function ArticleCard({
       >
         <DropdownMenu
           style={{ flex: 1 }}
-          openOnLongPress
+          triggerType="longPress"
           items={dropdownItems}
           trigger={
             <Pressable
@@ -238,114 +238,110 @@ export function ArticleCard({
   // Default variant
   return (
     <Animated.View
-      style={[style]}
+      style={[style, styles.articleCardWrapperOuter, { backgroundColor: theme.colors.card }]}
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(200)}
       layout={LinearTransition.duration(200)}
     >
       <DropdownMenu
-        openOnLongPress
-        style={[styles.articleCardWrapperOuter, { backgroundColor: theme.colors.card }]}
+        triggerType="longPress"
+        style={{ overflow: "visible" }}
         items={dropdownItems}
         trigger={
-          <View style={[styles.articleCardWrapper, { backgroundColor: theme.colors.card, borderColor: tintColor }]}>
-            <View style={[styles.articleCardWrapperInner]}>
-              {/* Top part of article card */}
-                  <Pressable
-                    onPress={handleCardPress}
-                    style={({ pressed }) => [
-                      styles.articleCard,
-                      pressed && styles.articleCardPressed,
-                    ]}
-                  >
-                    <View style={styles.articleCardTop}>
-                      <View style={styles.articleCardTextRow}>
-                        {readStatus === 'new' && (
-                          <View style={[styles.unreadDotDefault, { backgroundColor: tintColor }]} pointerEvents="none" />
-                        )}
-                        <View style={styles.articleCardText}>
-                          {article.title && (
-                            <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
-                              {article.title}
-                            </ThemedText>
-                          )}
-                          {article.siteName && (
-                            <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
-                              {article.siteName} • {showProgress && remainingTime
-                                ? `${remainingTime} min left`
-                                : readingTime}
-                            </ThemedText>
-                          )}
-                        </View>
-                      </View>
-
-                      {imageUrl ? (
-                        <Image
-                          source={{ uri: imageUrl ?? "" }}
-                          style={styles.articleImage}
-                          contentFit="cover"
-                          transition={200}
-                          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-                        />
-                      ) : (
-                        <View
-                          style={[
-                            styles.articleImage,
-                            styles.articleImagePlaceholder,
-                            faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
-                          ]}
-                        >
-                          {faviconUrl && !hasFaviconError ? (
-                            <Image
-                              source={{ uri: faviconUrl }}
-                              style={styles.articleFavicon}
-                              contentFit="contain"
-                              transition={150}
-                              onError={() => setHasFaviconError(true)}
-                            />
-                          ) : (
-                            <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  </Pressable>
-
-              {/* Bottom part of article card - tags and actions (outside main pressable) */}
-              <View style={styles.articleCardBottom}>
-                <View style={styles.articleTagList}>
-                  <TagList
-                    tags={article.tags}
-                    onUpdateTags={(tags) => onUpdateTags(article.id, tags)}
-                    size="small"
-                  />
-                </View>
-
-                {/* Icon list */}
-                <View style={styles.articleIconList}>
-                  {onToggleFavorite && (
-                    <Pressable
-                      onPress={handleToggleFavorite}
-                      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-                    >
-                      <IconSymbol
-                        name={article.isFavorite ? 'star.fill' : 'star'}
-                        size={20}
-                        color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'}
-                      />
-                    </Pressable>
+          <View>
+            {/* Top part of article card */}
+            <Pressable
+              onPress={handleCardPress}
+              style={({ pressed }) => [
+                styles.articleCardTop,
+                pressed && styles.articleCardPressed,
+              ]}
+            >
+              <View style={styles.articleCardTextRow}>
+                {readStatus === 'new' && (
+                  <View style={[styles.unreadDotDefault, { backgroundColor: tintColor }]} pointerEvents="none" />
+                )}
+                <View style={styles.articleCardText}>
+                  {article.title && (
+                    <ThemedText fontSize={16} style={styles.articleTitle} numberOfLines={2}>
+                      {article.title}
+                    </ThemedText>
                   )}
-                  <DropdownMenu
-                    trigger={
-                      <View style={{ padding: 2 }}>
-                        <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
-                      </View>
-                    }
-                    items={dropdownItems}
-                  />
+                  {article.siteName && (
+                    <ThemedText fontSize={14} style={styles.articleUrlAndDate}>
+                      {article.siteName} • {showProgress && remainingTime
+                        ? `${remainingTime} min left`
+                        : readingTime}
+                    </ThemedText>
+                  )}
                 </View>
               </View>
 
+              {imageUrl ? (
+                <Image
+                  source={{ uri: imageUrl ?? "" }}
+                  style={styles.articleImage}
+                  contentFit="cover"
+                  transition={200}
+                  placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.articleImage,
+                    styles.articleImagePlaceholder,
+                    faviconUrl ? { backgroundColor: article.faviconBackgroundColor || '#ECECEC' } : null,
+                  ]}
+                >
+                  {faviconUrl && !hasFaviconError ? (
+                    <Image
+                      source={{ uri: faviconUrl }}
+                      style={styles.articleFavicon}
+                      contentFit="contain"
+                      transition={150}
+                      onError={() => setHasFaviconError(true)}
+                    />
+                  ) : (
+                    <IconSymbol name="doc.text" size={22} color="rgba(120, 120, 120, 0.3)" />
+                  )}
+                </View>
+              )}
+            </Pressable>
+
+            {/* Bottom part of article card - tags and actions (outside main pressable) */}
+            <View style={styles.articleCardBottom}>
+              <View style={styles.articleTagList}>
+                <TagList
+                  tags={article.tags}
+                  onUpdateTags={(tags) => onUpdateTags(article.id, tags)}
+                  size="small"
+                />
+              </View>
+
+              {/* Icon list */}
+              <View style={styles.articleIconList}>
+                {onToggleFavorite && (
+                  <Pressable
+                    onPress={handleToggleFavorite}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+                  >
+                    <IconSymbol
+                      name={article.isFavorite ? 'star.fill' : 'star'}
+                      size={20}
+                      color={article.isFavorite ? '#FFD700' : 'rgba(120, 120, 120, 0.75)'}
+                    />
+                  </Pressable>
+                )}
+                <DropdownMenu
+                  triggerType="press"
+                  trigger={
+                    <View style={{ padding: 2 }}>
+                      <IconSymbol name="ellipsis" size={20} color="rgba(120, 120, 120, 0.75)" />
+                    </View>
+                  }
+                  items={dropdownItems}
+                />
+              </View>
             </View>
 
             {/* Progress bar */}
@@ -440,23 +436,8 @@ const styles = StyleSheet.create({
   // Default variant styles
   articleCardWrapperOuter: {
     borderRadius: 12,
-  },
-  articleCardWrapper: {
-    borderRadius: 12,
     boxShadow: '0px 8px 24px rgba(120, 120, 120, 0.05)',
-    overflow: "hidden",
-    // borderWidth: 1,
-  },
-  articleCardWrapperInner: {
-    // flex: 1,
-    padding: 12,
-  },
-  articleCard: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    overflow: 'hidden',
   },
   articleCardPressed: {
     opacity: 0.7,
@@ -465,7 +446,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 8,
+    padding: 12,
+    paddingBottom: 0,
   },
   articleCardTextRow: {
     flexDirection: 'row',
@@ -529,6 +511,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
+    padding: 12,
+    paddingTop: 8,
   },
   articleTagList: {
     flexGrow: 1,
