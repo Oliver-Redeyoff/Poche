@@ -3,13 +3,13 @@ import { Tabs, router } from 'expo-router'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { Header } from '@/components/header'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BottomDrawer } from '@/components/bottom-drawer'
 import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
 import { ThemedText } from '@/components/themed-text'
 import { Button } from '@/components/button'
 import { useAuth } from '../_layout'
-import { signOut, deleteAccount } from '@/lib/api'
+import { signOut, deleteAccount, getArticleUsage } from '@/lib/api'
 import { clearArticlesFromStorage } from '@/lib/article-sync'
 import { Colors } from '@/constants/theme'
 import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
@@ -28,6 +28,13 @@ export default function TabLayout() {
   const [showAccountSettings, setShowAccountSettings] = useState(false)
   const [showReadingSettings, setShowReadingSettings] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [usage, setUsage] = useState<{ count: number; limit: number } | null>(null)
+
+  useEffect(() => {
+    if (showAccountSettings) {
+      getArticleUsage().then(setUsage).catch(() => {})
+    }
+  }, [showAccountSettings])
 
   async function handleLogout() {
     if (session?.user?.id) {
@@ -141,6 +148,21 @@ export default function TabLayout() {
               Signed in as {session?.user?.email}
             </ThemedText>
 
+            {usage !== null && (() => {
+              const pct = Math.min(1, usage.count / usage.limit)
+              const fillColor = pct >= 1 ? colors.error : pct >= 0.8 ? colors.warning : colors.tint
+              return (
+                <View style={styles.usageSection}>
+                  <View style={[styles.usageBar, { backgroundColor: colors.border }]}>
+                    <View style={[styles.usageFill, { width: `${pct * 100}%`, backgroundColor: fillColor }]} />
+                  </View>
+                  <ThemedText fontSize={13} style={{ color: colors.textSecondary }}>
+                    {usage.count} / {usage.limit} articles saved
+                  </ThemedText>
+                </View>
+              )
+            })()}
+
             <Button
               title="Sign Out"
               variant="secondary"
@@ -220,5 +242,17 @@ const styles = StyleSheet.create({
   signedInText: {
     fontFamily: 'SourceSans3_400Regular',
     marginBottom: 4,
+  },
+  usageSection: {
+    gap: 6,
+  },
+  usageBar: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  usageFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 })

@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, count } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { articles } from '../db/schema.js';
+import { articles, user as userTable } from '../db/schema.js';
 import { extractArticle, decodeHtmlEntities } from '../lib/article-extractor.js';
 import type { Session, User } from 'better-auth';
 
@@ -48,6 +48,26 @@ app.get('/', async (c) => {
   }
 });
 
+// GET /articles/usage - Get article count and limit for the user
+app.get('/usage', async (c) => {
+  const user = c.get('user');
+
+  try {
+    const [[{ articleCount }], [userData]] = await Promise.all([
+      db.select({ articleCount: count() }).from(articles).where(eq(articles.userId, user.id)),
+      db.select({ articleLimit: userTable.articleLimit }).from(userTable).where(eq(userTable.id, user.id)),
+    ]);
+
+    return c.json({
+      count: Number(articleCount),
+      limit: userData?.articleLimit ?? 50,
+    });
+  } catch (error) {
+    console.error('Error fetching article usage:', error);
+    return c.json({ error: 'Failed to fetch article usage' }, 500);
+  }
+});
+
 // GET /articles/:id - Get a single article
 app.get('/:id', async (c) => {
   const user = c.get('user');
@@ -82,6 +102,17 @@ app.post('/', async (c) => {
   try {
     const body = await c.req.json();
     const { url, tags } = createArticleSchema.parse(body);
+
+    // Check article limit
+    const [[{ articleCount }], [userData]] = await Promise.all([
+      db.select({ articleCount: count() }).from(articles).where(eq(articles.userId, user.id)),
+      db.select({ articleLimit: userTable.articleLimit }).from(userTable).where(eq(userTable.id, user.id)),
+    ]);
+
+    const limit = userData?.articleLimit ?? 50;
+    if (Number(articleCount) >= limit) {
+      return c.json({ error: `Article limit reached. You can store up to ${limit} articles. Delete some articles to free up space.` }, 403);
+    }
 
     // Check if article with this URL already exists for this user
     const existing = await db

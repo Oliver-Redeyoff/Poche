@@ -58,7 +58,7 @@ app.get('/', (c) => {
 });
 
 // Better Auth handler - handles all /api/auth/* routes
-app.on(['GET', 'POST'], '/api/auth/**', (c) => {
+app.on(['GET', 'POST'], '/api/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
 

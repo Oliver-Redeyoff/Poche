@@ -253,6 +253,10 @@ export async function getSession(): Promise<AuthResponse | null> {
 // Articles
 // ============================================
 
+export async function getArticleUsage(): Promise<{ count: number; limit: number }> {
+  return apiRequest<{ count: number; limit: number }>(API_ENDPOINTS.ARTICLES_USAGE)
+}
+
 export async function getArticles(): Promise<Article[]> {
   const data = await apiRequest<{ articles: Article[] }>(API_ENDPOINTS.ARTICLES)
   return data.articles
