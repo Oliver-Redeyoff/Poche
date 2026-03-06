@@ -86,5 +86,6 @@ export const API_ENDPOINTS = {
   // Articles
   ARTICLES: '/api/articles',
   ARTICLE: (id: number) => `/api/articles/${id}`,
+  ARTICLES_USAGE: '/api/articles/usage',
 } as const
 

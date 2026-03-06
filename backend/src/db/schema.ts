@@ -12,6 +12,7 @@ export const user = pgTable('user', {
   image: text('image'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  articleLimit: integer('article_limit').notNull().default(50),
 });
 
 export const session = pgTable('session', {

@@ -165,16 +165,24 @@ final class ShareViewController: UIViewController {
     request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     request.httpBody = try? JSONSerialization.data(withJSONObject: ["url": sharedUrl])
 
-    let task = URLSession.shared.dataTask(with: request) { [weak self] _, response, _ in
+    let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, _ in
       guard let self else { return }
       let http = response as? HTTPURLResponse
-      let saved = http?.statusCode == 201 || http?.statusCode == 409
+      let statusCode = http?.statusCode ?? 0
+      let saved = statusCode == 201 || statusCode == 409
+
       if saved, let defaults = UserDefaults(suiteName: Self.appGroupId) {
         defaults.set(true, forKey: Self.shareJustSavedKey)
         defaults.synchronize()
       }
+
+      var statusMessage = saved ? "Saved!" : "Save failed"
+      if statusCode == 403 {
+        statusMessage = "Article limit reached"
+      }
+
       DispatchQueue.main.async {
-        self.setStatus(saved ? "Saved!" : "Save failed")
+        self.setStatus(statusMessage)
         self.completeRequest(after: 1.0)
       }
     }
