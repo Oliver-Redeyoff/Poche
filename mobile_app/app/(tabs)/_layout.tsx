@@ -142,40 +142,60 @@ export default function TabLayout() {
         onDismiss={() => setShowAccountSettings(false)}
       >
         <View style={styles.section}>
-            <ThemedText fontSize={13} style={styles.sectionTitle}>Account</ThemedText>
-            
-            <ThemedText fontSize={15} style={[styles.signedInText, { color: colors.textSecondary }]}>
-              Signed in as {session?.user?.email}
-            </ThemedText>
+          {/* User identity */}
+          <View style={styles.userRow}>
+            <View style={[styles.avatar, { backgroundColor: colors.accentLight }]}>
+              <ThemedText fontSize={19} style={[styles.avatarInitial, { color: colors.accent }]}>
+                {(session?.user?.name || session?.user?.email || '?')[0].toUpperCase()}
+              </ThemedText>
+            </View>
+            <View style={styles.userInfo}>
+              {session?.user?.name ? (
+                <>
+                  <ThemedText fontSize={15} style={styles.userName}>{session.user.name}</ThemedText>
+                  <ThemedText fontSize={13} style={{ color: colors.textSecondary }}>{session.user.email}</ThemedText>
+                </>
+              ) : (
+                <ThemedText fontSize={15} style={styles.userName}>{session?.user?.email}</ThemedText>
+              )}
+            </View>
+          </View>
 
-            {usage !== null && (() => {
-              const pct = Math.min(1, usage.count / usage.limit)
-              const fillColor = pct >= 1 ? colors.error : pct >= 0.8 ? colors.warning : colors.tint
-              return (
-                <View style={styles.usageSection}>
-                  <View style={[styles.usageBar, { backgroundColor: colors.border }]}>
-                    <View style={[styles.usageFill, { width: `${pct * 100}%`, backgroundColor: fillColor }]} />
-                  </View>
-                  <ThemedText fontSize={13} style={{ color: colors.textSecondary }}>
-                    {usage.count} / {usage.limit} articles saved
+          {/* Usage */}
+          {usage !== null && (() => {
+            const pct = Math.min(1, usage.count / usage.limit)
+            const fillColor = pct >= 1 ? colors.error : pct >= 0.8 ? colors.warning : colors.tint
+            return (
+              <View style={[styles.usageCard, { backgroundColor: colors.surface }]}>
+                <View style={styles.usageLabelRow}>
+                  <ThemedText fontSize={13} style={{ color: colors.textSecondary }}>Articles saved</ThemedText>
+                  <ThemedText fontSize={13} style={[styles.usageCount, { color: fillColor }]}>
+                    {usage.count} / {usage.limit}
                   </ThemedText>
                 </View>
-              )
-            })()}
+                <View style={[styles.usageBar, { backgroundColor: colors.border }]}>
+                  <View style={[styles.usageFill, { width: `${pct * 100}%`, backgroundColor: fillColor }]} />
+                </View>
+              </View>
+            )
+          })()}
 
-            <Button
-              title="Sign Out"
-              variant="secondary"
-              onPress={handleLogout}
-            />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            <Button
-              title="Delete Account"
-              variant="danger"
-              onPress={handleDeleteAccount}
-              loading={isDeleting}
-              loadingText="Deleting..."
-            />
+          <Button
+            title="Sign Out"
+            variant="primary"
+            onPress={handleLogout}
+            // style={{ backgroundColor: colors.card }}
+          />
+
+          <Button
+            title="Delete Account"
+            variant="danger"
+            onPress={handleDeleteAccount}
+            loading={isDeleting}
+            loadingText="Deleting..."
+          />
         </View>
       </BottomDrawer>
 
@@ -230,21 +250,42 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   section: {
+    gap: 16,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  sectionTitle: {
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
     fontFamily: 'SourceSans3_600SemiBold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    opacity: 0.6,
-    marginLeft: 4,
   },
-  signedInText: {
-    fontFamily: 'SourceSans3_400Regular',
-    marginBottom: 4,
+  userInfo: {
+    flex: 1,
+    gap: 2,
   },
-  usageSection: {
-    gap: 6,
+  userName: {
+    fontFamily: 'SourceSans3_600SemiBold',
+  },
+  usageCard: {
+    borderRadius: 10,
+    padding: 12,
+    gap: 8,
+  },
+  usageLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  usageCount: {
+    fontFamily: 'SourceSans3_600SemiBold',
   },
   usageBar: {
     height: 6,
@@ -254,5 +295,8 @@ const styles = StyleSheet.create({
   usageFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
   },
 })
