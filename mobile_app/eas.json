@@ -9,21 +9,24 @@
       "distribution": "internal",
       "credentialsSource": "local",
       "env": {
-        "API_URL": "https://api.poche.to"
+        "API_URL": "https://api.poche.to",
+        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv"
       }
     },
     "preview": {
       "distribution": "internal",
       "credentialsSource": "local",
       "env": {
-        "API_URL": "https://api.poche.to"
+        "API_URL": "https://api.poche.to",
+        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv"
       }
     },
     "production": {
       "autoIncrement": true,
       "credentialsSource": "local",
       "env": {
-        "API_URL": "https://api.poche.to"
+        "API_URL": "https://api.poche.to",
+        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv"
       }
     }
   },

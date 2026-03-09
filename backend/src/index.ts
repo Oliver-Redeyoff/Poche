@@ -5,6 +5,9 @@ import { logger } from 'hono/logger';
 import { auth } from './lib/auth.js';
 import articlesRoutes from './routes/articles.js';
 import type { Session, User } from 'better-auth';
+import { eq } from 'drizzle-orm';
+import { db } from './db/index.js';
+import { user as userTable } from './db/schema.js';
 
 // Type for authenticated context
 type AppContext = {
@@ -60,6 +63,34 @@ app.get('/', (c) => {
 // Better Auth handler - handles all /api/auth/* routes
 app.on(['GET', 'POST'], '/api/auth/*', (c) => {
   return auth.handler(c.req.raw);
+});
+
+// RevenueCat webhook — verified via shared secret, no auth middleware
+const RC_PREMIUM_EVENTS = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'REACTIVATION', 'UNCANCELLATION']);
+const RC_FREE_EVENTS = new Set(['CANCELLATION', 'EXPIRATION', 'BILLING_ISSUE']);
+
+app.post('/api/webhooks/revenuecat', async (c) => {
+  const secret = process.env.REVENUECAT_WEBHOOK_SECRET;
+  if (!secret || c.req.header('Authorization') !== secret) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  const body = await c.req.json();
+  const { event } = body;
+
+  if (!event?.type || !event?.app_user_id) {
+    return c.json({ error: 'Invalid payload' }, 400);
+  }
+
+  const userId: string = event.app_user_id;
+
+  if (RC_PREMIUM_EVENTS.has(event.type)) {
+    await db.update(userTable).set({ articleLimit: 999999 }).where(eq(userTable.id, userId));
+  } else if (RC_FREE_EVENTS.has(event.type)) {
+    await db.update(userTable).set({ articleLimit: 50 }).where(eq(userTable.id, userId));
+  }
+
+  return c.json({ ok: true });
 });
 
 // Auth middleware for protected routes
