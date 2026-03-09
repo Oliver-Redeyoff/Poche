@@ -3,7 +3,7 @@ import { Tabs, router } from 'expo-router'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { Header } from '@/components/header'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BottomDrawer } from '@/components/bottom-drawer'
 import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
 import { ThemedText } from '@/components/themed-text'
@@ -13,6 +13,8 @@ import { signOut, deleteAccount, getArticleUsage } from '@/lib/api'
 import { clearArticlesFromStorage } from '@/lib/article-sync'
 import { Colors } from '@/constants/theme'
 import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
+import Purchases from 'react-native-purchases'
+import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui'
 
 export default function TabLayout() {
   const { session, setSession } = useAuth()
@@ -28,11 +30,18 @@ export default function TabLayout() {
   const [showAccountSettings, setShowAccountSettings] = useState(false)
   const [showReadingSettings, setShowReadingSettings] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const paywallAfterDismiss = useRef(false)
   const [usage, setUsage] = useState<{ count: number; limit: number } | null>(null)
+  const [isPremium, setIsPremium] = useState(false)
 
   useEffect(() => {
     if (showAccountSettings) {
       getArticleUsage().then(setUsage).catch(() => {})
+      if (Platform.OS === 'ios') {
+        Purchases.getCustomerInfo()
+          .then((info) => setIsPremium(!!info.entitlements.active['premium']))
+          .catch(() => {})
+      }
     }
   }, [showAccountSettings])
 
@@ -41,6 +50,9 @@ export default function TabLayout() {
       await clearArticlesFromStorage(session.user.id)
     }
     await signOut()
+    if (Platform.OS === 'ios') {
+      await Purchases.logOut().catch(() => {})
+    }
     setSession(null)
     router.replace('/auth')
   }
@@ -140,6 +152,14 @@ export default function TabLayout() {
       <BottomDrawer
         visible={showAccountSettings}
         onDismiss={() => setShowAccountSettings(false)}
+        onFullyDismissed={async () => {
+          if (!paywallAfterDismiss.current) return
+          paywallAfterDismiss.current = false
+          const result = await RevenueCatUI.presentPaywall()
+          if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+            setIsPremium(true)
+          }
+        }}
       >
         <View style={styles.section}>
           {/* User identity */}
@@ -161,8 +181,28 @@ export default function TabLayout() {
             </View>
           </View>
 
+          {/* Subscription status */}
+          {isPremium ? (
+            <View style={[styles.premiumBadge, { backgroundColor: colors.accentLight }]}>
+              <ThemedText fontSize={13} style={[styles.premiumBadgeText, { color: colors.accent }]}>
+                Premium
+              </ThemedText>
+            </View>
+          ) : (
+            Platform.OS === 'ios' && (
+              <Button
+                title="Upgrade to Premium"
+                variant="primary"
+                onPress={() => {
+                  paywallAfterDismiss.current = true
+                  setShowAccountSettings(false)
+                }}
+              />
+            )
+          )}
+
           {/* Usage */}
-          {usage !== null && (() => {
+          {usage !== null && !isPremium && (() => {
             const pct = Math.min(1, usage.count / usage.limit)
             const fillColor = pct >= 1 ? colors.error : pct >= 0.8 ? colors.warning : colors.tint
             return (
@@ -298,5 +338,14 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
+  },
+  premiumBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  premiumBadgeText: {
+    fontFamily: 'SourceSans3_600SemiBold',
   },
 })

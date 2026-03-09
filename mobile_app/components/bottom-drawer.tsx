@@ -10,10 +10,12 @@ const DRAWER_OFFSCREEN = 400
 interface BottomDrawerProps {
   visible: boolean
   onDismiss: () => void
+  /** Called on iOS after the Modal animation fully completes and the VC is removed from the hierarchy. */
+  onFullyDismissed?: () => void
   children: ReactNode
 }
 
-export function BottomDrawer({ visible, onDismiss, children }: BottomDrawerProps) {
+export function BottomDrawer({ visible, onDismiss, onFullyDismissed, children }: BottomDrawerProps) {
   const insets = useSafeAreaInsets()
   const resolvedScheme = useResolvedColorScheme()
   const colors = Colors[resolvedScheme]
@@ -64,6 +66,7 @@ export function BottomDrawer({ visible, onDismiss, children }: BottomDrawerProps
       transparent
       animationType="fade"
       onRequestClose={dismiss}
+      onDismiss={onFullyDismissed}
     >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={dismiss} />

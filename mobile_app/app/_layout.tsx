@@ -5,6 +5,9 @@ import 'react-native-reanimated'
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react'
 import { View, Image, Alert, AppState, NativeModules, Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Constants from 'expo-constants'
+import Purchases, { LOG_LEVEL } from 'react-native-purchases'
+import RevenueCatUI from 'react-native-purchases-ui'
 import { Header } from '@/components/header'
 import {
   useFonts as useBitterFonts,
@@ -144,18 +147,28 @@ async function markOnboardingComplete(): Promise<void> {
 }
 
 // If Share Extension just saved an article (iOS), sync and show feedback
-async function checkShareExtensionJustSaved(session: AuthResponse | null): Promise<void> {
+async function checkShareExtensionJustSaved(
+  session: AuthResponse | null,
+  onArticleLimitReached?: () => void,
+): Promise<void> {
   if (!session || Platform.OS !== 'ios' || !NativeModules.PendingShareModule?.getShareExtensionJustSaved) {
     return
   }
   try {
     const justSaved = await NativeModules.PendingShareModule.getShareExtensionJustSaved()
     if (justSaved) {
-      await syncArticles(session.user.id, { processImages: true })
-      Alert.alert('Saved to Poche', 'Link has been saved to your library.')
+      const result = await syncArticles(session.user.id, { processImages: true })
+      if (result.error?.message.includes('Article limit reached')) {
+        onArticleLimitReached?.()
+      } else {
+        Alert.alert('Saved to Poche', 'Link has been saved to your library.')
+      }
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    const message = err instanceof Error ? err.message : ''
+    if (message.includes('Article limit reached')) {
+      onArticleLimitReached?.()
+    }
   }
 }
 
@@ -236,8 +249,20 @@ export default function RootLayout() {
         const existingSession = await getSession()
         setSession(existingSession)
 
+        // Initialize RevenueCat (iOS only)
+        if (Platform.OS === 'ios') {
+          const rcKey = Constants.expoConfig?.extra?.revenueCatIosKey as string | undefined
+          if (rcKey) {
+            if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
+            Purchases.configure({ apiKey: rcKey })
+            if (existingSession) {
+              await Purchases.logIn(existingSession.user.id)
+            }
+          }
+        }
+
         // If opened from Share Extension after it saved an article, sync and show feedback (iOS only)
-        await checkShareExtensionJustSaved(existingSession)
+        await checkShareExtensionJustSaved(existingSession, () => { RevenueCatUI.presentPaywall().catch(() => {}) })
 
         // Register background sync if user is logged in
         if (existingSession) {
@@ -259,7 +284,7 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState !== 'active') return
-      checkShareExtensionJustSaved(session).catch(() => {})
+      checkShareExtensionJustSaved(session, () => { RevenueCatUI.presentPaywall().catch(() => {}) }).catch(() => {})
     })
     return () => subscription.remove()
   }, [session])
@@ -275,13 +300,22 @@ export default function RootLayout() {
   useEffect(() => {
     if (session) {
       registerBackgroundSync()
-      if (Platform.OS === 'ios' && NativeModules.PendingShareModule?.setShareCredentials) {
-        NativeModules.PendingShareModule.setShareCredentials(session.token, API_URL)
+      if (Platform.OS === 'ios') {
+        if (NativeModules.PendingShareModule?.setShareCredentials) {
+          NativeModules.PendingShareModule.setShareCredentials(session.token, API_URL)
+        }
+        const rcKey = Constants.expoConfig?.extra?.revenueCatIosKey as string | undefined
+        if (rcKey) {
+          Purchases.logIn(session.user.id).catch(() => {})
+        }
       }
     } else {
       unregisterBackgroundSync()
-      if (Platform.OS === 'ios' && NativeModules.PendingShareModule?.clearShareCredentials) {
-        NativeModules.PendingShareModule.clearShareCredentials()
+      if (Platform.OS === 'ios') {
+        if (NativeModules.PendingShareModule?.clearShareCredentials) {
+          NativeModules.PendingShareModule.clearShareCredentials()
+        }
+        Purchases.logOut().catch(() => {})
       }
     }
   }, [session])
