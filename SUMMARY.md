@@ -15,6 +15,7 @@ Poche is a "read it later" application that allows users to save articles from t
 ### Technology Stack
 
 - **Backend**: Hono (Node.js), Better Auth with bearer plugin, Drizzle ORM, PostgreSQL
+- **Monetization**: RevenueCat (iOS IAP), Apple In-App Purchase via StoreKit, RevenueCat webhook for server-side limit enforcement
 - **Mobile App**: React Native with Expo Router, custom markdown renderer
 - **Browser Extension**: React with TypeScript, built with Vite
 - **Web App**: React with TypeScript, Vite, React Router
@@ -35,6 +36,7 @@ The project uses a PostgreSQL database with the following main tables:
 - `email` (string, unique)
 - `emailVerified` (boolean)
 - `image` (string, nullable)
+- `articleLimit` (integer, default 50) - Max saved articles; set to 999999 for premium users
 - `createdAt`, `updatedAt` (timestamps)
 
 #### `session` table (Better Auth)
@@ -130,6 +132,8 @@ Poche/
 - Bearer token authentication for browser extensions and mobile apps
 - **Password reset**: Email-based password reset flow via Resend
 - **Email service**: Transactional emails with beautiful HTML templates
+- **Article limit enforcement**: Free users capped at 50 articles (`articleLimit` on user row); 403 returned when limit reached
+- **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — verifies `Authorization` header, sets `articleLimit: 999999` on purchase/renewal and resets to 50 on cancellation/expiration
 - Docker Compose with Nginx reverse proxy for production deployment
 - HTTPS with Let's Encrypt SSL certificates (Certbot + Cloudflare DNS)
 - PostgreSQL with Drizzle ORM
@@ -154,7 +158,8 @@ Poche/
 - **Global font size**: Reading font size (14–26) stored in AuthContext (`appFontSize`/`setAppFontSize`), persisted to AsyncStorage (`@poche_app_font_size`); applies to article markdown
 - **Bottom drawer component**: Reusable `BottomDrawer` component with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
 - **Reading settings drawer**: Separate `ReadingSettingsDrawer` component (font size slider via `@react-native-community/slider` and theme selector); opened from tab header (paint palette icon) or article screen (paint palette button)
-- **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email, sign out, and delete account
+- **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email, Premium badge or Upgrade button, article usage bar, sign out, and delete account
+- **Premium subscription (iOS)**: RevenueCat paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; usage bar hidden for premium users; paywall shown when article limit is hit (403 response)
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
 - **Link styling**: Links appear in accent color with underline
@@ -328,6 +333,8 @@ The shared package provides common functionality across all projects:
 - ✅ **No build step required**: Uses TypeScript source directly (compatible with Metro, Vite, and EAS)
 
 ### Backend
+- ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — updates `articleLimit` based on subscription events; mounted before authMiddleware
+- ✅ **Article limit enforcement**: Free users capped at 50 articles; 403 with `"Article limit reached"` on save attempts over limit
 - ✅ Self-hosted API server with Hono
 - ✅ Better Auth integration with bearer plugin for token-based auth
 - ✅ Server-side article extraction with domain-specific configurations: CSS selector to narrow DOM, elements to remove, extraction library per domain (Readability, Defuddle, or raw DOM); BBC uses raw DOM with targeted element removal
@@ -398,6 +405,8 @@ The shared package provides common functionality across all projects:
 - ✅ **Offline favicon pipeline**: `syncArticles()` caches per-article favicons and extracted background colors for offline placeholders
 - ✅ **Offline link preview pipeline**: `syncArticles()` fetches `og:image`/`twitter:image`, caches preview images locally, and stores `previewImageUrl` + `previewImageLocalPath` on articles
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with App Group; extension saves article via API and opens app; app shows "Saved to Poche" on cold start and when app comes to foreground (AppState). Android share target opens app with `poche://share?url=...` (save from share route not yet implemented). Native `PendingShareModule` for credentials and "just saved" flag; `share.tsx` route for deep link redirect.
+- ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui` SDK; configured with `REVENUECAT_IOS_KEY`; `Purchases.configure()` + `logIn(userId)` on auth; `RevenueCatUI.presentPaywall()` for native paywall; entitlement `poche_plus`; paywall triggered on 403 article limit error and from account settings Upgrade button; Premium badge shown in account drawer
+- ✅ **BottomDrawer `onFullyDismissed`**: Fires after Modal animation fully completes (iOS `onDismiss`); used to present native RevenueCat paywall after drawer is gone (avoids view controller hierarchy conflict)
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend

@@ -39,7 +39,7 @@ export default function TabLayout() {
       getArticleUsage().then(setUsage).catch(() => {})
       if (Platform.OS === 'ios') {
         Purchases.getCustomerInfo()
-          .then((info) => setIsPremium(!!info.entitlements.active['premium']))
+          .then((info) => setIsPremium(!!info.entitlements.active['poche_plus']))
           .catch(() => {})
       }
     }

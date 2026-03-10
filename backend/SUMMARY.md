@@ -10,6 +10,8 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 - **Password Reset**: Email-based password reset flow via Resend
 - **Email Service**: Transactional emails with beautiful HTML templates
 - **Article Extraction**: Server-side article parsing with domain-specific configs (Readability, raw DOM, or Defuddle) and NodeHtmlMarkdown (URL → markdown)
+- **Article Limit Enforcement**: Free users capped at 50 articles (`articleLimit` on user row); `POST /api/articles` returns 403 with `"Article limit reached"` when limit exceeded
+- **RevenueCat Webhook**: `POST /api/webhooks/revenuecat` — verifies `Authorization` header against `REVENUECAT_WEBHOOK_SECRET`; sets `articleLimit: 999999` on purchase/renewal events and resets to 50 on cancellation/expiration; mounted before `authMiddleware`
 - **RESTful API**: Full CRUD operations for articles
 - **Docker Support**: Easy deployment with Docker Compose
 - **Type Safety**: Full TypeScript with Drizzle ORM
@@ -67,6 +69,7 @@ backend/
 - `email` (text, unique, required)
 - `emailVerified` (boolean, default false)
 - `image` (text, nullable)
+- `articleLimit` (integer, default 50) - Max saved articles; RevenueCat webhook sets to 999999 for premium, resets to 50 on cancellation
 - `createdAt`, `updatedAt` (timestamps)
 
 #### `session`
@@ -131,10 +134,19 @@ All article endpoints require `Authorization: Bearer <token>` header.
 - `POST /api/articles` - Save article from URL
   - Body: `{ url: string, tags?: string }`
   - Backend fetches URL and extracts content via domain-specific extraction
+  - Returns 403 `"Article limit reached"` if user's saved article count >= `articleLimit`
 - `PATCH /api/articles/:id` - Update article (tags, title, readingProgress, isFavorite)
   - Automatically sets `startedAt` when progress first goes above 0
   - Automatically sets `finishedAt` when progress reaches 100
 - `DELETE /api/articles/:id` - Delete article
+
+### Webhook (Unauthenticated — verified by shared secret)
+- `POST /api/webhooks/revenuecat` - RevenueCat subscription event handler
+  - Verifies `Authorization` header == `REVENUECAT_WEBHOOK_SECRET`
+  - `INITIAL_PURCHASE`, `RENEWAL`, `REACTIVATION`, `UNCANCELLATION` → `articleLimit: 999999`
+  - `CANCELLATION`, `EXPIRATION`, `BILLING_ISSUE` → `articleLimit: 50`
+  - Uses `event.app_user_id` (= Better Auth user ID) for DB lookup
+  - Mounted before `authMiddleware` in `index.ts`
 
 ## Authentication Flow
 
@@ -194,6 +206,9 @@ BETTER_AUTH_URL=https://api.poche.to
 
 # Email (for password reset)
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+
+# RevenueCat (webhook verification — keep secret)
+REVENUECAT_WEBHOOK_SECRET=your_webhook_secret_here
 ```
 
 **Important**: `POSTGRES_PASSWORD` must NOT contain special characters like `@`, `:`, `/`, `#`, `+`, or backticks. These break the DATABASE_URL parsing. Use only letters and numbers (e.g., `PocheDb2024Secure`).
@@ -306,7 +321,8 @@ Located in `src/lib/auth.ts`:
 
 1. Logger - Request logging
 2. CORS - Cross-origin request handling with dynamic origin validation
-3. Auth Middleware - Validates bearer token for protected routes
+3. RevenueCat Webhook route - Mounted **before** auth middleware (uses its own `Authorization` header check)
+4. Auth Middleware - Validates bearer token for protected routes
 
 ## Known Considerations
 
@@ -369,6 +385,8 @@ The webapp is built and deployed to `backend/web_app_dist/`. Docker Compose moun
 - ✅ **Reading progress fields**: `readingProgress`, `isFavorite`, `startedAt`, `finishedAt`
 - ✅ **Smart timestamp handling**: Auto-sets `startedAt` and `finishedAt` based on progress updates
 - ✅ **ArticleUpdates validation**: Zod schema for progress and favorite updates
+- ✅ **Article limit enforcement**: `articleLimit` column on user table (default 50); `POST /api/articles` checks count before saving and returns 403 when exceeded
+- ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — inline handler in `index.ts`; verifies `Authorization` header; updates `articleLimit` on subscription events; mounted before `authMiddleware`
 
 ## Future Enhancements
 

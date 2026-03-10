@@ -18,9 +18,10 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Unified Theme System**: Light, dark, and sepia themes apply consistently across all screens; `Colors` palette has 3 schemes; `useResolvedColorScheme()` hook replaces direct `useColorScheme()` for color decisions
 - **Global Theme Selection**: Users choose Auto, Light, Sepia, or Dark from the reading settings drawer; persisted to AsyncStorage
 - **Global Font Size**: Reading font size (14–26) in AuthContext (`appFontSize`/`setAppFontSize`), persisted to AsyncStorage (`@poche_app_font_size`); applies to article markdown
-- **Bottom Drawer Component**: Reusable `BottomDrawer` component (`components/bottom-drawer.tsx`) with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
+- **Bottom Drawer Component**: Reusable `BottomDrawer` component (`components/bottom-drawer.tsx`) with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; `onFullyDismissed` callback fires after modal animation completes (iOS `onDismiss`); used by reading settings and account settings
 - **Reading Settings Drawer**: `ReadingSettingsDrawer` component (`components/reading-settings-drawer.tsx`); font size via `@react-native-community/slider` (configurable steps) and theme selector; opened from tab header (paint palette icon) and article screen (paint palette button)
-- **Account Settings Drawer**: Uses `BottomDrawer`; shows signed-in email, sign out, and delete account; triggered by person icon in tab header (no separate settings screen)
+- **Account Settings Drawer**: Uses `BottomDrawer`; shows signed-in email, Premium badge or Upgrade button, article usage progress bar (hidden for premium), sign out, and delete account; triggered by person icon in tab header
+- **Premium subscription (iOS)**: RevenueCat integration via `react-native-purchases` + `react-native-purchases-ui`; native paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; paywall shown on 403 article limit error or from account settings Upgrade button; SDK configured in `_layout.tsx` with `logIn`/`logOut` tied to auth state
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
@@ -43,7 +44,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 
 ### Technology Stack
 
-- **Framework**: React Native with Expo SDK ~54
+- **Framework**: React Native with Expo SDK ~55
 - **Routing**: Expo Router (file-based routing)
 - **Language**: TypeScript
 - **Navigation**: Expo Router with Stack and Tab navigators
@@ -175,8 +176,9 @@ Tab layout with account and reading settings:
 - Home and Library tabs with custom styling
 - **Header**: Poche logo and two icon buttons — paint palette (opens `ReadingSettingsDrawer`), person (opens account settings drawer)
 - **Reading settings drawer**: `ReadingSettingsDrawer` (font size + theme); triggered by paint palette icon
-- **Account settings drawer**: `BottomDrawer` triggered by person icon; signed-in email, Sign Out, Delete Account
-- Sign out clears local articles via `clearArticlesFromStorage(userId)` before signing out
+- **Account settings drawer**: `BottomDrawer` triggered by person icon; signed-in user info, Premium badge (if `poche_plus` entitlement active) or "Upgrade to Premium" button (iOS only), article usage progress bar (hidden for premium), Sign Out, Delete Account
+- **Upgrade flow**: "Upgrade to Premium" sets `paywallAfterDismiss` ref and closes drawer; `onFullyDismissed` presents `RevenueCatUI.presentPaywall()` after drawer animation; updates `isPremium` state on success
+- Sign out clears local articles via `clearArticlesFromStorage(userId)` and calls `Purchases.logOut()` before signing out
 - Delete account with password confirmation (iOS `Alert.prompt`, Android directs to web app)
 
 ### components/bottom-drawer.tsx
@@ -187,7 +189,8 @@ Reusable bottom sheet drawer component:
 - `Reanimated` slide animation (250ms in, 200ms out)
 - Adapts colors from current theme via `useResolvedColorScheme()` and `Colors` palette
 - Handles safe area insets for bottom padding
-- **Props**: `visible` (boolean), `onDismiss` (callback), `children` (ReactNode)
+- **Props**: `visible` (boolean), `onDismiss` (callback), `onFullyDismissed?` (fires after iOS modal animation fully completes via `Modal.onDismiss`), `children` (ReactNode)
+- `onFullyDismissed` used to safely present native RevenueCat paywall after drawer is gone (avoids view controller hierarchy conflict where presenting a native VC while the React Native Modal is still in the hierarchy causes immediate dismissal)
 - Used by: `ReadingSettingsDrawer`, account settings in tab layout
 
 ### components/reading-settings-drawer.tsx
@@ -325,17 +328,19 @@ The app communicates with a self-hosted backend via `lib/api.ts`:
 - **User-scoped queries**: All article operations filter by authenticated user
 
 ### Environment Variables
-API URL is configured via environment variable:
+API URL and RevenueCat key are configured via environment variables:
 
 **Local Development:**
-1. Create `.env` file with `API_URL=http://your-api-url`
-2. `app.config.js` reads `.env` and exposes via `extra.apiUrl`
-3. `lib/api.ts` reads via `expo-constants`
+1. Create `.env` file with `API_URL=http://your-api-url` and `REVENUECAT_IOS_KEY=appl_...`
+2. `app.config.js` reads `.env` and exposes via `extra.apiUrl` and `extra.revenueCatIosKey`
+3. `lib/api.ts` / `app/_layout.tsx` read via `expo-constants`
 
 **EAS Builds:**
-1. Set `API_URL` in `eas.json` under `build.<profile>.env`
+1. Set `API_URL` and `REVENUECAT_IOS_KEY` in `eas.json` under `build.<profile>.env`
 2. EAS injects env vars during build
-3. `app.config.js` reads `process.env.API_URL`
+3. `app.config.js` reads `process.env.API_URL` and `process.env.REVENUECAT_IOS_KEY`
+
+Note: `REVENUECAT_IOS_KEY` is a public iOS SDK key (safe to commit). The webhook secret (`REVENUECAT_WEBHOOK_SECRET`) lives only in the backend `.env` and must never be committed.
 
 ### Article Fields
 - `id` (number) - Unique identifier
@@ -453,6 +458,8 @@ Key dependencies:
 - `expo-task-manager` - Task manager for background tasks
 - `expo-file-system/legacy` - Image downloading and caching for offline access
 - `react-native-reanimated` - Smooth animations for article list
+- `react-native-purchases` - RevenueCat SDK for iOS in-app purchases
+- `react-native-purchases-ui` - RevenueCat native paywall UI (`RevenueCatUI.presentPaywall()`)
 - `@poche/shared` - Shared types, utilities, API helpers, markdown parsing
 - `patch-package` - Dev dependency for patching react-native source code
 
@@ -589,6 +596,8 @@ module.exports = config;
 - ✅ **Account settings drawer**: Uses `BottomDrawer` in tab layout; person icon trigger; sign out + delete account (replaces separate `settings.tsx` screen)
 - ✅ **Sepia theme**: Full color palette (text #3D3229, background #F5ECD7, card #EDE3CA, accent #D44A5C) with navigation theme and `Colors.sepia` palette
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with status UI ("Saving to Poche…", "Saved!", "Opening Poche…", "No link found"); extension saves via API using token/API URL from App Group; native `PendingShareModule` (getShareExtensionJustSaved, setShareCredentials, clearShareCredentials); `share.tsx` route; "just saved" check on cold start and when app comes to foreground (AppState). Android: share target opens app with `poche://share?url=...` (in-app save not yet implemented — see SHARE_FEATURE_REVIEW.md).
+- ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui`; `Purchases.configure({ apiKey })` in `_layout.tsx` init; `Purchases.logIn(userId)` on auth, `Purchases.logOut()` on sign-out; `RevenueCatUI.presentPaywall()` for native paywall; entitlement ID `poche_plus`; paywall triggered on 403 "Article limit reached" error and from account settings Upgrade button; `paywallAfterDismiss` ref + `onFullyDismissed` callback pattern prevents view controller hierarchy conflicts
+- ✅ **BottomDrawer `onFullyDismissed`**: New prop forwarded to `Modal.onDismiss` (fires on iOS after modal animation fully completes); enables safe native VC presentation after drawer is fully dismissed
 
 ## Technical Notes
 
