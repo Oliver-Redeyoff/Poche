@@ -26,7 +26,7 @@
       "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to",
-        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv"
+        "REVENUECAT_IOS_KEY": "appl_ePmhLyiAutodciSyDZspGpMyyVS"
       }
     }
   },
