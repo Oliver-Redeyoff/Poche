@@ -490,7 +490,8 @@
 /* Features Section */
 .features {
     padding: var(--space-2xl) var(--space-lg);
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-primary);
 
     .features-grid {
         display: grid;
@@ -574,25 +575,9 @@
 .download {
     position: relative;
     padding: var(--space-2xl) var(--space-lg);
-    background: var(--color-dark-section-bg);
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-primary);
     overflow: hidden;
-
-    .download-background {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-    }
-
-    .download-shape {
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, var(--color-brand-primary) 0%, transparent 70%);
-        border-radius: 50%;
-        top: -200px;
-        right: -200px;
-        opacity: 0.15;
-    }
 
     .download-cards {
         display: flex;
@@ -609,16 +594,16 @@
     align-items: center;
     gap: var(--space-md);
     padding: var(--space-md) var(--space-lg);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--color-dark-section-border);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
     border-radius: var(--radius-lg);
-    color: var(--color-dark-section-text);
+    color: var(--color-text-primary);
     transition: all 0.3s ease;
     min-width: 280px;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: var(--color-bg-tertiary);
+        border-color: var(--color-brand-primary);
         transform: translateY(-4px);
 
         .download-card-arrow {
@@ -662,10 +647,22 @@
     }
 }
 
+.download-card-soon {
+    opacity: 0.5;
+    cursor: default;
+
+    &:hover {
+        transform: none;
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border-primary);
+    }
+}
+
 /* Extensions Section */
 .extensions {
     padding: var(--space-2xl) var(--space-lg);
     background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-primary);
 
     .extensions-grid {
         display: grid;
@@ -743,7 +740,8 @@
 /* How It Works Section */
 .how-it-works {
     padding: var(--space-2xl) var(--space-lg);
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-primary);
 
     .steps {
         display: flex;
@@ -801,7 +799,8 @@
 /* CTA Section */
 .cta {
     padding: var(--space-2xl) var(--space-lg);
-    background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-accent-sand) 100%);
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-primary);
     text-align: center;
 
     .cta-content {
