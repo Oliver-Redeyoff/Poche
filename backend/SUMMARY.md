@@ -387,6 +387,7 @@ The webapp is built and deployed to `backend/web_app_dist/`. Docker Compose moun
 - ✅ **ArticleUpdates validation**: Zod schema for progress and favorite updates
 - ✅ **Article limit enforcement**: `articleLimit` column on user table (default 50); `POST /api/articles` checks count before saving and returns 403 when exceeded
 - ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — inline handler in `index.ts`; verifies `Authorization` header; updates `articleLimit` on subscription events; mounted before `authMiddleware`
+- ✅ **App Store setup**: Paid Apps Agreement signed, W-8BEN tax form completed, banking configured; subscription products `poche_plus_monthly` + `poche_plus_yearly` added to app version and submitted for review
 
 ## Future Enhancements
 

@@ -283,12 +283,8 @@ const Home = () => {
       </section>
 
       {/* Download Section */}
-      <section id="download" className="download">
-        <div className="download-background">
-          <div className="download-shape"></div>
-        </div>
-        
-        <div className="section-header light">
+      <section id="download" className="download">        
+        <div className="section-header">
           <h2 className="section-title">Get the App</h2>
           <p className="section-subtitle">
             Download Poche for your favorite device and start saving articles today
@@ -296,7 +292,7 @@ const Home = () => {
         </div>
         
         <div className="download-cards">
-          <a href="https://apps.apple.com/app/poche" className="download-card" target="_blank" rel="noopener noreferrer">
+          <a href="https://apps.apple.com/app/id6757148159" className="download-card" target="_blank" rel="noopener noreferrer">
             <div className="download-card-icon">
               <i className="fa-brands fa-apple"></i>
             </div>
@@ -309,13 +305,26 @@ const Home = () => {
             </div>
           </a>
           
-          <a href="https://play.google.com/store/apps/details?id=app.poche" className="download-card" target="_blank" rel="noopener noreferrer">
+          <div className="download-card download-card-soon">
             <div className="download-card-icon">
               <i className="fa-brands fa-google-play"></i>
             </div>
             <div className="download-card-content">
-              <span className="download-card-label">Get it on</span>
+              <span className="download-card-label">Coming soon to</span>
               <span className="download-card-title">Google Play</span>
+            </div>
+            <div className="download-card-arrow">
+              <i className="fa-solid fa-clock"></i>
+            </div>
+          </div>
+
+          <a href="https://apps.apple.com/app/id6757148159" className="download-card" target="_blank" rel="noopener noreferrer">
+            <div className="download-card-icon">
+              <i className="fa-brands fa-apple"></i>
+            </div>
+            <div className="download-card-content">
+              <span className="download-card-label">Download on the</span>
+              <span className="download-card-title">Mac App Store</span>
             </div>
             <div className="download-card-arrow">
               <i className="fa-solid fa-arrow-right"></i>
@@ -352,7 +361,7 @@ const Home = () => {
             <span className="extension-cta">Install Add-on <i className="fa-solid fa-arrow-right"></i></span>
           </a>
           
-          <a href="https://apps.apple.com/app/poche-safari" className="extension-card" target="_blank" rel="noopener noreferrer">
+          <a href="https://apps.apple.com/app/id6757148159" className="extension-card" target="_blank" rel="noopener noreferrer">
             <div className="extension-icon safari">
               <i className="fa-brands fa-safari"></i>
             </div>
