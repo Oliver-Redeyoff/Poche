@@ -1,5 +1,6 @@
 import { StyleSheet, View, Platform, Pressable, Alert } from 'react-native'
-import { Tabs, router } from 'expo-router'
+import { router } from 'expo-router'
+import { NativeTabs } from 'expo-router/unstable-native-tabs'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { Header } from '@/components/header'
@@ -19,9 +20,7 @@ import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui'
 export default function TabLayout() {
   const { session, setSession } = useAuth()
 
-  const backgroundColor = useThemeColor({}, 'background')
   const tintColor = useThemeColor({}, 'tint')
-  const iconColor = useThemeColor({}, 'icon')
   const borderColor = useThemeColor({}, 'border')
   const textColor = useThemeColor({}, 'text')
   const resolvedScheme = useResolvedColorScheme()
@@ -244,41 +243,16 @@ export default function TabLayout() {
         onDismiss={() => setShowReadingSettings(false)}
       />
 
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: tintColor,
-          tabBarInactiveTintColor: iconColor,
-          tabBarStyle: {
-            backgroundColor,
-            borderTopColor: borderColor,
-            borderTopWidth: 1,
-          },
-          tabBarLabelStyle: {
-            fontFamily: 'SourceSans3_500Medium',
-            fontSize: 12,
-          },
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <IconSymbol name="house.fill" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="library"
-          options={{
-            title: 'Library',
-            tabBarIcon: ({ color, size }) => (
-              <IconSymbol name="books.vertical.fill" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
+      <NativeTabs tintColor={tintColor}>
+        <NativeTabs.Trigger name="index">
+          <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="library">
+          <NativeTabs.Trigger.Icon sf={{ default: 'books.vertical', selected: 'books.vertical.fill' }} md="menu_book" />
+          <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
     </View>
   )
 }
