@@ -497,6 +497,45 @@ export async function cacheArticleLinkPreview(
 }
 
 /**
+ * Download and cache favicon + extract background color for a single article.
+ * Returns an updated article object (same reference if nothing changed).
+ */
+export async function processSingleArticleFavicon(article: Article, userId: string): Promise<Article> {
+  try {
+    const faviconLocalPath = await cacheArticleFavicon(article, userId)
+    const colorSource = faviconLocalPath || article.faviconLocalPath || null
+    const faviconBackgroundColor =
+      article.faviconBackgroundColor ?? (colorSource ? await getAverageImageColor(colorSource) : null)
+    return {
+      ...article,
+      faviconLocalPath: faviconLocalPath ?? article.faviconLocalPath ?? null,
+      faviconBackgroundColor,
+    }
+  } catch (error) {
+    console.error(`Error processing favicon for article ${article.id}:`, error)
+    return article
+  }
+}
+
+/**
+ * Fetch and cache link preview image for a single article.
+ * Returns an updated article object (same reference if nothing changed).
+ */
+export async function processSingleArticleLinkPreview(article: Article, userId: string): Promise<Article> {
+  try {
+    const preview = await cacheArticleLinkPreview(article, userId)
+    return {
+      ...article,
+      previewImageUrl: preview.previewImageUrl ?? article.previewImageUrl ?? null,
+      previewImageLocalPath: preview.previewImageLocalPath ?? article.previewImageLocalPath ?? null,
+    }
+  } catch (error) {
+    console.error(`Error processing link preview for article ${article.id}:`, error)
+    return article
+  }
+}
+
+/**
  * Cache link preview images for multiple articles and return updated article objects.
  */
 export async function processArticlesLinkPreviews(
