@@ -77,7 +77,26 @@ export default function HomeScreen() {
     try {
       if (!session?.user) return
 
-      const result = await syncArticles(session.user.id, { processImages: true })
+      const result = await syncArticles(session.user.id, {
+        processImages: true,
+        onProcessingComplete: (enrichedArticles) => {
+          // Patch only the enriched image/favicon fields into current state so
+          // any user edits (deletes, tag changes, etc.) made while processing
+          // are not overwritten.
+          const enrichedMap = new Map(enrichedArticles.map(a => [a.id, a]))
+          setArticles(current => current.map(article => {
+            const enriched = enrichedMap.get(article.id)
+            if (!enriched) return article
+            return {
+              ...article,
+              faviconLocalPath: enriched.faviconLocalPath ?? article.faviconLocalPath,
+              faviconBackgroundColor: enriched.faviconBackgroundColor ?? article.faviconBackgroundColor,
+              previewImageUrl: enriched.previewImageUrl ?? article.previewImageUrl,
+              previewImageLocalPath: enriched.previewImageLocalPath ?? article.previewImageLocalPath,
+            }
+          }))
+        },
+      })
       if (!result.error || result.allArticles.length > 0) {
         setArticles(result.allArticles)
       }

@@ -1,7 +1,42 @@
+import { useState, useEffect } from 'react'
 import { getArticles as fetchArticlesFromApi, deleteArticle as deleteArticleApi, updateArticle as updateArticleApi, ArticleUpdates } from './api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '@poche/shared'
-import { processArticlesImages, processArticlesFavicons, processArticlesLinkPreviews } from './image-cache'
+import { processArticleImages, processSingleArticleFavicon, processSingleArticleLinkPreview } from './image-cache'
+
+// ============================================================
+// Sync progress state — module-level pub/sub so any component
+// can subscribe without prop drilling or a separate context.
+// ============================================================
+
+export type SyncStatus = 'idle' | 'fetching' | 'processing' | 'done'
+
+export interface SyncProgressState {
+  /** Current phase of the sync operation */
+  status: SyncStatus
+  /** 0–1 fill amount; meaningful during 'processing' and 'done' */
+  progress: number
+}
+
+let _syncState: SyncProgressState = { status: 'idle', progress: 0 }
+const _syncListeners = new Set<(state: SyncProgressState) => void>()
+
+function _setSyncState(state: SyncProgressState): void {
+  _syncState = state
+  _syncListeners.forEach(listener => listener(state))
+}
+
+/** Subscribe to sync progress updates in a React component. */
+export function useSyncProgress(): SyncProgressState {
+  const [state, setState] = useState<SyncProgressState>(_syncState)
+  useEffect(() => {
+    // Read latest state immediately in case it changed before mount
+    setState(_syncState)
+    _syncListeners.add(setState)
+    return () => { _syncListeners.delete(setState) }
+  }, [])
+  return state
+}
 
 /**
  * Get storage key for articles (per user)
@@ -91,12 +126,19 @@ export function mergeAndSortArticles(newArticles: Article[], storedArticles: Art
 }
 
 /**
- * Sync articles: fetch new ones, process images, merge, and save
+ * Sync articles: fetch new ones, merge and save immediately, then process
+ * images/favicons/previews in the background.
+ *
+ * The returned `allArticles` is available as soon as the API call completes so
+ * the UI can render without waiting for potentially slow image downloads.
+ * `options.onProcessingComplete` is called (if provided) once all background
+ * processing has finished and the enriched articles have been saved to storage.
  */
 export async function syncArticles(
   userId: string,
   options: {
     processImages?: boolean
+    onProcessingComplete?: (allArticles: Article[]) => void
   } = {}
 ): Promise<{
   newArticles: Article[]
@@ -104,46 +146,77 @@ export async function syncArticles(
   error?: Error
 }> {
   try {
+    _setSyncState({ status: 'fetching', progress: 0 })
+
     // Load stored articles
     const storedArticles = await loadArticlesFromStorage(userId)
     const storedArticleIds = storedArticles.map(article => article.id)
-    const processedStoredArticles = await processArticlesFavicons(storedArticles, userId)
-    
+
     // Fetch new articles from backend
     const newArticles = await fetchNewArticlesFromBackend(userId, storedArticleIds)
-    
-    if (newArticles.length === 0) {
-      // Persist stored-article favicon backfills (if any)
-      await saveArticlesToStorage(userId, processedStoredArticles)
-      return {
-        newArticles: [],
-        allArticles: processedStoredArticles,
-      }
-    }
-    
-    // Process images for new articles if requested
-    let processedNewArticles = newArticles
-    if (options.processImages) {
-      processedNewArticles = await processArticlesImages(newArticles, userId)
-    }
 
-    // Always cache favicons for offline tile placeholders
-    processedNewArticles = await processArticlesFavicons(processedNewArticles, userId)
-    // Cache link preview images (og:image/twitter:image) for richer offline cards
-    processedNewArticles = await processArticlesLinkPreviews(processedNewArticles, userId)
-    
-    // Merge and sort articles
-    const allArticles = mergeAndSortArticles(processedNewArticles, processedStoredArticles)
-    
-    // Save to storage
+    // Merge and save immediately so the UI can show articles right away
+    const allArticles = mergeAndSortArticles(newArticles, storedArticles)
     await saveArticlesToStorage(userId, allArticles)
-    
+
+    _setSyncState({ status: 'processing', progress: 0 })
+
+    // Fire-and-forget: process favicons / images / link previews per-article
+    // so we can report granular progress back to the UI.
+    ;(async () => {
+      try {
+        const totalItems = storedArticles.length + newArticles.length
+
+        if (totalItems === 0) {
+          _setSyncState({ status: 'idle', progress: 0 })
+          return
+        }
+
+        let completed = 0
+        const onItemComplete = () => {
+          completed++
+          _setSyncState({ status: 'processing', progress: completed / totalItems })
+        }
+
+        // Backfill favicons on stored articles
+        const processedStored: Article[] = []
+        for (const article of storedArticles) {
+          processedStored.push(await processSingleArticleFavicon(article, userId))
+          onItemComplete()
+        }
+
+        // Process new articles: (optional) images → favicon → link preview
+        const processedNew: Article[] = []
+        for (let article of newArticles) {
+          if (options.processImages) {
+            article = await processArticleImages(article, userId)
+          }
+          article = await processSingleArticleFavicon(article, userId)
+          article = await processSingleArticleLinkPreview(article, userId)
+          processedNew.push(article)
+          onItemComplete()
+        }
+
+        const enrichedArticles = mergeAndSortArticles(processedNew, processedStored)
+        await saveArticlesToStorage(userId, enrichedArticles)
+
+        _setSyncState({ status: 'done', progress: 1 })
+        setTimeout(() => _setSyncState({ status: 'idle', progress: 0 }), 2000)
+
+        options.onProcessingComplete?.(enrichedArticles)
+      } catch (err) {
+        console.error('Error in background article processing:', err)
+        _setSyncState({ status: 'idle', progress: 0 })
+      }
+    })()
+
     return {
-      newArticles: processedNewArticles,
+      newArticles,
       allArticles,
     }
   } catch (error) {
     console.error('Error syncing articles:', error)
+    _setSyncState({ status: 'idle', progress: 0 })
     return {
       newArticles: [],
       allArticles: await loadArticlesFromStorage(userId), // Return stored articles as fallback
