@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, ReactNode } from 'react'
+import { InlineBannerAd } from './inline-banner-ad'
 import { Text, View, StyleSheet, Linking, TextStyle, ViewStyle, StyleProp } from 'react-native'
 import { Image } from 'expo-image'
 import { 
@@ -56,6 +57,7 @@ export interface MarkdownProps {
   renderImage?: (props: { src: string; alt?: string; nodeKey: string }) => ReactNode
   minImageWidth?: number
   minImageHeight?: number
+  showAds?: boolean
 }
 
 // Default image component
@@ -108,14 +110,15 @@ function DefaultImage({
 }
 
 // The Markdown component
-export function Markdown({ 
-  children, 
-  style = {}, 
+export function Markdown({
+  children,
+  style = {},
   baseUrl,
   onLinkPress,
   renderImage,
   minImageWidth = 50,
-  minImageHeight = 50
+  minImageHeight = 50,
+  showAds = false,
 }: MarkdownProps) {
   
   // Parse markdown content
@@ -336,9 +339,24 @@ export function Markdown({
     }
   }, [style, renderInline, renderImage, minImageWidth, minImageHeight])
   
+  const rendered = useMemo(() => {
+    let paragraphCount = 0
+    const nodes: React.ReactNode[] = []
+    tokens.forEach((token, index) => {
+      nodes.push(renderBlock(token, index))
+      if (token.type === 'paragraph') {
+        paragraphCount++
+        if (showAds && paragraphCount % 5 === 0) {
+          nodes.push(<InlineBannerAd key={`ad-${index}`} />)
+        }
+      }
+    })
+    return nodes
+  }, [tokens, showAds, renderBlock])
+
   return (
     <View style={[defaultStyles.body, style.body as ViewStyle]}>
-      {tokens.map((token, index) => renderBlock(token, index))}
+      {rendered}
     </View>
   )
 }

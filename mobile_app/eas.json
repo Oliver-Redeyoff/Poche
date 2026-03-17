@@ -10,7 +10,9 @@
       "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to",
-        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv"
+        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv",
+        "ADMOB_BANNER_IOS": "ca-app-pub-3940256099942544/2934735716",
+        "ADMOB_BANNER_ANDROID": "ca-app-pub-3940256099942544/6300978111"
       }
     },
     "preview": {
@@ -18,7 +20,9 @@
       "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to",
-        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv"
+        "REVENUECAT_IOS_KEY": "test_eCVtqVFPziprUprdZDFYsvLiwNv",
+        "ADMOB_BANNER_IOS": "ca-app-pub-3940256099942544/2934735716",
+        "ADMOB_BANNER_ANDROID": "ca-app-pub-3940256099942544/6300978111"
       }
     },
     "production": {
@@ -26,7 +30,9 @@
       "credentialsSource": "local",
       "env": {
         "API_URL": "https://api.poche.to",
-        "REVENUECAT_IOS_KEY": "appl_ePmhLyiAutodciSyDZspGpMyyVS"
+        "REVENUECAT_IOS_KEY": "appl_ePmhLyiAutodciSyDZspGpMyyVS",
+        "ADMOB_BANNER_IOS": "ca-app-pub-9487705441504419/3789657720",
+        "ADMOB_BANNER_ANDROID": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
       }
     }
   },
