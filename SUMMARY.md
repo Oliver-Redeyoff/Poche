@@ -178,6 +178,9 @@ Poche/
 - **Reading time**: Display estimated reading time based on article word count
 - **Clear data on logout**: Locally stored articles are cleared when user signs out
 - **Share intent (Save to Poche)**: Users can share a web page from Safari (iOS) or the system share sheet (Android) to Poche. **iOS**: Share Extension appears as "Save to Poche"; extension reads auth token and API URL from App Group, POSTs URL to backend to save the article, then opens the main app which syncs and shows "Saved to Poche". **Android**: App receives share intent and opens with `poche://share?url=...` (in-app save from share route not yet implemented). Root layout shares credentials with the extension (iOS) and checks "just saved" on cold start and when app returns to foreground (AppState).
+- **Native tabs**: Tab bar uses `NativeTabs` from `expo-router/unstable-native-tabs` for a native iOS tab controller
+- **Instant article display**: Articles shown immediately after the API call returns; per-article favicon/image/preview processing runs in a background IIFE with granular progress reporting
+- **Sync progress bar**: 2px animated bar below the header in the tab layout; pulses during API fetch, fills as a progress bar during per-article processing, fades out on completion; built with React Native's built-in `Animated` API
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -407,6 +410,8 @@ The shared package provides common functionality across all projects:
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with App Group; extension saves article via API and opens app; app shows "Saved to Poche" on cold start and when app comes to foreground (AppState). Android share target opens app with `poche://share?url=...` (save from share route not yet implemented). Native `PendingShareModule` for credentials and "just saved" flag; `share.tsx` route for deep link redirect.
 - ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui` SDK; configured with `REVENUECAT_IOS_KEY`; `Purchases.configure()` + `logIn(userId)` on auth; `RevenueCatUI.presentPaywall()` for native paywall; entitlement `poche_plus`; paywall triggered on 403 article limit error and from account settings Upgrade button; Premium badge shown in account drawer
 - ✅ **BottomDrawer `onFullyDismissed`**: Fires after Modal animation fully completes (iOS `onDismiss`); used to present native RevenueCat paywall after drawer is gone (avoids view controller hierarchy conflict)
+- ✅ **Native tabs**: Tab bar migrated to `NativeTabs` from `expo-router/unstable-native-tabs`
+- ✅ **Instant article display + sync progress bar**: Articles shown immediately after API response; background per-article processing (favicons, images, previews) reports progress via module-level pub/sub; `SyncProgressBar` component in tab layout shows pulse during fetch and fill-progress during processing using React Native built-in `Animated`
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend
