@@ -22,6 +22,8 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Reading Settings Drawer**: `ReadingSettingsDrawer` component (`components/reading-settings-drawer.tsx`); font size via `@react-native-community/slider` (configurable steps) and theme selector; opened from tab header (paint palette icon) and article screen (paint palette button)
 - **Account Settings Drawer**: Uses `BottomDrawer`; shows signed-in email, Premium badge or Upgrade button, article usage progress bar (hidden for premium), sign out, and delete account; triggered by person icon in tab header
 - **Premium subscription (iOS)**: RevenueCat integration via `react-native-purchases` + `react-native-purchases-ui`; native paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; paywall shown on 403 article limit error or from account settings Upgrade button; SDK configured in `_layout.tsx` with `logIn`/`logOut` tied to auth state
+- **Sync progress bar**: 2px bar below the header in the tab layout; pulses opacity (full-width) while waiting for the API response ('fetching'), fills left-to-right as favicons/images download per-article ('processing'), then fades out on completion; implemented with React Native's built-in `Animated` API; `useSyncProgress()` hook (module-level pub/sub in `article-sync.ts`) feeds the component without prop drilling
+- **Instant article display**: Articles appear in the UI as soon as the API call returns new articles; favicon, image, and link-preview processing happens in a fire-and-forget background IIFE with per-article progress reporting via `_setSyncState`; `onProcessingComplete` callback patches only enriched image/favicon fields into current UI state to avoid overwriting concurrent user edits
 - **Custom Theme**: Warm color palette with Poche coral accent (#EF4056 light, #F06B7E dark)
 - **Offline Access**: Signed-in users can access articles stored locally even when offline
 - **Offline Image Caching**: Images in articles are downloaded and stored locally for offline viewing
@@ -47,7 +49,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Framework**: React Native with Expo SDK ~55
 - **Routing**: Expo Router (file-based routing)
 - **Language**: TypeScript
-- **Navigation**: Expo Router with Stack and Tab navigators
+- **Navigation**: Expo Router with Stack navigator; `NativeTabs` from `expo-router/unstable-native-tabs` for the Home/Library tab bar
 - **Backend**: Self-hosted API (Hono + Better Auth + PostgreSQL)
 - **Storage**: AsyncStorage for session persistence and article caching
 - **Background Tasks**: expo-background-task for periodic article syncing
@@ -173,8 +175,9 @@ Authentication screen:
 
 ### app/(tabs)/_layout.tsx
 Tab layout with account and reading settings:
-- Home and Library tabs with custom styling
+- Home and Library tabs via `NativeTabs` from `expo-router/unstable-native-tabs`
 - **Header**: Poche logo and two icon buttons — paint palette (opens `ReadingSettingsDrawer`), person (opens account settings drawer)
+- **SyncProgressBar**: Absolutely positioned 2px bar rendered below the header; uses React Native's built-in `Animated` API (not Reanimated) to avoid conflicts with the native `NativeTabs` component; pulses opacity at full width during 'fetching', fills as a progress bar during 'processing', fades out on 'done'; `pointerEvents="none"` ensures it never intercepts touches
 - **Reading settings drawer**: `ReadingSettingsDrawer` (font size + theme); triggered by paint palette icon
 - **Account settings drawer**: `BottomDrawer` triggered by person icon; signed-in user info, Premium badge (if `poche_plus` entitlement active) or "Upgrade to Premium" button (iOS only), article usage progress bar (hidden for premium), Sign Out, Delete Account
 - **Upgrade flow**: "Upgrade to Premium" sets `paywallAfterDismiss` ref and closes drawer; `onFullyDismissed` presents `RevenueCatUI.presentPaywall()` after drawer animation; updates `isPremium` state on success
@@ -283,7 +286,10 @@ API client using `@poche/shared` helpers:
 
 ### lib/article-sync.ts
 Centralized article sync logic:
-- `syncArticles()` - Sync articles from backend, cache content images, cache/backfill article favicons (with background color extraction), and cache link preview images from Open Graph/Twitter metadata
+- **Sync progress pub/sub**: Module-level `_syncState` + `_syncListeners` set; `_setSyncState()` broadcasts to all listeners; `useSyncProgress()` React hook subscribes and returns current `SyncProgressState`
+- `SyncStatus` — `'idle' | 'fetching' | 'processing' | 'done'`
+- `SyncProgressState` — `{ status: SyncStatus, progress: number }` (progress is 0–1)
+- `syncArticles()` — fetches new articles, merges + saves immediately so UI can render, then fires a background IIFE that processes favicons/images/previews per-article with granular progress reporting; accepts `onProcessingComplete` callback; uses `_setSyncState` throughout to drive `SyncProgressBar`
 - `loadArticlesFromStorage()` - Load articles from AsyncStorage
 - `saveArticlesToStorage()` - Save articles to AsyncStorage
 - `clearArticlesFromStorage(userId)` - Clear all locally stored articles for a user (used on logout)
@@ -598,6 +604,10 @@ module.exports = config;
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with status UI ("Saving to Poche…", "Saved!", "Opening Poche…", "No link found"); extension saves via API using token/API URL from App Group; native `PendingShareModule` (getShareExtensionJustSaved, setShareCredentials, clearShareCredentials); `share.tsx` route; "just saved" check on cold start and when app comes to foreground (AppState). Android: share target opens app with `poche://share?url=...` (in-app save not yet implemented — see SHARE_FEATURE_REVIEW.md).
 - ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui`; `Purchases.configure({ apiKey })` in `_layout.tsx` init; `Purchases.logIn(userId)` on auth, `Purchases.logOut()` on sign-out; `RevenueCatUI.presentPaywall()` for native paywall; entitlement ID `poche_plus`; paywall triggered on 403 "Article limit reached" error and from account settings Upgrade button; `paywallAfterDismiss` ref + `onFullyDismissed` callback pattern prevents view controller hierarchy conflicts
 - ✅ **BottomDrawer `onFullyDismissed`**: New prop forwarded to `Modal.onDismiss` (fires on iOS after modal animation fully completes); enables safe native VC presentation after drawer is fully dismissed
+- ✅ **Native tabs**: Migrated tab bar to `NativeTabs` from `expo-router/unstable-native-tabs` for native iOS tab controller
+- ✅ **Instant article display**: `syncArticles()` now shows articles immediately after API response; background IIFE handles per-article favicon/image/link-preview processing with granular progress; `onProcessingComplete` callback patches only enriched fields into UI state to avoid overwriting concurrent edits
+- ✅ **Sync progress bar**: `SyncProgressBar` component in tab `_layout.tsx`; 2px bar below header; opacity pulse during 'fetching', fill progress during 'processing', fade-out on done; built with React Native built-in `Animated` (not Reanimated) to avoid native tab conflicts; `useSyncProgress()` hook in `article-sync.ts` uses module-level pub/sub (no prop drilling)
+- ✅ **`processSingleArticleFavicon` / `processSingleArticleLinkPreview`**: New per-article functions in `lib/image-cache.ts` enabling per-article progress tracking during background sync (replaces batch-only approach)
 
 ## Technical Notes
 
