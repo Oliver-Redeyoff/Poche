@@ -587,6 +587,7 @@ export default function ArticleScreen() {
     const [isTooSmall, setIsTooSmall] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [imageSrc, setImageSrc] = useState<string>(src)
+    const [aspectRatio, setAspectRatio] = useState(16 / 9)
 
     // Look up cached version of the image
     useEffect(() => {
@@ -612,23 +613,25 @@ export default function ArticleScreen() {
     }
 
     return (
-      <View style={{ marginVertical: 16, width: '100%', display: (hasError || isTooSmall) ? 'none' : 'flex' }}>
+      <View style={{ marginVertical: 16, width: '100%', display: (hasError || isTooSmall) ? 'none' : 'flex', alignItems: 'center' }}>
         <Image
           source={{ uri: imageSrc }}
           style={{
             width: '100%',
-            aspectRatio: 16 / 9,
+            aspectRatio,
+            maxHeight: 500,
             borderRadius: 12,
           }}
-          contentFit="contain"
+          contentFit="cover"
           transition={200}
           onLoad={(event) => {
             setIsLoading(false)
-            // Check if the image is too small (like tracking pixels or icons)
             const { width, height } = event.source
             if (width < MIN_IMAGE_WIDTH || height < MIN_IMAGE_HEIGHT) {
               setIsTooSmall(true)
               setFailedImages(prev => new Set(prev).add(src))
+            } else {
+              setAspectRatio(width / height)
             }
           }}
           onError={() => {

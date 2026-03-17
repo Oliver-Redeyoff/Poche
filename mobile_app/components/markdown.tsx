@@ -346,7 +346,7 @@ export function Markdown({
       nodes.push(renderBlock(token, index))
       if (token.type === 'paragraph') {
         paragraphCount++
-        if (showAds && paragraphCount % 5 === 0) {
+        if (showAds && paragraphCount % 10 === 0) {
           nodes.push(<InlineBannerAd key={`ad-${index}`} />)
         }
       }

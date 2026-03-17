@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { Platform, View } from 'react-native'
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads'
 import Constants from 'expo-constants'
 
@@ -10,10 +10,12 @@ const adUnitId = __DEV__
 
 export function InlineBannerAd() {
   return (
-    <BannerAd
-      unitId={adUnitId}
-      size={BannerAdSize.BANNER}
-      requestOptions={{ requestNonPersonalizedAdsOnly: true }}
-    />
+    <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+      <BannerAd
+        unitId={adUnitId}
+        size={BannerAdSize.INLINE_ADAPTIVE_BANNER}
+        requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+      />
+    </View>
   )
 }
