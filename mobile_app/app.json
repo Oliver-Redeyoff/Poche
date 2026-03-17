@@ -50,6 +50,13 @@
         }
       ],
       [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-9487705441504419~2795172655"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#FDF8F5",

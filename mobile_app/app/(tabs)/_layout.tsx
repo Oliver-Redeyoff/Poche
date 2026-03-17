@@ -1,4 +1,4 @@
-import { StyleSheet, View, Platform, Pressable, Alert, useWindowDimensions, Animated, Easing } from 'react-native'
+import { StyleSheet, View, Platform, Pressable, Alert, Animated } from 'react-native'
 import { router } from 'expo-router'
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
 import { useThemeColor } from '@/hooks/use-theme-color'
@@ -22,19 +22,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // This matches the dimensions defined in components/header.tsx.
 const HEADER_CONTENT_HEIGHT = 57
 const PROGRESS_BAR_HEIGHT = 2
-const IND_WIDTH_RATIO = 0.35 // indeterminate indicator is 35% of screen width
 
 function SyncProgressBar() {
   const { status, progress } = useSyncProgress()
   const tintColor = useThemeColor({}, 'tint')
   const insets = useSafeAreaInsets()
-  const { width: screenWidth } = useWindowDimensions()
 
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT
 
   const opacityAnim = useRef(new Animated.Value(0)).current
   const fillAnim = useRef(new Animated.Value(0)).current
-  const indAnim = useRef(new Animated.Value(0)).current
+  const pulseAnim = useRef(new Animated.Value(1)).current
   const loopRef = useRef<Animated.CompositeAnimation | null>(null)
 
   useEffect(() => {
@@ -45,14 +43,18 @@ function SyncProgressBar() {
       Animated.timing(opacityAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start()
     } else if (status === 'fetching') {
       Animated.timing(opacityAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start()
-      fillAnim.setValue(0)
-      indAnim.setValue(0)
+      fillAnim.setValue(1)
+      pulseAnim.setValue(1)
       loopRef.current = Animated.loop(
-        Animated.timing(indAnim, { toValue: 1, duration: 900, easing: Easing.linear, useNativeDriver: true })
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 0.3, duration: 600, useNativeDriver: false }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: false }),
+        ])
       )
       loopRef.current.start()
     } else if (status === 'processing') {
       loopRef.current?.stop()
+      pulseAnim.setValue(1)
       Animated.timing(opacityAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start()
       Animated.timing(fillAnim, { toValue: progress, duration: 300, useNativeDriver: false }).start()
     } else if (status === 'done') {
@@ -69,14 +71,9 @@ function SyncProgressBar() {
     }
   }, [status, progress])
 
-  const indTranslateX = indAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-screenWidth * IND_WIDTH_RATIO, screenWidth],
-  })
-
   const fillWidth = fillAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, screenWidth],
+    outputRange: ['0%', '100%'],
   })
 
   return (
@@ -89,37 +86,23 @@ function SyncProgressBar() {
         right: 0,
         height: PROGRESS_BAR_HEIGHT,
         zIndex: 100,
-        overflow: 'hidden',
         opacity: opacityAnim,
-        backgroundColor: "green"
       }}
     >
-      {status === 'fetching' ? (
-        <Animated.View
-          style={{
-            position: 'absolute',
-            height: PROGRESS_BAR_HEIGHT,
-            width: screenWidth * IND_WIDTH_RATIO,
-            backgroundColor: tintColor,
-            transform: [{ translateX: indTranslateX }],
-          }}
-        />
-      ) : (
-        <Animated.View
-          style={{
-            position: 'absolute',
-            height: PROGRESS_BAR_HEIGHT,
-            backgroundColor: tintColor,
-            width: fillWidth,
-          }}
-        />
-      )}
+      <Animated.View
+        style={{
+          height: PROGRESS_BAR_HEIGHT,
+          backgroundColor: tintColor,
+          width: fillWidth,
+          opacity: pulseAnim,
+        }}
+      />
     </Animated.View>
   )
 }
 
 export default function TabLayout() {
-  const { session, setSession } = useAuth()
+  const { session, setSession, isPremium, setIsPremium } = useAuth()
 
   const tintColor = useThemeColor({}, 'tint')
   const borderColor = useThemeColor({}, 'border')
@@ -132,7 +115,6 @@ export default function TabLayout() {
   const [isDeleting, setIsDeleting] = useState(false)
   const paywallAfterDismiss = useRef(false)
   const [usage, setUsage] = useState<{ count: number; limit: number } | null>(null)
-  const [isPremium, setIsPremium] = useState(false)
 
   useEffect(() => {
     if (showAccountSettings) {

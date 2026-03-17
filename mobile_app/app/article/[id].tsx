@@ -29,7 +29,7 @@ import { Button, ContextMenu, Divider, Host, Menu } from '@expo/ui/swift-ui'
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { session } = useAuth()
+  const { session, isPremium } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const theme = useTheme() as PocheTheme
@@ -616,11 +616,11 @@ export default function ArticleScreen() {
         <Image
           source={{ uri: imageSrc }}
           style={{
-            // width: '100%',
+            width: '100%',
             aspectRatio: 16 / 9,
             borderRadius: 12,
           }}
-          // contentFit="contain"
+          contentFit="contain"
           transition={200}
           onLoad={(event) => {
             setIsLoading(false)
@@ -792,12 +792,13 @@ export default function ArticleScreen() {
         
         {/* Article Content */}
         <View style={[styles.contentContainer, { maxWidth: contentWidth }]}>
-          <Markdown 
+          <Markdown
             style={markdownStyles}
             baseUrl={article.url || undefined}
             renderImage={renderArticleImage}
             minImageWidth={MIN_IMAGE_WIDTH}
             minImageHeight={MIN_IMAGE_HEIGHT}
+            showAds={!isPremium}
           >
             {markdownContent}
           </Markdown>

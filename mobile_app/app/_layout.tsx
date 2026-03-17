@@ -107,6 +107,8 @@ interface AuthContextType {
   setAppTheme: (theme: AppTheme) => void
   appFontSizeMultiplier: number
   setAppFontSizeMultiplier: (multiplier: number) => void
+  isPremium: boolean
+  setIsPremium: (v: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -121,6 +123,8 @@ const AuthContext = createContext<AuthContextType>({
   setAppTheme: () => {},
   appFontSizeMultiplier: DEFAULT_FONT_SIZE_MULTIPLIER,
   setAppFontSizeMultiplier: () => {},
+  isPremium: false,
+  setIsPremium: () => {},
 })
 
 export function useAuth() {
@@ -189,6 +193,7 @@ export default function RootLayout() {
   }, [])
 
   const clearNewLogin = useCallback(() => setIsNewLogin(false), [])
+  const [isPremium, setIsPremium] = useState(false)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true) // Default to true to avoid flash
   const [appTheme, setAppThemeState] = useState<AppTheme>('auto')
   const [appFontSizeMultiplier, setAppFontSizeMultiplierState] = useState<number>(DEFAULT_FONT_SIZE_MULTIPLIER)
@@ -257,6 +262,9 @@ export default function RootLayout() {
             Purchases.configure({ apiKey: rcKey })
             if (existingSession) {
               await Purchases.logIn(existingSession.user.id)
+              Purchases.getCustomerInfo()
+                .then(info => setIsPremium(!!info.entitlements.active['poche_plus']))
+                .catch(() => {})
             }
           }
         }
@@ -349,7 +357,7 @@ export default function RootLayout() {
   const themeWithMultiplier: PocheTheme = { ...resolvedTheme, fontSizeMultiplier: appFontSizeMultiplier }
 
   return (
-    <AuthContext.Provider value={{ session, setSession, isNewLogin, clearNewLogin, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSizeMultiplier, setAppFontSizeMultiplier }}>
+    <AuthContext.Provider value={{ session, setSession, isNewLogin, clearNewLogin, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSizeMultiplier, setAppFontSizeMultiplier, isPremium, setIsPremium }}>
       <ThemeProvider value={themeWithMultiplier}>
         <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
         <StatusBar style={statusBarStyle} />
