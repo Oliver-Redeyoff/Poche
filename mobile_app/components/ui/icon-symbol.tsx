@@ -42,7 +42,7 @@ const MAPPING = {
   'checkmark.circle': 'check-circle',
   'checkmark.circle.fill': 'check-circle',
   'person': 'person',
-  'paintpalette': 'palette'
+  'paintpalette': 'palette',
 } as IconMapping;
 
 /**

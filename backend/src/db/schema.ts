@@ -1,5 +1,7 @@
 import { pgTable, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 
+export const FREE_ARTICLE_LIMIT = 50;
+
 // ============================================
 // Better Auth tables
 // ============================================
@@ -12,7 +14,7 @@ export const user = pgTable('user', {
   image: text('image'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  articleLimit: integer('article_limit').notNull().default(50),
+  activeSubscription: boolean('active_subscription').notNull().default(false),
 });
 
 export const session = pgTable('session', {

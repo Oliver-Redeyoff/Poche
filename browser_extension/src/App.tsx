@@ -14,6 +14,7 @@ const browserAPI: typeof chrome = typeof chrome !== 'undefined' ? chrome : brows
 export function App(): JSX.Element {
   const [session, setSession] = useState<api.Session | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true)
+  const [isPremium, setIsPremium] = useState<boolean>(false)
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [saveButtonDisabled, setSaveButtonDisabled] = useState<boolean>(false)
@@ -84,12 +85,14 @@ export function App(): JSX.Element {
   const checkAuthStatus = async (): Promise<void> => {
     try {
       const currentSession = await api.getSession()
-      
+
       if (currentSession?.user) {
         setSession(currentSession)
+        setIsPremium(currentSession.user.activeSubscription ?? false)
         await updateSaveButtonState()
       } else {
         setSession(null)
+        setIsPremium(false)
       }
     } catch (error) {
       console.error('Error checking auth status:', error)
@@ -105,8 +108,9 @@ export function App(): JSX.Element {
       setIsLoading(true)
       
       const sessionData = await api.signIn(email, password)
-      
+
       setSession(sessionData)
+      setIsPremium(sessionData.user.activeSubscription ?? false)
       showStatus('Signed in successfully!', 'success')
       await updateSaveButtonState()
     } catch (error) {
@@ -123,8 +127,9 @@ export function App(): JSX.Element {
       setIsLoading(true)
       
       const sessionData = await api.signUp(email, password)
-      
+
       setSession(sessionData)
+      setIsPremium(sessionData.user.activeSubscription ?? false)
       showStatus('Account created and signed in!', 'success')
       await updateSaveButtonState()
     } catch (error) {
@@ -204,6 +209,7 @@ export function App(): JSX.Element {
       console.error('Error signing out:', error)
     }
     setSession(null)
+    setIsPremium(false)
     setTags([])
     showStatus('Logged out successfully', 'success')
   }
@@ -222,7 +228,7 @@ export function App(): JSX.Element {
 
   return (
     <div className="app">
-      <Header />
+      <Header isPremium={isPremium} />
       <StatusMessage show={showStatusMessage} message={statusMessage} type={statusType} />
       {isCheckingAuth ? (
         <LoadingSpinner />

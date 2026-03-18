@@ -10,8 +10,8 @@ The Poche backend is a self-hosted API server that handles authentication and ar
 - **Password Reset**: Email-based password reset flow via Resend
 - **Email Service**: Transactional emails with beautiful HTML templates
 - **Article Extraction**: Server-side article parsing with domain-specific configs (Readability, raw DOM, or Defuddle) and NodeHtmlMarkdown (URL → markdown)
-- **Article Limit Enforcement**: Free users capped at 50 articles (`articleLimit` on user row); `POST /api/articles` returns 403 with `"Article limit reached"` when limit exceeded
-- **RevenueCat Webhook**: `POST /api/webhooks/revenuecat` — verifies `Authorization` header against `REVENUECAT_WEBHOOK_SECRET`; sets `articleLimit: 999999` on purchase/renewal events and resets to 50 on cancellation/expiration; mounted before `authMiddleware`
+- **Article Limit Enforcement**: Free users capped at 50 articles (`FREE_ARTICLE_LIMIT` constant); limit derived from `activeSubscription` boolean on the user row; `POST /api/articles` returns 403 with `"Article limit reached"` when limit exceeded
+- **RevenueCat Webhook**: `POST /api/webhooks/revenuecat` — verifies `Authorization` header against `REVENUECAT_WEBHOOK_SECRET`; sets `activeSubscription: true` on purchase/renewal events and `false` on cancellation/expiration; mounted before `authMiddleware`; **DB `activeSubscription` is only used server-side** — clients that have access to the RC SDK (mobile) should use RC directly as the source of truth
 - **RESTful API**: Full CRUD operations for articles
 - **Docker Support**: Easy deployment with Docker Compose
 - **Type Safety**: Full TypeScript with Drizzle ORM
@@ -69,7 +69,7 @@ backend/
 - `email` (text, unique, required)
 - `emailVerified` (boolean, default false)
 - `image` (text, nullable)
-- `articleLimit` (integer, default 50) - Max saved articles; RevenueCat webhook sets to 999999 for premium, resets to 50 on cancellation
+- `activeSubscription` (boolean, default false) - Whether user has Poche Plus; set by RevenueCat webhook; used server-side to derive article limit (`FREE_ARTICLE_LIMIT = 50` when false, no effective limit when true)
 - `createdAt`, `updatedAt` (timestamps)
 
 #### `session`
@@ -134,7 +134,7 @@ All article endpoints require `Authorization: Bearer <token>` header.
 - `POST /api/articles` - Save article from URL
   - Body: `{ url: string, tags?: string }`
   - Backend fetches URL and extracts content via domain-specific extraction
-  - Returns 403 `"Article limit reached"` if user's saved article count >= `articleLimit`
+  - Returns 403 `"Article limit reached"` if user's saved article count >= derived limit (`FREE_ARTICLE_LIMIT` for free users, 999999 for premium)
 - `PATCH /api/articles/:id` - Update article (tags, title, readingProgress, isFavorite)
   - Automatically sets `startedAt` when progress first goes above 0
   - Automatically sets `finishedAt` when progress reaches 100
@@ -143,8 +143,8 @@ All article endpoints require `Authorization: Bearer <token>` header.
 ### Webhook (Unauthenticated — verified by shared secret)
 - `POST /api/webhooks/revenuecat` - RevenueCat subscription event handler
   - Verifies `Authorization` header == `REVENUECAT_WEBHOOK_SECRET`
-  - `INITIAL_PURCHASE`, `RENEWAL`, `REACTIVATION`, `UNCANCELLATION` → `articleLimit: 999999`
-  - `CANCELLATION`, `EXPIRATION`, `BILLING_ISSUE` → `articleLimit: 50`
+  - `INITIAL_PURCHASE`, `RENEWAL`, `REACTIVATION`, `UNCANCELLATION` → `activeSubscription: true`
+  - `CANCELLATION`, `EXPIRATION`, `BILLING_ISSUE` → `activeSubscription: false`
   - Uses `event.app_user_id` (= Better Auth user ID) for DB lookup
   - Mounted before `authMiddleware` in `index.ts`
 
@@ -385,8 +385,8 @@ The webapp is built and deployed to `backend/web_app_dist/`. Docker Compose moun
 - ✅ **Reading progress fields**: `readingProgress`, `isFavorite`, `startedAt`, `finishedAt`
 - ✅ **Smart timestamp handling**: Auto-sets `startedAt` and `finishedAt` based on progress updates
 - ✅ **ArticleUpdates validation**: Zod schema for progress and favorite updates
-- ✅ **Article limit enforcement**: `articleLimit` column on user table (default 50); `POST /api/articles` checks count before saving and returns 403 when exceeded
-- ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — inline handler in `index.ts`; verifies `Authorization` header; updates `articleLimit` on subscription events; mounted before `authMiddleware`
+- ✅ **Article limit enforcement**: `activeSubscription` boolean on user table (default false); limit derived via `FREE_ARTICLE_LIMIT` constant; `POST /api/articles` checks count before saving and returns 403 when exceeded
+- ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — inline handler in `index.ts`; verifies `Authorization` header; updates `activeSubscription` on subscription events; mounted before `authMiddleware`
 - ✅ **App Store setup**: Paid Apps Agreement signed, W-8BEN tax form completed, banking configured; subscription products `poche_plus_monthly` + `poche_plus_yearly` added to app version and submitted for review
 
 ## Future Enhancements

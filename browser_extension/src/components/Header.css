@@ -24,5 +24,14 @@
       letter-spacing: -0.5;
       color: var(--color-text-primary);
     }
+
+    .header-plus {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.5em;
+      color: var(--color-brand-primary);
+      align-self: flex-start;
+      margin-top: 0.1em;
+    }
   }
 }

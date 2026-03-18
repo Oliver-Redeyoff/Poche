@@ -9,6 +9,7 @@ export interface User {
   image: string | null
   createdAt: string
   updatedAt: string
+  activeSubscription: boolean
 }
 
 // Auth response from Better Auth
