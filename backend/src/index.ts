@@ -85,9 +85,9 @@ app.post('/api/webhooks/revenuecat', async (c) => {
   const userId: string = event.app_user_id;
 
   if (RC_PREMIUM_EVENTS.has(event.type)) {
-    await db.update(userTable).set({ articleLimit: 999999 }).where(eq(userTable.id, userId));
+    await db.update(userTable).set({ activeSubscription: true }).where(eq(userTable.id, userId));
   } else if (RC_FREE_EVENTS.has(event.type)) {
-    await db.update(userTable).set({ articleLimit: 50 }).where(eq(userTable.id, userId));
+    await db.update(userTable).set({ activeSubscription: false }).where(eq(userTable.id, userId));
   }
 
   return c.json({ ok: true });

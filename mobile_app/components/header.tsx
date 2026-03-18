@@ -34,9 +34,10 @@ export function Header({
   style,
   hidden = false,
 }: HeaderProps) {
-  const { appFontSizeMultiplier } = useAuth()
+  const { appFontSizeMultiplier, isPremium } = useAuth()
   const insets = useSafeAreaInsets()
   const textColor = useThemeColor({}, 'text')
+  const accentColor = useThemeColor({}, 'accent')
   const borderColor = useThemeColor({}, 'border')
   const backgroundColor = useThemeColor({}, 'background')
 
@@ -80,6 +81,9 @@ export function Header({
                 style={{ width: 24 * appFontSizeMultiplier, height: 24 * appFontSizeMultiplier }}
               />
               <ThemedText fontSize={26} style={styles.logoText}>Poche</ThemedText>
+              {isPremium && (
+                <ThemedText fontSize={22} style={[styles.plusBadge, { color: accentColor }]}>+</ThemedText>
+              )}
             </View>
           ) : (
             <View style={styles.placeholder} />
@@ -132,6 +136,9 @@ const styles = StyleSheet.create({
   logoText: {
     letterSpacing: -1,
     fontFamily: 'Bitter_600SemiBold',
+  },
+  plusBadge: {
+    fontFamily: 'Bitter_700Bold',
   },
   title: {
     fontFamily: 'SourceSans3_600SemiBold',

@@ -36,7 +36,7 @@ The project uses a PostgreSQL database with the following main tables:
 - `email` (string, unique)
 - `emailVerified` (boolean)
 - `image` (string, nullable)
-- `articleLimit` (integer, default 50) - Max saved articles; set to 999999 for premium users
+- `activeSubscription` (boolean, default false) - Whether the user has an active Poche Plus subscription; set by RevenueCat webhook
 - `createdAt`, `updatedAt` (timestamps)
 
 #### `session` table (Better Auth)
@@ -132,8 +132,8 @@ Poche/
 - Bearer token authentication for browser extensions and mobile apps
 - **Password reset**: Email-based password reset flow via Resend
 - **Email service**: Transactional emails with beautiful HTML templates
-- **Article limit enforcement**: Free users capped at 50 articles (`articleLimit` on user row); 403 returned when limit reached
-- **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — verifies `Authorization` header, sets `articleLimit: 999999` on purchase/renewal and resets to 50 on cancellation/expiration
+- **Article limit enforcement**: Free users capped at 50 articles (`FREE_ARTICLE_LIMIT` constant); 403 returned when limit reached; limit derived from `activeSubscription` on the user row (premium → no effective limit)
+- **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — verifies `Authorization` header, sets `activeSubscription: true` on purchase/renewal and `false` on cancellation/expiration; this is the only place the DB premium flag is written
 - Docker Compose with Nginx reverse proxy for production deployment
 - HTTPS with Let's Encrypt SSL certificates (Certbot + Cloudflare DNS)
 - PostgreSQL with Drizzle ORM
@@ -159,7 +159,7 @@ Poche/
 - **Bottom drawer component**: Reusable `BottomDrawer` component with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
 - **Reading settings drawer**: Separate `ReadingSettingsDrawer` component (font size slider via `@react-native-community/slider` and theme selector); opened from tab header (paint palette icon) or article screen (paint palette button)
 - **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email, Premium badge or Upgrade button, article usage bar, sign out, and delete account
-- **Premium subscription (iOS)**: RevenueCat paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; usage bar hidden for premium users; paywall shown when article limit is hit (403 response)
+- **Premium subscription (iOS)**: RevenueCat paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; usage bar hidden for premium users; paywall shown when article limit is hit (403 response); `isPremium` state derived from RC SDK (`getCustomerInfo()`) — RC is the source of truth on mobile; DB `activeSubscription` is only used server-side where RC SDK is unavailable
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), natural aspect ratio from image dimensions (capped at 500px tall with cover fit), centered
 - **Inline AdMob banner ads**: `react-native-google-mobile-ads` `INLINE_ADAPTIVE_BANNER` injected every 10 paragraphs for free users; hidden for `poche_plus` premium users; `isPremium` lifted to AuthContext so article screen can read it; test IDs used in dev builds
@@ -337,7 +337,7 @@ The shared package provides common functionality across all projects:
 - ✅ **No build step required**: Uses TypeScript source directly (compatible with Metro, Vite, and EAS)
 
 ### Backend
-- ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — updates `articleLimit` based on subscription events; mounted before authMiddleware
+- ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — updates `activeSubscription` based on subscription events; mounted before authMiddleware
 - ✅ **Article limit enforcement**: Free users capped at 50 articles; 403 with `"Article limit reached"` on save attempts over limit
 - ✅ Self-hosted API server with Hono
 - ✅ Better Auth integration with bearer plugin for token-based auth
@@ -409,7 +409,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Offline favicon pipeline**: `syncArticles()` caches per-article favicons and extracted background colors for offline placeholders
 - ✅ **Offline link preview pipeline**: `syncArticles()` fetches `og:image`/`twitter:image`, caches preview images locally, and stores `previewImageUrl` + `previewImageLocalPath` on articles
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with App Group; extension saves article via API and opens app; app shows "Saved to Poche" on cold start and when app comes to foreground (AppState). Android share target opens app with `poche://share?url=...` (save from share route not yet implemented). Native `PendingShareModule` for credentials and "just saved" flag; `share.tsx` route for deep link redirect.
-- ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui` SDK; configured with `REVENUECAT_IOS_KEY`; `Purchases.configure()` + `logIn(userId)` on auth; `RevenueCatUI.presentPaywall()` for native paywall; entitlement `poche_plus`; paywall triggered on 403 article limit error and from account settings Upgrade button; Premium badge shown in account drawer
+- ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui` SDK; configured with `REVENUECAT_IOS_KEY`; `Purchases.configure()` + `logIn(userId)` on auth; `RevenueCatUI.presentPaywall()` for native paywall; entitlement `poche_plus`; paywall triggered on 403 article limit error and from account settings Upgrade button; Premium badge shown in account drawer; **RC SDK is the source of truth for `isPremium` on mobile** — DB `activeSubscription` is only used server-side
 - ✅ **BottomDrawer `onFullyDismissed`**: Fires after Modal animation fully completes (iOS `onDismiss`); used to present native RevenueCat paywall after drawer is gone (avoids view controller hierarchy conflict)
 - ✅ **Google AdMob inline ads**: `react-native-google-mobile-ads`; `INLINE_ADAPTIVE_BANNER` injected every 10 paragraphs in article content; ads hidden for `poche_plus` premium users; `isPremium`/`setIsPremium` lifted from `(tabs)/_layout.tsx` into `AuthContext` (`_layout.tsx`), initialised via `Purchases.getCustomerInfo()` on session load; AdMob iOS App ID `ca-app-pub-9487705441504419~2795172655` in `app.json` plugin config; banner ad unit ID `ca-app-pub-9487705441504419/3789657720` in `eas.json` + `app.config.js` extras; `InlineBannerAd` component in `components/inline-banner-ad.tsx`; `app-ads.txt` published at `poche.to/app-ads.txt`
 - ✅ **Natural image sizing**: Article images sized by actual dimensions (from `onLoad` event), max 500px tall, `contentFit="cover"`, centered
