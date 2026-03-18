@@ -15,7 +15,7 @@ Poche is a "read it later" application that allows users to save articles from t
 ### Technology Stack
 
 - **Backend**: Hono (Node.js), Better Auth with bearer plugin, Drizzle ORM, PostgreSQL
-- **Monetization**: RevenueCat (iOS IAP), Apple In-App Purchase via StoreKit, RevenueCat webhook for server-side limit enforcement
+- **Monetization**: RevenueCat (iOS IAP), Apple In-App Purchase via StoreKit, RevenueCat webhook for server-side limit enforcement; Google AdMob banner ads (inline in articles for free users)
 - **Mobile App**: React Native with Expo Router, custom markdown renderer
 - **Browser Extension**: React with TypeScript, built with Vite
 - **Web App**: React with TypeScript, Vite, React Router
@@ -161,7 +161,8 @@ Poche/
 - **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email, Premium badge or Upgrade button, article usage bar, sign out, and delete account
 - **Premium subscription (iOS)**: RevenueCat paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; usage bar hidden for premium users; paywall shown when article limit is hit (403 response)
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
-- **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), with error handling
+- **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), natural aspect ratio from image dimensions (capped at 500px tall with cover fit), centered
+- **Inline AdMob banner ads**: `react-native-google-mobile-ads` `INLINE_ADAPTIVE_BANNER` injected every 10 paragraphs for free users; hidden for `poche_plus` premium users; `isPremium` lifted to AuthContext so article screen can read it; test IDs used in dev builds
 - **Link styling**: Links appear in accent color with underline
 - **Offline article access**: Articles stored locally in AsyncStorage
 - **Offline image caching**: Images downloaded and stored locally for offline viewing
@@ -410,6 +411,8 @@ The shared package provides common functionality across all projects:
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with App Group; extension saves article via API and opens app; app shows "Saved to Poche" on cold start and when app comes to foreground (AppState). Android share target opens app with `poche://share?url=...` (save from share route not yet implemented). Native `PendingShareModule` for credentials and "just saved" flag; `share.tsx` route for deep link redirect.
 - ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui` SDK; configured with `REVENUECAT_IOS_KEY`; `Purchases.configure()` + `logIn(userId)` on auth; `RevenueCatUI.presentPaywall()` for native paywall; entitlement `poche_plus`; paywall triggered on 403 article limit error and from account settings Upgrade button; Premium badge shown in account drawer
 - ✅ **BottomDrawer `onFullyDismissed`**: Fires after Modal animation fully completes (iOS `onDismiss`); used to present native RevenueCat paywall after drawer is gone (avoids view controller hierarchy conflict)
+- ✅ **Google AdMob inline ads**: `react-native-google-mobile-ads`; `INLINE_ADAPTIVE_BANNER` injected every 10 paragraphs in article content; ads hidden for `poche_plus` premium users; `isPremium`/`setIsPremium` lifted from `(tabs)/_layout.tsx` into `AuthContext` (`_layout.tsx`), initialised via `Purchases.getCustomerInfo()` on session load; AdMob iOS App ID `ca-app-pub-9487705441504419~2795172655` in `app.json` plugin config; banner ad unit ID `ca-app-pub-9487705441504419/3789657720` in `eas.json` + `app.config.js` extras; `InlineBannerAd` component in `components/inline-banner-ad.tsx`; `app-ads.txt` published at `poche.to/app-ads.txt`
+- ✅ **Natural image sizing**: Article images sized by actual dimensions (from `onLoad` event), max 500px tall, `contentFit="cover"`, centered
 - ✅ **Native tabs**: Tab bar migrated to `NativeTabs` from `expo-router/unstable-native-tabs`
 - ✅ **Instant article display + sync progress bar**: Articles shown immediately after API response; background per-article processing (favicons, images, previews) reports progress via module-level pub/sub; `SyncProgressBar` component in tab layout shows pulse during fetch and fill-progress during processing using React Native built-in `Animated`
 
