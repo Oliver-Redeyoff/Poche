@@ -263,26 +263,28 @@ export default function TabLayout() {
                 <ThemedText fontSize={15} style={styles.userName}>{session?.user?.email}</ThemedText>
               )}
             </View>
+            {isPremium && (
+              <View style={[styles.premiumBadge, { backgroundColor: borderColor }]}>
+                <ThemedText fontSize={16} style={[styles.premiumBadgeText, { color: colors.text }]}>
+                  Poche
+                </ThemedText>
+                <ThemedText fontSize={16} style={[styles.premiumBadgePlus, { color: colors.accent }]}>
+                  +
+                </ThemedText>
+              </View>
+            )}
           </View>
 
           {/* Subscription status */}
-          {isPremium ? (
-            <View style={[styles.premiumBadge, { backgroundColor: colors.accentLight }]}>
-              <ThemedText fontSize={13} style={[styles.premiumBadgeText, { color: colors.accent }]}>
-                Premium
-              </ThemedText>
-            </View>
-          ) : (
-            Platform.OS === 'ios' && (
-              <Button
-                title="Upgrade to Premium"
-                variant="primary"
-                onPress={() => {
-                  paywallAfterDismiss.current = true
-                  setShowAccountSettings(false)
-                }}
-              />
-            )
+          {!isPremium && Platform.OS === 'ios' && (
+            <Button
+              title="Upgrade to Premium"
+              variant="primary"
+              onPress={() => {
+                paywallAfterDismiss.current = true
+                setShowAccountSettings(false)
+              }}
+            />
           )}
 
           {/* Usage */}
@@ -399,12 +401,17 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
   premiumBadge: {
+    display: 'flex',
+    flexDirection: 'row',
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 20,
   },
   premiumBadgeText: {
-    fontFamily: 'SourceSans3_600SemiBold',
+    fontFamily: 'Bitter_600SemiBold',
+  },
+  premiumBadgePlus: {
+    fontFamily: 'Bitter_700Bold',
   },
 })
