@@ -40,6 +40,8 @@ PODS:
     - ExpoModulesCore
   - ExpoAsset (55.0.8):
     - ExpoModulesCore
+  - ExpoAudio (55.0.9):
+    - ExpoModulesCore
   - ExpoBackgroundTask (55.0.9):
     - ExpoModulesCore
   - ExpoBlur (55.0.8):
@@ -48,7 +50,7 @@ PODS:
     - ExpoModulesCore
   - ExpoDomWebView (55.0.3):
     - ExpoModulesCore
-  - ExpoFileSystem (55.0.10):
+  - ExpoFileSystem (55.0.11):
     - ExpoModulesCore
   - ExpoFont (55.0.4):
     - ExpoModulesCore
@@ -108,6 +110,8 @@ PODS:
   - ExpoRouter (55.0.3):
     - ExpoModulesCore
     - RNScreens
+  - ExpoSpeech (55.0.9):
+    - ExpoModulesCore
   - ExpoSplashScreen (55.0.10):
     - ExpoModulesCore
   - ExpoSymbols (55.0.4):
@@ -2125,6 +2129,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-sherpa-onnx-offline-tts (0.2.6):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-slider (5.1.2):
     - boost
     - DoubleConversion
@@ -3074,6 +3106,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNZipArchive (7.0.2):
+    - React-Core
+    - RNZipArchive/Core (= 7.0.2)
+    - SSZipArchive (~> 2.5.5)
+  - RNZipArchive/Core (7.0.2):
+    - React-Core
+    - SSZipArchive (~> 2.5.5)
   - SDWebImage (5.21.5):
     - SDWebImage/Core (= 5.21.5)
   - SDWebImage/Core (5.21.5)
@@ -3086,6 +3125,7 @@ PODS:
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.17)
   - SocketRocket (0.7.1)
+  - SSZipArchive (2.5.5)
   - UMAppLoader (55.0.2)
   - Yoga (0.0.0)
 
@@ -3097,6 +3137,7 @@ DEPENDENCIES:
   - Expo (from `../node_modules/expo`)
   - ExpoAppleAuthentication (from `../node_modules/expo-apple-authentication/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoAudio (from `../node_modules/expo-audio/ios`)
   - ExpoBackgroundTask (from `../node_modules/expo-background-task/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
@@ -3112,6 +3153,7 @@ DEPENDENCIES:
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoModulesJSI (from `../node_modules/expo-modules-core`)
   - ExpoRouter (from `../node_modules/expo-router/ios`)
+  - ExpoSpeech (from `../node_modules/expo-speech/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
@@ -3161,6 +3203,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-sherpa-onnx-offline-tts (from `../node_modules/react-native-sherpa-onnx-offline-tts`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
@@ -3203,6 +3246,7 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
+  - RNZipArchive (from `../node_modules/react-native-zip-archive`)
   - SocketRocket (~> 0.7.1)
   - UMAppLoader (from `../node_modules/unimodules-app-loader/ios`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -3223,6 +3267,7 @@ SPEC REPOS:
     - SDWebImageSVGCoder
     - SDWebImageWebPCoder
     - SocketRocket
+    - SSZipArchive
 
 EXTERNAL SOURCES:
   boost:
@@ -3239,6 +3284,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-apple-authentication/ios"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoAudio:
+    :path: "../node_modules/expo-audio/ios"
   ExpoBackgroundTask:
     :path: "../node_modules/expo-background-task/ios"
   ExpoBlur:
@@ -3269,6 +3316,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-modules-core"
   ExpoRouter:
     :path: "../node_modules/expo-router/ios"
+  ExpoSpeech:
+    :path: "../node_modules/expo-speech/ios"
   ExpoSplashScreen:
     :path: "../node_modules/expo-splash-screen/ios"
   ExpoSymbols:
@@ -3366,6 +3415,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-sherpa-onnx-offline-tts:
+    :path: "../node_modules/react-native-sherpa-onnx-offline-tts"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   React-NativeModulesApple:
@@ -3450,6 +3501,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
+  RNZipArchive:
+    :path: "../node_modules/react-native-zip-archive"
   UMAppLoader:
     :path: "../node_modules/unimodules-app-loader/ios"
   Yoga:
@@ -3463,11 +3516,12 @@ SPEC CHECKSUMS:
   Expo: 26895976b2c5f7c901a1ced3366f93b69500b6ab
   ExpoAppleAuthentication: b1ca252ee1d79888720df7af6bbb559b3ca57a77
   ExpoAsset: 4fc5f72f8a74135c522fa61df0bfb869e5b3c3e6
+  ExpoAudio: 21926501faf4eb94ef2a1ecdda9c9d47f25148d2
   ExpoBackgroundTask: e8100c968bb4ed4de7d8ef2c268af70c53aaa74a
   ExpoBlur: 7a5722ca5c8d9e8a2fe2d3be7cb61071b585ca11
   ExpoCrypto: ac96b323c2badd6326887eb68647dd07f1ec2bd0
   ExpoDomWebView: d4f2ed3c3fa31d0ce89e79501a0c041c2f233189
-  ExpoFileSystem: 0d267067930a744555ff6ab842fd79d3eeb2c33b
+  ExpoFileSystem: 81a923e4253da87f00ea08f36e123046d7416f60
   ExpoFont: 4d2a6dedce012c4793532cb38d561d3da95eaafd
   ExpoGlassEffect: 126e41562c17e261862b6d4e8b95fe8c66a0e16d
   ExpoHaptics: 8bce973169ae09427d0a10886d222601ada8c128
@@ -3478,6 +3532,7 @@ SPEC CHECKSUMS:
   ExpoModulesCore: 5bfb1f65437111faee807649b5366778d2bd93bd
   ExpoModulesJSI: fdb82be16565ad49cdff2b68af8442b40ba9c259
   ExpoRouter: 05360ba37fc9a07dabedbf68ff8da520bcddd560
+  ExpoSpeech: 3aa83216ad0c410b72d678811698d7bd08d63294
   ExpoSplashScreen: 91624a9550497925d9606fc9da86061369833716
   ExpoSymbols: 237882b097b55437cf37b36b21d8a4892f07e782
   ExpoSystemUI: c4c5b9ba9a5a4713c70f3d68c3bcf3221f2198f2
@@ -3533,6 +3588,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 12a03cb4ecdb03d18dbdeb5be3345133eb50cad3
   React-microtasksnativemodule: 3889cab2172031863a5a4c84f72eb6ad6f230c93
   react-native-safe-area-context: 54d812805f3c4e08a4580ad086cbde1d8780c2e4
+  react-native-sherpa-onnx-offline-tts: fd17ea8196cb5c4c320ebe8676150bac63c74831
   react-native-slider: 5da4af460d0dd1346f927e829dfecbb81bd46f91
   React-NativeModulesApple: 98d4bfdb563fbcee3d6076c3d398c10799098bd9
   React-networking: 223510e7fcbf949f1c66a2de9d50c98a441bf416
@@ -3577,11 +3633,13 @@ SPEC CHECKSUMS:
   RNReanimated: 361d5b8e20a77cd1f7907ad301f6d51ef79c1545
   RNScreens: f865936b895044e568e629300951f8344157b421
   RNWorklets: 6c4441bf4c01fd1598099789264481d199d18968
+  RNZipArchive: 421f5f056eddfe72f56ac4400608d202d2c53674
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   UMAppLoader: 71b50bcc31d86495e52c0b4cd17e2708bf297be3
   Yoga: 3d56e80930898685da43cbf53b5843932df8e765
 
