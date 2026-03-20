@@ -158,7 +158,7 @@ Poche/
 - **Global font size**: Reading font size (14–26) stored in AuthContext (`appFontSize`/`setAppFontSize`), persisted to AsyncStorage (`@poche_app_font_size`); applies to article markdown
 - **Bottom drawer component**: Reusable `BottomDrawer` component with swipe-to-dismiss (PanResponder + Reanimated), dimmed backdrop, slide animation; used by reading settings and account settings
 - **Reading settings drawer**: Separate `ReadingSettingsDrawer` component (font size slider via `@react-native-community/slider` and theme selector); opened from tab header (paint palette icon) or article screen (paint palette button)
-- **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email, Premium badge or Upgrade button, article usage bar, sign out, and delete account
+- **Account settings drawer**: Bottom drawer triggered by person icon in tab header; shows signed-in email with inline "Poche+" badge (premium) or Upgrade button, article usage bar, sign out, and delete account
 - **Premium subscription (iOS)**: RevenueCat paywall via `RevenueCatUI.presentPaywall()`; entitlement `poche_plus`; usage bar hidden for premium users; paywall shown when article limit is hit (403 response); `isPremium` state derived from RC SDK (`getCustomerInfo()`) — RC is the source of truth on mobile; DB `activeSubscription` is only used server-side where RC SDK is unavailable
 - **Markdown rendering**: Custom markdown-to-React-Native component for article content
 - **Smart image handling**: Filters invalid URLs, low-resolution images (< 50x50), natural aspect ratio from image dimensions (capped at 500px tall with cover fit), centered
