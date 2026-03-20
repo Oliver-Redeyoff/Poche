@@ -58,6 +58,7 @@ export interface MarkdownProps {
   minImageWidth?: number
   minImageHeight?: number
   showAds?: boolean
+  onBlockLayout?: (tokenIndex: number, y: number, height: number) => void
 }
 
 // Default image component
@@ -119,6 +120,7 @@ export function Markdown({
   minImageWidth = 50,
   minImageHeight = 50,
   showAds = false,
+  onBlockLayout,
 }: MarkdownProps) {
   
   // Parse markdown content
@@ -214,7 +216,21 @@ export function Markdown({
   // Render a block token
   const renderBlock = useCallback((token: Token, index: number): ReactNode => {
     const key = `block-${index}`
-    
+
+    const wrapWithLayout = (content: ReactNode) => {
+      if (!onBlockLayout) return content
+      return (
+        <View
+          key={key}
+          onLayout={e => onBlockLayout(index, e.nativeEvent.layout.y, e.nativeEvent.layout.height)}
+        >
+          {content}
+        </View>
+      )
+    }
+
+    let content: ReactNode
+
     switch (token.type) {
       case 'heading':
         const headingStyles: Record<number, StyleProp<TextStyle>> = {
@@ -225,41 +241,45 @@ export function Markdown({
           5: [defaultStyles.heading5, style.heading5],
           6: [defaultStyles.heading6, style.heading6],
         }
-        return (
+        content = (
           <Text key={key} style={headingStyles[token.level || 1]}>
             {renderInline(parseInline(token.content), key)}
           </Text>
         )
-        
+        break
+
       case 'paragraph':
-        return (
+        content = (
           <Text key={key} style={[defaultStyles.paragraph, style.paragraph]}>
             {renderInline(parseInline(token.content), key)}
           </Text>
         )
-        
+        break
+
       case 'code_block':
-        return (
+        content = (
           <View key={key} style={[defaultStyles.code_block, style.code_block || style.fence]}>
             <Text style={[defaultStyles.code_block_text, style.code_block_text || style.fence_text]}>
               {token.content}
             </Text>
           </View>
         )
-        
+        break
+
       case 'blockquote':
         const quoteTokens = tokenize(token.content)
-        return (
+        content = (
           <View key={key} style={[defaultStyles.blockquote, style.blockquote]}>
             {quoteTokens.map((t, i) => renderBlock(t, i))}
           </View>
         )
-        
+        break
+
       case 'list':
-        return (
-          <View 
-            key={key} 
-            style={token.ordered 
+        content = (
+          <View
+            key={key}
+            style={token.ordered
               ? [defaultStyles.ordered_list, style.ordered_list]
               : [defaultStyles.bullet_list, style.bullet_list]
             }
@@ -276,35 +296,37 @@ export function Markdown({
             ))}
           </View>
         )
-        
+        break
+
       case 'hr':
-        return <View key={key} style={[defaultStyles.hr, style.hr]} />
-        
+        content = <View key={key} style={[defaultStyles.hr, style.hr]} />
+        break
+
       case 'table':
-        return (
+        content = (
           <View key={key} style={[defaultStyles.table, style.table]}>
             {token.rows?.map((row, rowIndex) => {
               const isHeader = token.hasHeader && rowIndex === 0
               return (
-                <View 
-                  key={`${key}-row-${rowIndex}`} 
+                <View
+                  key={`${key}-row-${rowIndex}`}
                   style={[
-                    defaultStyles.tableRow, 
+                    defaultStyles.tableRow,
                     style.tableRow,
                     isHeader && [defaultStyles.tableHeader, style.tableHeader]
                   ]}
                 >
                   {row.map((cell, cellIndex) => (
-                    <View 
+                    <View
                       key={`${key}-cell-${rowIndex}-${cellIndex}`}
                       style={[
-                        isHeader 
+                        isHeader
                           ? [defaultStyles.tableHeaderCell, style.tableHeaderCell]
                           : [defaultStyles.tableCell, style.tableCell],
                         { flex: 1 }
                       ]}
                     >
-                      <Text style={isHeader 
+                      <Text style={isHeader
                         ? [defaultStyles.tableHeaderCellText, style.tableHeaderCellText]
                         : [defaultStyles.tableCellText, style.tableCellText]
                       }>
@@ -317,27 +339,30 @@ export function Markdown({
             })}
           </View>
         )
-        
+        break
+
       case 'image':
-        if (renderImage && token.src) {
-          return renderImage({ src: token.src, alt: token.alt, nodeKey: key })
-        }
-        return token.src ? (
-          <DefaultImage
-            key={key}
-            src={token.src}
-            alt={token.alt}
-            nodeKey={key}
-            minWidth={minImageWidth}
-            minHeight={minImageHeight}
-            style={style.image}
-          />
-        ) : null
-        
+        content = renderImage && token.src
+          ? renderImage({ src: token.src, alt: token.alt, nodeKey: key })
+          : token.src
+            ? <DefaultImage
+                key={key}
+                src={token.src}
+                alt={token.alt}
+                nodeKey={key}
+                minWidth={minImageWidth}
+                minHeight={minImageHeight}
+                style={style.image}
+              />
+            : null
+        break
+
       default:
         return null
     }
-  }, [style, renderInline, renderImage, minImageWidth, minImageHeight])
+
+    return wrapWithLayout(content)
+  }, [style, renderInline, renderImage, minImageWidth, minImageHeight, onBlockLayout])
   
   const rendered = useMemo(() => {
     let paragraphCount = 0

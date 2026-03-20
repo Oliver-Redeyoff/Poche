@@ -18,6 +18,7 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.left': 'chevron-left',
   'chevron.right': 'chevron-right',
+  'chevron.down': 'expand-more',
   'trash': 'delete-outline',
   'gear': 'settings',
   // Onboarding icons
@@ -43,6 +44,15 @@ const MAPPING = {
   'checkmark.circle.fill': 'check-circle',
   'person': 'person',
   'paintpalette': 'palette',
+  // Search
+  'magnifyingglass': 'search',
+  // TTS player
+  'play.fill': 'play-arrow',
+  'pause.fill': 'pause',
+  'backward.end.fill': 'skip-previous',
+  'forward.end.fill': 'skip-next',
+  'xmark': 'close',
+  'waveform': 'graphic-eq',
 } as IconMapping;
 
 /**

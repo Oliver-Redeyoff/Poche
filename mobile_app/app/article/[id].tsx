@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StyleSheet, ScrollView, Text, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut, FadeInDown, FadeOutDown } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
@@ -25,6 +25,8 @@ import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
 import { Pressable, Linking } from 'react-native'
 import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
 import { Button, ContextMenu, Divider, Host, Menu } from '@expo/ui/swift-ui'
+import { useTTS } from '@/hooks/use-tts'
+import { TtsPlayerBar } from '@/components/tts-player-bar'
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -78,6 +80,11 @@ export default function ArticleScreen() {
     const collapsedTop = insets.top + 3 + 8
     returnBtnTop.value = withTiming(headerHidden ? collapsedTop : fullTop, { duration: 250 })
   }, [headerHidden, insets.top])
+
+  // TTS block layout tracking
+  const blockLayoutsRef = useRef<Map<number, { y: number; height: number }>>(new Map())
+  const contentContainerOffsetRef = useRef(0)
+  const [activeBlockLayout, setActiveBlockLayout] = useState<{ y: number; height: number } | null>(null)
 
   // Reading settings (theme comes from AuthContext; fontSize from navigation theme for app-wide consistency)
   const { appTheme: readingTheme } = useAuth()
@@ -648,6 +655,58 @@ export default function ArticleScreen() {
     return <ArticleImage key={nodeKey} src={src} nodeKey={nodeKey} />
   }, [ArticleImage])
 
+  // TTS hook - must come before conditional returns
+  const tts = useTTS(article?.content ?? '')
+
+  // Update highlight overlay when current TTS segment changes
+  useEffect(() => {
+    if (!tts.isActive) {
+      setActiveBlockLayout(null)
+      return
+    }
+    const segment = tts.segments[tts.currentIndex]
+    if (!segment) { setActiveBlockLayout(null); return }
+    const layout = blockLayoutsRef.current.get(segment.tokenIndex)
+    setActiveBlockLayout(layout ?? null)
+  }, [tts.currentIndex, tts.isActive, tts.segments])
+
+  // Auto-scroll to current TTS segment
+  useEffect(() => {
+    if (!tts.isActive || tts.currentIndex < 0) return
+    const segment = tts.segments[tts.currentIndex]
+    if (!segment) return
+    const layout = blockLayoutsRef.current.get(segment.tokenIndex)
+    if (!layout) return
+    const y = contentContainerOffsetRef.current + layout.y - 100
+    scrollViewRef.current?.scrollTo({ y: Math.max(0, y), animated: true })
+  }, [tts.currentIndex, tts.isActive, tts.segments])
+
+  // Clear stale block layouts when article content changes
+  useEffect(() => {
+    blockLayoutsRef.current.clear()
+  }, [article?.content])
+
+  // Block layout callback for Markdown
+  const handleBlockLayout = useCallback((tokenIndex: number, y: number, height: number) => {
+    blockLayoutsRef.current.set(tokenIndex, { y, height })
+  }, [])
+
+  // Start TTS from closest segment to current scroll position
+  function startSegmentFromProgress(): number {
+    if (tts.segments.length === 0) return 0
+    const scrollY = (readingProgressRef.current / 100) * Math.max(0, contentHeightRef.current - screenHeight)
+    let best = 0
+    let bestDist = Infinity
+    for (const seg of tts.segments) {
+      const layout = blockLayoutsRef.current.get(seg.tokenIndex)
+      if (!layout) continue
+      const blockY = contentContainerOffsetRef.current + layout.y
+      const dist = Math.abs(blockY - scrollY)
+      if (dist < bestDist) { bestDist = dist; best = seg.index }
+    }
+    return best
+  }
+
   // Conditional returns - must come after all hooks
   if (loading) {
     return (
@@ -735,12 +794,40 @@ export default function ArticleScreen() {
         </View>
       </View>
 
+      {/* TTS player bar */}
+      {tts.isActive && (
+        <Animated.View
+          entering={FadeInDown.duration(250)}
+          exiting={FadeOutDown.duration(200)}
+          style={styles.ttsBarContainer}
+        >
+          <TtsPlayerBar
+            isPlaying={tts.isPlaying}
+            currentIndex={tts.currentIndex}
+            totalSegments={tts.segments.length}
+            speed={tts.speed}
+            voices={tts.voices}
+            selectedVoiceId={tts.selectedVoiceId}
+            engine={tts.engine}
+            modelState={tts.modelState}
+            onPlay={tts.resume}
+            onPause={tts.pause}
+            onSkipBack={tts.skipBack}
+            onSkipForward={tts.skipForward}
+            onCycleSpeed={tts.cycleSpeed}
+            onSetVoice={tts.setVoice}
+            onSetEngine={tts.setEngine}
+            onClose={tts.close}
+          />
+        </Animated.View>
+      )}
+
       {/* Return to progress button */}
       {showReturnButton && (
-        <Animated.View 
-          entering={FadeIn.duration(200)} 
+        <Animated.View
+          entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={[styles.returnButtonContainer, {bottom: insets.bottom + 20}]}
+          style={[styles.returnButtonContainer, {bottom: insets.bottom + (tts.isActive ? 100 : 20)}]}
         >
           <Pressable 
             onPress={returnToProgress}
@@ -752,10 +839,10 @@ export default function ArticleScreen() {
         </Animated.View>
       )}
 
-      <ScrollView 
+      <ScrollView
         ref={scrollViewRef}
         style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0, backgroundColor: colors.background }]}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight, paddingBottom: tts.isActive ? 68 + insets.bottom : 0 }]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
@@ -784,6 +871,15 @@ export default function ArticleScreen() {
                 {readingTime && ` • ${readingTime} min read`}
               </ThemedText>
             )}
+            {tts.segments.length > 0 && (
+              <Pressable
+                onPress={() => tts.startFrom(startSegmentFromProgress())}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, flexDirection: 'row', alignItems: 'center', gap: 4 })}
+              >
+                <IconSymbol name="waveform" size={16} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 15, fontFamily: 'SourceSans3_500Medium' }}>Listen</Text>
+              </Pressable>
+            )}
           </View>
           
           {/* Tags */}
@@ -794,7 +890,25 @@ export default function ArticleScreen() {
         </View>
         
         {/* Article Content */}
-        <View style={[styles.contentContainer, { maxWidth: contentWidth }]}>
+        <View
+          style={[styles.contentContainer, { maxWidth: contentWidth }]}
+          onLayout={e => { contentContainerOffsetRef.current = e.nativeEvent.layout.y }}
+        >
+          {/* TTS highlight overlay */}
+          {tts.isActive && activeBlockLayout && (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: activeBlockLayout.y,
+                left: -4,
+                right: -4,
+                height: activeBlockLayout.height,
+                backgroundColor: 'rgba(255, 200, 0, 0.15)',
+                borderRadius: 4,
+              }}
+            />
+          )}
           <Markdown
             style={markdownStyles}
             baseUrl={article.url || undefined}
@@ -802,6 +916,7 @@ export default function ArticleScreen() {
             minImageWidth={MIN_IMAGE_WIDTH}
             minImageHeight={MIN_IMAGE_HEIGHT}
             showAds={!isPremium}
+            onBlockLayout={handleBlockLayout}
           >
             {markdownContent}
           </Markdown>
@@ -916,5 +1031,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     opacity: 0.6,
+  },
+  ttsBarContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 15,
   },
 })

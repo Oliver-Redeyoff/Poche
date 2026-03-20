@@ -20,5 +20,8 @@ config.resolver.extraNodeModules = {
   '@poche/shared': sharedRoot,
 };
 
+// Allow bundling zip files (for embedded TTS model)
+config.resolver.assetExts = [...(config.resolver.assetExts ?? []), 'zip'];
+
 module.exports = config;
 
