@@ -182,6 +182,7 @@ Poche/
 - **Native tabs**: Tab bar uses `NativeTabs` from `expo-router/unstable-native-tabs` for a native iOS tab controller
 - **Instant article display**: Articles shown immediately after the API call returns; per-article favicon/image/preview processing runs in a background IIFE with granular progress reporting
 - **Sync progress bar**: 2px animated bar below the header in the tab layout; pulses during API fetch, fills as a progress bar during per-article processing, fades out on completion; built with React Native's built-in `Animated` API
+- **Neural TTS (Listen)**: On-device text-to-speech via `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium, ~65 MB model bundled in app). "Listen" button in article header starts playback from scroll position. Player bar with play/pause, skip, speed (0.75×–2×), and voice picker. Engine selector allows switching to iOS system voices. TTS highlight overlay and auto-scroll to active segment. iOS only; requires iOS 16.0.
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -415,6 +416,7 @@ The shared package provides common functionality across all projects:
 - ✅ **Natural image sizing**: Article images sized by actual dimensions (from `onLoad` event), max 500px tall, `contentFit="cover"`, centered
 - ✅ **Native tabs**: Tab bar migrated to `NativeTabs` from `expo-router/unstable-native-tabs`
 - ✅ **Instant article display + sync progress bar**: Articles shown immediately after API response; background per-article processing (favicons, images, previews) reports progress via module-level pub/sub; `SyncProgressBar` component in tab layout shows pulse during fetch and fill-progress during processing using React Native built-in `Animated`
+- ✅ **Neural TTS**: `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium) bundled as zip asset; `use-tts.ts` hook with dual-engine playback (Sherpa + expo-audio / system + expo-speech); generation token pattern for async cancellation; `tts-player-bar.tsx` + `tts-voice-picker.tsx`; TTS highlight overlay and auto-scroll in article detail; iOS 16.0+ required
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend

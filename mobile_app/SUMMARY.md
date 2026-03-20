@@ -41,6 +41,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Clear Data on Logout**: Locally stored articles are cleared when user signs out
 - **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
 - **Share intent (Save to Poche)**: Share a web page from Safari (iOS) or system share sheet (Android) to Poche. **iOS**: Share Extension "Save to Poche" reads token and API URL from App Group, POSTs URL to backend, sets "just saved" flag, opens app; app checks flag on cold start and when returning to foreground (AppState), syncs and shows "Saved to Poche". **Android**: App receives share and opens with `poche://share?url=...` (in-app save from share route not yet implemented). Root layout writes/clears share credentials (iOS) and registers `share` route.
+- **Neural TTS (Listen)**: On-device text-to-speech via Sherpa-ONNX (Piper VITS model, en_US-ryan-medium, ~65 MB). Model bundled in app as `assets/sherpa-model.zip`, extracted on first use. "Listen" button in article meta row starts playback from current scroll position. Player bar slides up with play/pause, skip back/forward, speed cycle (0.75×–2×), and voice picker. Engine selector in voice picker allows switching to iOS system voices. TTS highlight overlay shows current paragraph. Auto-scrolls to active segment.
 
 ## Architecture
 
@@ -84,6 +85,8 @@ mobile_app/
 │   ├── dropdown-menu.tsx  # Reusable native context menu wrapper
 │   ├── header.tsx         # Custom header component with logo, back button, and collapsible animation
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
+│   ├── tts-player-bar.tsx # TTS playback controls bar (play/pause, skip, speed, voice picker trigger)
+│   ├── tts-voice-picker.tsx # Engine selector (Neural/System) + system voice list bottom drawer
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
 │   └── ...
@@ -91,9 +94,13 @@ mobile_app/
 │   ├── api.ts            # API client (uses @poche/shared helpers)
 │   ├── background-sync.ts # Background task for syncing articles
 │   ├── article-sync.ts   # Centralized article sync logic with reading progress updates
-│   └── image-cache.ts    # Image extraction, downloading, and caching utilities
+│   ├── image-cache.ts    # Image extraction, downloading, and caching utilities
+│   ├── model-manager.ts  # TTS model lifecycle (check, install from bundle, get paths, delete)
+│   ├── sherpa-tts-engine.ts # Singleton wrapper around react-native-sherpa-onnx-offline-tts
+│   └── tts-extract.ts    # Extracts TtsSegments from tokenized markdown (maps token index → text)
 ├── hooks/                # Custom React hooks
 │   ├── use-article-actions.ts  # Article management hook (delete, tags, favorites)
+│   ├── use-tts.ts              # TTS hook: engine state, playback loop, speed, voice, engine switching
 │   ├── use-color-scheme.ts     # Re-exports useColorScheme + useResolvedColorScheme() hook
 │   ├── use-color-scheme.web.ts # Web variant with hydration support
 │   └── use-theme-color.ts     # Returns colors from resolved theme (light/dark/sepia)
@@ -466,6 +473,9 @@ Key dependencies:
 - `react-native-reanimated` - Smooth animations for article list
 - `react-native-purchases` - RevenueCat SDK for iOS in-app purchases
 - `react-native-purchases-ui` - RevenueCat native paywall UI (`RevenueCatUI.presentPaywall()`)
+- `react-native-sherpa-onnx-offline-tts` - Neural TTS synthesis (Sherpa-ONNX / Piper VITS) → WAV file; requires iOS 16.0
+- `expo-audio` - WAV file playback with completion callbacks (replaced expo-av which was SDK 55 incompatible)
+- `react-native-zip-archive` - Model zip extraction (SSZipArchive; requires raw paths, no `file://` scheme)
 - `@poche/shared` - Shared types, utilities, API helpers, markdown parsing
 - `patch-package` - Dev dependency for patching react-native source code
 
@@ -608,6 +618,7 @@ module.exports = config;
 - ✅ **Instant article display**: `syncArticles()` now shows articles immediately after API response; background IIFE handles per-article favicon/image/link-preview processing with granular progress; `onProcessingComplete` callback patches only enriched fields into UI state to avoid overwriting concurrent edits
 - ✅ **Sync progress bar**: `SyncProgressBar` component in tab `_layout.tsx`; 2px bar below header; opacity pulse during 'fetching', fill progress during 'processing', fade-out on done; built with React Native built-in `Animated` (not Reanimated) to avoid native tab conflicts; `useSyncProgress()` hook in `article-sync.ts` uses module-level pub/sub (no prop drilling)
 - ✅ **`processSingleArticleFavicon` / `processSingleArticleLinkPreview`**: New per-article functions in `lib/image-cache.ts` enabling per-article progress tracking during background sync (replaces batch-only approach)
+- ✅ **Neural TTS engine**: `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium) bundled as `assets/sherpa-model.zip`; auto-installs on first "Listen" tap with spinner UI; `use-tts.ts` hook manages dual-engine playback loop (Sherpa via expo-audio + system via expo-speech); generation token pattern cancels stale async ops; `tts-player-bar.tsx` + `tts-voice-picker.tsx` UI; TTS highlight overlay and auto-scroll in article detail; iOS deployment target bumped to 16.0; metro config updated to bundle `.zip` assets
 
 ## Technical Notes
 
