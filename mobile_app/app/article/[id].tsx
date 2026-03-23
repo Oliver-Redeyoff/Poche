@@ -708,10 +708,9 @@ export default function ArticleScreen() {
     blockLayoutsRef.current.set(tokenIndex, { y, height })
   }, [])
 
-  // Start TTS from closest segment to current scroll position
-  function startSegmentFromProgress(): number {
+  // Start TTS from closest segment to a given scroll Y
+  function segmentNearScrollY(scrollY: number): number {
     if (tts.segments.length === 0) return 0
-    const scrollY = currentScrollYRef.current
     let best = 0
     let bestDist = Infinity
     for (const seg of tts.segments) {
@@ -723,6 +722,43 @@ export default function ArticleScreen() {
     }
     return best
   }
+
+  function startSegmentFromProgress(): number {
+    return segmentNearScrollY(currentScrollYRef.current)
+  }
+
+  function startSegmentFromReadingProgress(): number {
+    const scrollY = (readingProgressRef.current / 100) * (contentHeightRef.current - layoutHeightRef.current)
+    return segmentNearScrollY(scrollY)
+  }
+
+  const startListening = useCallback((segmentIndex: number) => {
+    if (!article) return
+    const content = article.content || '*No content available*'
+    tts.setArticle(content, article.title ?? '', article.siteName || article.author || null, article.previewImageUrl || null, article.id)
+    tts.startFrom(segmentIndex)
+  }, [article, tts])
+
+  const listenMenuItems = useMemo((): DropdownMenuItem[] => [
+    {
+      key: 'listen-start',
+      label: 'Listen from start',
+      icon: 'arrow.counterclockwise' as const,
+      onPress: () => startListening(0),
+    },
+    {
+      key: 'listen-here',
+      label: 'Listen from here',
+      icon: 'arrow.forward' as const,
+      onPress: () => startListening(startSegmentFromProgress()),
+    },
+    ...(readingProgress > 0 && readingProgress < 100 ? [{
+      key: 'listen-progress',
+      label: 'Continue listening',
+      icon: 'play.fill' as const,
+      onPress: () => startListening(startSegmentFromReadingProgress()),
+    }] : []),
+  ], [article, readingProgress, startListening])
 
   // Conditional returns - must come after all hooks
   if (loading) {
@@ -812,21 +848,22 @@ export default function ArticleScreen() {
       </View>
 
       {/* Listen FAB — visible when TTS is inactive */}
-      {!tts.isActive && tts.segments.length > 0 && (
+      {!tts.isActive && tts.segments.length > 0 && !headerHidden && (
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(150)}
-          style={[styles.fab, { bottom: insets.bottom + 24 }]}
+          style={[styles.fab, { bottom: insets.bottom + 20 }]}
         >
-          <Pressable
-            onPress={() => {
-              tts.setArticle(markdownContent, article.title ?? '', article.siteName || article.author || null, article.previewImageUrl || null)
-              tts.startFrom(startSegmentFromProgress())
-            }}
+          <DropdownMenu
             style={[styles.fabButton, { backgroundColor: colors.accent }]}
-          >
-            <IconSymbol name="waveform" size={22} color="#FFFFFF" />
-          </Pressable>
+            triggerType="press"
+            trigger={
+              <View style={styles.fabInner}>
+                <IconSymbol name="headphones" size={22} color="#FFFFFF" />
+              </View>
+            }
+            items={listenMenuItems}
+          />
         </Animated.View>
       )}
 
@@ -850,7 +887,7 @@ export default function ArticleScreen() {
       )}
 
       {/* Return to progress button */}
-      {showReturnButton && (
+      {showReturnButton && !tts.isActive && (
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
@@ -1054,17 +1091,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     zIndex: 15,
-  },
-  fabButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+  },
+  fabButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    overflow: 'hidden',
+  },
+  fabInner: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })

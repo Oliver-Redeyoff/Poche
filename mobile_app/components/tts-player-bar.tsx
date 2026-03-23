@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Pressable, StyleSheet, Text, ActivityIndicator } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, Easing } from 'react-native-reanimated'
 import { Image } from 'expo-image'
+import { router, usePathname } from 'expo-router'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from './ui/icon-symbol'
 import { TtsVoicePicker } from './tts-voice-picker'
@@ -15,12 +17,41 @@ export function TtsPlayerBar() {
   const muted = '#8E8E93'
 
   const [showVoicePicker, setShowVoicePicker] = useState(false)
+  const pathname = usePathname()
 
-  const { currentIndex, segments, isPlaying, speed, engine, modelState, voices, selectedVoiceId, articleTitle, articleAuthor, articleThumb } = tts
+  const { currentIndex, segments, isPlaying, speed, engine, modelState, voices, selectedVoiceId, articleId, articleTitle, articleAuthor, articleThumb } = tts
   const totalSegments = segments.length
   const atStart = currentIndex === 0
   const atEnd = currentIndex >= totalSegments - 1
-  const progress = totalSegments > 1 ? currentIndex / (totalSegments - 1) : 0
+  const progressAnim = useSharedValue(0)
+  const progressStyle = useAnimatedStyle(() => ({ width: `${progressAnim.value * 100}%` }))
+
+  // Chars per second at 1× speed — used to estimate each segment's duration
+  const CHARS_PER_SECOND = 14
+
+  useEffect(() => {
+    if (!isPlaying || totalSegments <= 1) {
+      cancelAnimation(progressAnim)
+      return
+    }
+
+    const segment = segments[currentIndex]
+    if (!segment) return
+
+    const segmentStart = currentIndex / (totalSegments - 1)
+    const segmentEnd = currentIndex >= totalSegments - 1 ? 1 : (currentIndex + 1) / (totalSegments - 1)
+
+    // Snap to segment start if the bar is significantly off (e.g. after a skip)
+    if (Math.abs(progressAnim.value - segmentStart) > 0.08) {
+      progressAnim.value = segmentStart
+    }
+
+    const estimatedMs = (segment.text.length / CHARS_PER_SECOND / speed) * 1000
+    progressAnim.value = withTiming(segmentEnd, { duration: Math.max(200, estimatedMs), easing: Easing.linear })
+
+    return () => cancelAnimation(progressAnim)
+  }, [currentIndex, isPlaying, totalSegments, speed])
+
   const isInstalling = engine === 'sherpa' && modelState === 'installing'
 
   return (
@@ -28,7 +59,7 @@ export function TtsPlayerBar() {
       <View style={styles.container}>
         {/* Progress bar */}
         <View style={[styles.progressTrack, { backgroundColor: border }]}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
+          <Animated.View style={[styles.progressFill, { backgroundColor: accent }, progressStyle]} />
         </View>
 
         {isInstalling ? (
@@ -46,26 +77,29 @@ export function TtsPlayerBar() {
               <IconSymbol name="xmark" size={16} color={muted} />
             </Pressable>
 
-            {/* Thumbnail */}
-            {articleThumb ? (
-              <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
-            ) : (
-              <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
-                <IconSymbol name="doc.text" size={18} color={muted} />
-              </View>
-            )}
-
-            {/* Article info */}
-            <View style={styles.info}>
-              <Text style={[styles.title, { color: text }]} numberOfLines={1}>
-                {articleTitle ?? 'Article'}
-              </Text>
-              {articleAuthor ? (
-                <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
-                  {articleAuthor}
+            {/* Thumbnail + info — tappable, navigates to article */}
+            <Pressable
+              style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
+              onPress={() => articleId != null && pathname !== `/article/${articleId}` && router.push(`/article/${articleId}`)}
+            >
+              {articleThumb ? (
+                <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
+              ) : (
+                <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
+                  <IconSymbol name="doc.text" size={18} color={muted} />
+                </View>
+              )}
+              <View style={styles.info}>
+                <Text style={[styles.title, { color: text }]} numberOfLines={1}>
+                  {articleTitle ?? 'Article'}
                 </Text>
-              ) : null}
-            </View>
+                {articleAuthor ? (
+                  <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
+                    {articleAuthor}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
 
             {/* Playback controls */}
             <Pressable
@@ -138,10 +172,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 10,
   },
+  articleInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  },
   thumbnail: {
     width: 42,
     height: 42,
     borderRadius: 6,
+    flexShrink: 0,
   },
   thumbnailPlaceholder: {
     alignItems: 'center',
@@ -150,7 +192,7 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
+    gap: 1,
   },
   title: {
     fontSize: 14,

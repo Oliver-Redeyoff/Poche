@@ -53,6 +53,11 @@ const MAPPING = {
   'forward.end.fill': 'skip-next',
   'xmark': 'close',
   'waveform': 'graphic-eq',
+  'headphones': 'headphones',
+  'arrow.counterclockwise': 'replay',
+  'arrow.forward': 'arrow-forward',
+  'scope': 'gps-fixed',
+  'bookmark.fill': 'bookmark',
 } as IconMapping;
 
 /**

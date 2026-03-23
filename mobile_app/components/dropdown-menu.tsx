@@ -34,6 +34,12 @@ function toSystemIcon(icon?: IconSymbolName): SFSymbols7_0 | undefined {
     'doc.text': 'doc.text',
     'doc.text.fill': 'doc.text.fill',
     'paintpalette': 'paintpalette',
+    'play.fill': 'play.fill',
+    'headphones': 'headphones',
+    'arrow.counterclockwise': 'arrow.counterclockwise',
+    'arrow.forward': 'arrow.forward',
+    'scope': 'scope',
+    'bookmark.fill': 'bookmark.fill',
   }
 
   return mapping[icon]
