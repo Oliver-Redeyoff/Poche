@@ -339,6 +339,11 @@ export default function TabLayout() {
         screenOptions={{
           tabBarActiveTintColor: tintColor,
           headerShown: false,
+          tabBarStyle: {
+            backgroundColor: colors.background,
+            borderTopWidth: 1,
+            borderTopColor: borderColor,
+          },
         }}
       >
         <Tabs.Screen
