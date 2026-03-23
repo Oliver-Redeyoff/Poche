@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { StyleSheet, View, Pressable, Alert, Modal, TextInput, Platform } from 'react-native'
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated'
-import { useTheme } from '@react-navigation/native'
 import { ThemedText } from './themed-text'
+import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from './ui/icon-symbol'
 import { tagToColor } from '@poche/shared'
 
@@ -16,7 +16,9 @@ interface TagListProps {
 }
 
 export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) {
-  const theme = useTheme()
+  const cardColor = useThemeColor({}, 'card')
+  const textColor = useThemeColor({}, 'text')
+  const borderColor = useThemeColor({}, 'border')
   const [showAddTagModal, setShowAddTagModal] = useState(false)
   const [newTagInput, setNewTagInput] = useState('')
 
@@ -156,17 +158,17 @@ export function TagList({ tags, onUpdateTags, size = 'default' }: TagListProps) 
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+          <View style={[styles.modalContent, { backgroundColor: cardColor }]}>
             <ThemedText fontSize={20} style={styles.modalTitle}>Add Tag</ThemedText>
-            <ThemedText fontSize={14} style={[styles.modalSubtitle, { color: theme.colors.text }]}>
+            <ThemedText fontSize={14} style={[styles.modalSubtitle, { color: textColor }]}>
               Enter a new tag for this article
             </ThemedText>
             <TextInput
-              style={[styles.modalInput, { borderColor: theme.colors.border, color: theme.colors.text }]}
+              style={[styles.modalInput, { borderColor: borderColor, color: textColor }]}
               value={newTagInput}
               onChangeText={setNewTagInput}
               placeholder="Tag name"
-              placeholderTextColor={theme.colors.border}
+              placeholderTextColor={borderColor}
               autoFocus
               onSubmitEditing={() => addTag(newTagInput)}
             />

@@ -10,7 +10,6 @@ import { DropdownMenu, DropdownMenuItem } from './dropdown-menu'
 import { Article, getArticleStatus } from '@poche/shared'
 import { extractFirstImageUrl } from '../lib/image-cache'
 import { useThemeColor } from '@/hooks/use-theme-color'
-import { useTheme } from '@react-navigation/native'
 
 interface ArticleCardProps {
   style?: StyleProp<ViewStyle>
@@ -57,8 +56,8 @@ export function ArticleCard({
   const contentImageUrl = extractFirstImageUrl(article.content || null)
   const imageUrl = previewImageUrl || contentImageUrl || null
   const readingTime = calculateReadingTime(article.wordCount)
-  const theme = useTheme()
   const tintColor = useThemeColor({}, 'tint')
+  const cardColor = useThemeColor({}, 'card')
   const isTile = variant === 'tile'
   const faviconUrl = article.faviconLocalPath
   const [hasFaviconError, setHasFaviconError] = useState(false)
@@ -157,7 +156,7 @@ export function ArticleCard({
               onPress={handleCardPress}
               style={({ pressed }) => [
                 styles.tileCard,
-                { backgroundColor: theme.colors.card },
+                { backgroundColor: cardColor },
                 pressed && styles.tileCardPressed,
               ]}
             >
@@ -238,7 +237,7 @@ export function ArticleCard({
   // Default variant
   return (
     <Animated.View
-      style={[style, styles.articleCardWrapperOuter, { backgroundColor: theme.colors.card }]}
+      style={[style, styles.articleCardWrapperOuter, { backgroundColor: cardColor }]}
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(200)}
       layout={LinearTransition.duration(200)}

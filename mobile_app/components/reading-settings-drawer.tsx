@@ -4,7 +4,6 @@ import Slider from '@react-native-community/slider'
 import { ThemedText } from '@/components/themed-text'
 import { BottomDrawer } from '@/components/bottom-drawer'
 import { useAuth } from '@/app/_layout'
-import { useTheme } from '@react-navigation/native'
 import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { Colors } from '@/constants/theme'
 
@@ -21,8 +20,6 @@ export function ReadingSettingsDrawer({
   visible,
   onDismiss,
 }: ReadingSettingsDrawerProps) {
-  const theme = useTheme()
-  const isDark = theme.dark
   const resolvedScheme = useResolvedColorScheme()
   const colors = Colors[resolvedScheme]
   const {
@@ -78,7 +75,7 @@ export function ReadingSettingsDrawer({
               {
                 key: 'auto' as const,
                 label: 'Auto',
-                bg: isDark ? '#1C1A18' : '#FAFAF8',
+                bg: resolvedScheme === 'dark' ? '#1C1A18' : '#FAFAF8',
                 border: true,
               },
               {

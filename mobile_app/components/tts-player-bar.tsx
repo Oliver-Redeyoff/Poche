@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { View, Pressable, StyleSheet, Text, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useTheme } from '@react-navigation/native'
 import { Voice } from 'expo-speech'
+import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from './ui/icon-symbol'
 import { TtsVoicePicker } from './tts-voice-picker'
 import type { TtsSpeed, TtsEngine, ModelState } from '../hooks/use-tts'
@@ -47,13 +47,9 @@ export function TtsPlayerBar({
   onOpenVoicePicker,
 }: TtsPlayerBarProps) {
   const insets = useSafeAreaInsets()
-  const theme = useTheme()
-  const isDark = theme.dark
-  const accent = theme.colors.primary
-  const bg = isDark ? '#1C1C1E' : '#F2F2F7'
-  const border = isDark ? '#38383A' : '#D1D1D6'
-  const text = theme.colors.text
-  const muted = isDark ? '#8E8E93' : '#8E8E93'
+  const accent = useThemeColor({}, 'accent')
+  const text = useThemeColor({}, 'text')
+  const muted = '#8E8E93'
 
   const [showVoicePicker, setShowVoicePicker] = useState(false)
 
@@ -153,6 +149,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: "center",
     paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   controls: {
     flexDirection: 'row',

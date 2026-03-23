@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native'
 import { Voice, VoiceQuality } from 'expo-speech'
 import { BottomDrawer } from './bottom-drawer'
-import { useTheme } from '@react-navigation/native'
+import { useThemeColor } from '@/hooks/use-theme-color'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { IconSymbol } from './ui/icon-symbol'
 import type { TtsEngine, ModelState } from '../hooks/use-tts'
 
@@ -35,11 +36,11 @@ export function TtsVoicePicker({
   onSelect,
   onSetEngine,
 }: TtsVoicePickerProps) {
-  const theme = useTheme()
-  const isDark = theme.dark
-  const accent = theme.colors.primary
-  const text = theme.colors.text
-  const muted = isDark ? '#8E8E93' : '#8E8E93'
+  const resolvedScheme = useResolvedColorScheme()
+  const isDark = resolvedScheme === 'dark'
+  const accent = useThemeColor({}, 'accent')
+  const text = useThemeColor({}, 'text')
+  const muted = '#8E8E93'
   const inputBg = isDark ? '#2C2C2E' : '#EBEBEB'
   const separator = isDark ? '#38383A' : '#E5E5EA'
   const sectionBg = isDark ? '#2C2C2E' : '#F2F2F7'

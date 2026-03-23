@@ -11,6 +11,8 @@ import { getCachedImagePath } from '@/lib/image-cache'
 import { useTheme } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth, BASE_FONT_SIZE, type PocheTheme } from '../_layout'
+import { useThemeColor } from '@/hooks/use-theme-color'
+import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import {
   updateReadingProgressLocal,
   syncReadingProgressToBackend,
@@ -35,7 +37,6 @@ export default function ArticleScreen() {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const theme = useTheme() as PocheTheme
-  const isDark = theme.dark
   const multiplier = theme.fontSizeMultiplier ?? 1
   const fontSize = Math.round(BASE_FONT_SIZE * multiplier)
   const insets = useSafeAreaInsets()
@@ -87,33 +88,38 @@ export default function ArticleScreen() {
   const contentContainerOffsetRef = useRef(0)
   const [activeBlockLayout, setActiveBlockLayout] = useState<{ y: number; height: number } | null>(null)
 
-  // Reading settings (theme comes from AuthContext; fontSize from navigation theme for app-wide consistency)
-  const { appTheme: readingTheme } = useAuth()
+  // Reading settings
   const [showSettings, setShowSettings] = useState(false)
 
   const dismissDrawer = useCallback(() => {
     setShowSettings(false)
   }, [])
 
-  // Reading colors derived from the active navigation theme + article-specific extras
-  const effectiveDark = theme.dark
+  // Reading colors via theme hooks
+  const resolvedScheme = useResolvedColorScheme()
+  const isDark = resolvedScheme === 'dark'
+  const isSepia = resolvedScheme === 'sepia'
+  const colorText = useThemeColor({}, 'text')
+  const colorTextSecondary = useThemeColor({}, 'textSecondary')
+  const colorTextMuted = useThemeColor({}, 'textMuted')
+  const colorBackground = useThemeColor({}, 'background')
+  const colorAccent = useThemeColor({}, 'accent')
+  const colorBorder = useThemeColor({}, 'border')
+  const colorCard = useThemeColor({}, 'card')
 
-  const colors = useMemo(() => {
-    const isSepia = readingTheme === 'sepia'
-    return {
-      text: theme.colors.text,
-      textSecondary: effectiveDark ? '#A8A4A0' : isSepia ? '#6B5D4F' : '#666666',
-      textMuted: effectiveDark ? '#787470' : isSepia ? '#8A7B6B' : '#999999',
-      background: theme.colors.background,
-      accent: theme.colors.primary,
-      accentHover: effectiveDark ? '#E85A6E' : isSepia ? '#C03D4E' : '#D93548',
-      divider: theme.colors.border,
-      blockquoteBg: effectiveDark ? '#252320' : isSepia ? '#EDE3CA' : '#F5F3F0',
-      blockquoteBorder: effectiveDark ? '#4A4845' : isSepia ? '#C4B896' : '#D4D0CC',
-      codeBg: effectiveDark ? '#252320' : isSepia ? '#EDE3CA' : '#F0EDE8',
-      card: theme.colors.card,
-    }
-  }, [readingTheme, effectiveDark, theme])
+  const colors = useMemo(() => ({
+    text: colorText,
+    textSecondary: colorTextSecondary,
+    textMuted: colorTextMuted,
+    background: colorBackground,
+    accent: colorAccent,
+    accentHover: isDark ? '#E85A6E' : isSepia ? '#C03D4E' : '#D93548',
+    divider: colorBorder,
+    blockquoteBg: isDark ? '#252320' : isSepia ? '#EDE3CA' : '#F5F3F0',
+    blockquoteBorder: isDark ? '#4A4845' : isSepia ? '#C4B896' : '#D4D0CC',
+    codeBg: isDark ? '#252320' : isSepia ? '#EDE3CA' : '#F0EDE8',
+    card: colorCard,
+  }), [colorText, colorTextSecondary, colorTextMuted, colorBackground, colorAccent, colorBorder, colorCard, isDark, isSepia])
   
 
   useEffect(() => {
@@ -747,7 +753,7 @@ export default function ArticleScreen() {
   const overlayHeight = insets.top + 56 + 3
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.topOverlay}>
         <Header 
           showLogo
@@ -762,7 +768,7 @@ export default function ArticleScreen() {
                 <IconSymbol 
                   name="paintpalette"
                   size={28} 
-                  color={theme.colors.text} 
+                  color={colors.text}
                 />
               </Pressable>
 
@@ -770,10 +776,10 @@ export default function ArticleScreen() {
                 onPress={toggleFavorite}
                 style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
               >
-                <IconSymbol 
-                  name={article.isFavorite ? 'star.fill' : 'star'} 
-                  size={28} 
-                  color={article.isFavorite ? '#FFD700' : theme.colors.text} 
+                <IconSymbol
+                  name={article.isFavorite ? 'star.fill' : 'star'}
+                  size={28}
+                  color={article.isFavorite ? '#FFD700' : colors.text}
                 />
               </Pressable>
 
@@ -781,7 +787,7 @@ export default function ArticleScreen() {
                 triggerType="press"
                 trigger={
                   <Pressable style={{ opacity: 1, padding: 4 }}>
-                    <IconSymbol name="ellipsis" size={28} color={theme.colors.text} />
+                    <IconSymbol name="ellipsis" size={28} color={colors.text} />
                   </Pressable>
                 }
                 items={moreMenuItems}
@@ -833,9 +839,9 @@ export default function ArticleScreen() {
             left: 0,
             right: 0,
             paddingBottom: insets.bottom,
-            backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: isDark ? '#38383A' : '#D1D1D6',
+            backgroundColor: colors.background,
+            borderTopWidth: 2,
+            borderTopColor: colors.divider,
             zIndex: 15,
           }}
         >
