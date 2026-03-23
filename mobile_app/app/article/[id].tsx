@@ -820,7 +820,7 @@ export default function ArticleScreen() {
         >
           <Pressable
             onPress={() => {
-              tts.setArticle(markdownContent, article.title ?? '')
+              tts.setArticle(markdownContent, article.title ?? '', article.siteName || article.author || null, article.previewImageUrl || null)
               tts.startFrom(startSegmentFromProgress())
             }}
             style={[styles.fabButton, { backgroundColor: colors.accent }]}
@@ -845,24 +845,7 @@ export default function ArticleScreen() {
             zIndex: 15,
           }}
         >
-          <TtsPlayerBar
-            isPlaying={tts.isPlaying}
-            currentIndex={tts.currentIndex}
-            totalSegments={tts.segments.length}
-            speed={tts.speed}
-            engine={tts.engine}
-            modelState={tts.modelState}
-            voices={tts.voices}
-            selectedVoiceId={tts.selectedVoiceId}
-            onPlay={tts.resume}
-            onPause={tts.pause}
-            onSkipBack={tts.skipBack}
-            onSkipForward={tts.skipForward}
-            onCycleSpeed={tts.cycleSpeed}
-            onSetVoice={tts.setVoice}
-            onSetEngine={tts.setEngine}
-            onClose={tts.close}
-          />
+          <TtsPlayerBar />
         </View>
       )}
 

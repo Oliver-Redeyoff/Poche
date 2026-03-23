@@ -18,7 +18,6 @@ import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTtsContext } from '@/contexts/tts-context'
 import { TtsPlayerBar } from '@/components/tts-player-bar'
-import { TtsVoicePicker } from '@/components/tts-voice-picker'
 
 // Height of the custom Header component (56px content + 1px border + status bar inset)
 // This matches the dimensions defined in components/header.tsx.
@@ -115,7 +114,6 @@ export default function TabLayout() {
   const colors = Colors[resolvedScheme]
 
   const [showAccountSettings, setShowAccountSettings] = useState(false)
-  const [showVoicePicker, setShowVoicePicker] = useState(false)
   const [showReadingSettings, setShowReadingSettings] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const paywallAfterDismiss = useRef(false)
@@ -380,38 +378,9 @@ export default function TabLayout() {
             borderTopColor: resolvedScheme === 'dark' ? '#38383A' : '#D1D1D6',
           }}
         >
-          <TtsPlayerBar
-            isPlaying={tts.isPlaying}
-            currentIndex={tts.currentIndex}
-            totalSegments={tts.segments.length}
-            speed={tts.speed}
-            engine={tts.engine}
-            modelState={tts.modelState}
-            voices={tts.voices}
-            selectedVoiceId={tts.selectedVoiceId}
-            onPlay={tts.resume}
-            onPause={tts.pause}
-            onSkipBack={tts.skipBack}
-            onSkipForward={tts.skipForward}
-            onCycleSpeed={tts.cycleSpeed}
-            onSetVoice={tts.setVoice}
-            onSetEngine={tts.setEngine}
-            onClose={tts.close}
-            onOpenVoicePicker={() => setShowVoicePicker(true)}
-          />
+          <TtsPlayerBar />
         </View>
       )}
-
-      <TtsVoicePicker
-        visible={showVoicePicker}
-        onDismiss={() => setShowVoicePicker(false)}
-        voices={tts.voices}
-        selectedVoiceId={tts.selectedVoiceId}
-        engine={tts.engine}
-        modelState={tts.modelState}
-        onSelect={tts.setVoice}
-        onSetEngine={tts.setEngine}
-      />
     </View>
   )
 }

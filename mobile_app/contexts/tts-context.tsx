@@ -3,7 +3,9 @@ import { useTTS, TtsState, TtsActions } from '../hooks/use-tts'
 
 interface TtsContextValue extends TtsState, TtsActions {
   articleTitle: string | null
-  setArticle: (content: string, title: string) => void
+  articleAuthor: string | null
+  articleThumb: string | null
+  setArticle: (content: string, title: string, author?: string | null, thumb?: string | null) => void
 }
 
 const TtsContext = createContext<TtsContextValue | null>(null)
@@ -11,14 +13,18 @@ const TtsContext = createContext<TtsContextValue | null>(null)
 export function TtsProvider({ children }: { children: React.ReactNode }) {
   const tts = useTTS()
   const [articleTitle, setArticleTitle] = useState<string | null>(null)
+  const [articleAuthor, setArticleAuthor] = useState<string | null>(null)
+  const [articleThumb, setArticleThumb] = useState<string | null>(null)
 
-  const setArticle = useCallback((content: string, title: string) => {
+  const setArticle = useCallback((content: string, title: string, author?: string | null, thumb?: string | null) => {
     tts.setContent(content)
     setArticleTitle(title)
+    setArticleAuthor(author ?? null)
+    setArticleThumb(thumb ?? null)
   }, [tts.setContent])
 
   return (
-    <TtsContext.Provider value={{ ...tts, articleTitle, setArticle }}>
+    <TtsContext.Provider value={{ ...tts, articleTitle, articleAuthor, articleThumb, setArticle }}>
       {children}
     </TtsContext.Provider>
   )

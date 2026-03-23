@@ -1,204 +1,185 @@
 import React, { useState } from 'react'
 import { View, Pressable, StyleSheet, Text, ActivityIndicator } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Voice } from 'expo-speech'
+import { Image } from 'expo-image'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from './ui/icon-symbol'
 import { TtsVoicePicker } from './tts-voice-picker'
-import type { TtsSpeed, TtsEngine, ModelState } from '../hooks/use-tts'
+import { useTtsContext } from '@/contexts/tts-context'
 
-interface TtsPlayerBarProps {
-  isPlaying: boolean
-  currentIndex: number
-  totalSegments: number
-  speed: TtsSpeed
-  voices: Voice[]
-  selectedVoiceId: string | null
-  engine: TtsEngine
-  modelState: ModelState
-  onPlay: () => void
-  onPause: () => void
-  onSkipBack: () => void
-  onSkipForward: () => void
-  onCycleSpeed: () => void
-  onSetVoice: (id: string | null) => void
-  onSetEngine: (engine: TtsEngine) => void
-  onClose: () => void
-  onOpenVoicePicker?: () => void
-}
-
-export function TtsPlayerBar({
-  isPlaying,
-  currentIndex,
-  totalSegments,
-  speed,
-  voices,
-  selectedVoiceId,
-  engine,
-  modelState,
-  onPlay,
-  onPause,
-  onSkipBack,
-  onSkipForward,
-  onCycleSpeed,
-  onSetVoice,
-  onSetEngine,
-  onClose,
-  onOpenVoicePicker,
-}: TtsPlayerBarProps) {
-  const insets = useSafeAreaInsets()
+export function TtsPlayerBar() {
+  const tts = useTtsContext()
   const accent = useThemeColor({}, 'accent')
   const text = useThemeColor({}, 'text')
+  const border = useThemeColor({}, 'border')
+  const surface = useThemeColor({}, 'surface')
   const muted = '#8E8E93'
 
   const [showVoicePicker, setShowVoicePicker] = useState(false)
 
+  const { currentIndex, segments, isPlaying, speed, engine, modelState, voices, selectedVoiceId, articleTitle, articleAuthor, articleThumb } = tts
+  const totalSegments = segments.length
   const atStart = currentIndex === 0
   const atEnd = currentIndex >= totalSegments - 1
-
-  const selectedVoiceName = voices.find(v => v.identifier === selectedVoiceId)?.name ?? 'Default'
+  const progress = totalSegments > 1 ? currentIndex / (totalSegments - 1) : 0
   const isInstalling = engine === 'sherpa' && modelState === 'installing'
 
   return (
     <>
-      <View style={[styles.container]}>
+      <View style={styles.container}>
+        {/* Progress bar */}
+        <View style={[styles.progressTrack, { backgroundColor: border }]}>
+          <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
+        </View>
+
         {isInstalling ? (
-          /* Installing state — auto-installs from bundle, just show a spinner */
-          <View style={styles.installingRow}>
+          <View style={styles.row}>
             <ActivityIndicator size="small" color={accent} />
-            <Text style={[styles.installingText, { color: text }]}>Preparing neural voice…</Text>
-            <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
+            <Text style={[styles.title, { color: text }]}>Preparing neural voice…</Text>
+            <Pressable onPress={tts.close} hitSlop={8}>
               <IconSymbol name="xmark" size={16} color={muted} />
             </Pressable>
           </View>
         ) : (
-          <>
-            <View style={styles.controls}>
-              <Pressable onPress={onClose} style={styles.btn} hitSlop={8}>
-                <IconSymbol name="xmark" size={18} color={muted} />
-              </Pressable>
+          <View style={styles.row}>
+            {/* Close */}
+            <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
+              <IconSymbol name="xmark" size={16} color={muted} />
+            </Pressable>
 
-              <Pressable
-                onPress={onSkipBack}
-                style={[styles.btn, atStart && styles.disabled]}
-                hitSlop={8}
-                disabled={atStart}
-              >
-                <IconSymbol name="backward.end.fill" size={22} color={atStart ? muted : text} />
-              </Pressable>
+            {/* Thumbnail */}
+            {articleThumb ? (
+              <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
+            ) : (
+              <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
+                <IconSymbol name="doc.text" size={18} color={muted} />
+              </View>
+            )}
 
-              <Pressable
-                onPress={isPlaying ? onPause : onPlay}
-                style={[styles.btn, styles.playBtn, { backgroundColor: accent }]}
-                hitSlop={4}
-              >
-                <IconSymbol
-                  name={isPlaying ? 'pause.fill' : 'play.fill'}
-                  size={22}
-                  color="#FFFFFF"
-                />
-              </Pressable>
-
-              <Pressable
-                onPress={onSkipForward}
-                style={[styles.btn, atEnd && styles.disabled]}
-                hitSlop={8}
-                disabled={atEnd}
-              >
-                <IconSymbol name="forward.end.fill" size={22} color={atEnd ? muted : text} />
-              </Pressable>
-
-              <Pressable onPress={onCycleSpeed} style={styles.btn} hitSlop={8}>
-                <Text style={[styles.speedText, { color: text }]}>{speed}×</Text>
-              </Pressable>
+            {/* Article info */}
+            <View style={styles.info}>
+              <Text style={[styles.title, { color: text }]} numberOfLines={1}>
+                {articleTitle ?? 'Article'}
+              </Text>
+              {articleAuthor ? (
+                <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
+                  {articleAuthor}
+                </Text>
+              ) : null}
             </View>
 
-            {/*<Pressable*/}
-            {/*  onPress={() => onOpenVoicePicker ? onOpenVoicePicker() : setShowVoicePicker(true)}*/}
-            {/*  style={({ pressed }) => [styles.voiceRow, { opacity: pressed ? 0.6 : 1 }]}*/}
-            {/*  hitSlop={4}*/}
-            {/*>*/}
-            {/*  <Text style={[styles.voiceLabel, { color: muted }]}>Voice  </Text>*/}
-            {/*  <Text style={[styles.voiceName, { color: text }]} numberOfLines={1}>*/}
-            {/*    {engine === 'sherpa' ? 'Neural (Sherpa)' : selectedVoiceName}*/}
-            {/*  </Text>*/}
-            {/*  <IconSymbol name="chevron.right" size={14} color={muted} style={{ marginLeft: 2 }} />*/}
-            {/*</Pressable>*/}
-          </>
+            {/* Playback controls */}
+            <Pressable
+              onPress={tts.skipBack}
+              style={[styles.sideBtn, atStart && styles.disabled]}
+              hitSlop={8}
+              disabled={atStart}
+            >
+              <IconSymbol name="backward.end.fill" size={20} color={atStart ? muted : text} />
+            </Pressable>
+
+            <Pressable
+              onPress={isPlaying ? tts.pause : tts.resume}
+              style={[styles.playBtn, { backgroundColor: accent }]}
+              hitSlop={4}
+            >
+              <IconSymbol
+                name={isPlaying ? 'pause.fill' : 'play.fill'}
+                size={20}
+                color="#FFFFFF"
+              />
+            </Pressable>
+
+            <Pressable
+              onPress={tts.skipForward}
+              style={[styles.sideBtn, atEnd && styles.disabled]}
+              hitSlop={8}
+              disabled={atEnd}
+            >
+              <IconSymbol name="forward.end.fill" size={20} color={atEnd ? muted : text} />
+            </Pressable>
+
+            <Pressable onPress={tts.cycleSpeed} style={styles.sideBtn} hitSlop={8}>
+              <Text style={[styles.speedText, { color: muted }]}>{speed}×</Text>
+            </Pressable>
+          </View>
         )}
       </View>
 
-      {!onOpenVoicePicker && (
-        <TtsVoicePicker
-          visible={showVoicePicker}
-          onDismiss={() => setShowVoicePicker(false)}
-          voices={voices}
-          selectedVoiceId={selectedVoiceId}
-          engine={engine}
-          modelState={modelState}
-          onSelect={onSetVoice}
-          onSetEngine={onSetEngine}
-        />
-      )}
+      <TtsVoicePicker
+        visible={showVoicePicker}
+        onDismiss={() => setShowVoicePicker(false)}
+        voices={voices}
+        selectedVoiceId={selectedVoiceId}
+        engine={engine}
+        modelState={modelState}
+        onSelect={tts.setVoice}
+        onSetEngine={tts.setEngine}
+      />
     </>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: '100%',
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingBottom: 10,
   },
-  controls: {
+  progressTrack: {
+    height: 3,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 10,
   },
-  btn: {
-    padding: 6,
+  thumbnail: {
+    width: 42,
+    height: 42,
+    borderRadius: 6,
+  },
+  thumbnailPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  info: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'SourceSans3_600SemiBold',
+  },
+  author: {
+    fontSize: 12,
+    fontFamily: 'SourceSans3_400Regular',
+  },
+  sideBtn: {
+    padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   playBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 22,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   disabled: {
     opacity: 0.3,
   },
   speedText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
-    minWidth: 36,
+    minWidth: 30,
     textAlign: 'center',
-  },
-  voiceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  voiceLabel: {
-    fontSize: 13,
-  },
-  voiceName: {
-    fontSize: 13,
-    fontWeight: '500',
-    flex: 1,
-  },
-  installingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
-  },
-  installingText: {
-    flex: 1,
-    fontSize: 15,
-  },
-  closeBtn: {
-    padding: 4,
   },
 })
