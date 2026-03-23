@@ -50,7 +50,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Framework**: React Native with Expo SDK ~55
 - **Routing**: Expo Router (file-based routing)
 - **Language**: TypeScript
-- **Navigation**: Expo Router with Stack navigator; `NativeTabs` from `expo-router/unstable-native-tabs` for the Home/Library tab bar
+- **Navigation**: Expo Router with Stack navigator; standard `Tabs` from `expo-router` for the Home/Library tab bar
 - **Backend**: Self-hosted API (Hono + Better Auth + PostgreSQL)
 - **Storage**: AsyncStorage for session persistence and article caching
 - **Background Tasks**: expo-background-task for periodic article syncing
@@ -63,14 +63,17 @@ The Poche mobile app is a React Native application built with Expo that allows u
 ```
 mobile_app/
 ├── app/                    # Expo Router file-based routes
-│   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext, onboarding check)
+│   ├── _layout.tsx        # Root layout (Stack navigator, AuthContext, TtsProvider, onboarding check)
 │   ├── (tabs)/            # Tab navigator group
-│   │   ├── _layout.tsx    # Tab layout (Home & Library tabs, account settings drawer)
-│   │   ├── index.tsx      # Home tab - Continue Reading, New Articles & Recently Read sections
-│   │   └── library.tsx    # Library tab - All Articles, Favorites, Tags tiles
+│   │   ├── _layout.tsx    # Tab layout (Home & Library tabs, account settings drawer, TTS overlay)
+│   │   ├── (home)/
+│   │   │   └── library.tsx  # Home tab - Continue Reading, New Articles & Recently Read sections
+│   │   └── (library)/
+│   │       └── library.tsx  # Library tab - All Articles, Favorites, Tags tiles
+│   ├── article/
+│   │   └── [id].tsx       # Article detail screen (root Stack — full-screen, tab bar hidden)
 │   ├── articles/
-│   │   └── index.tsx      # Filtered article list (by tag, favorites, or all)
-│   ├── article/[id].tsx   # Article detail screen with markdown rendering & progress tracking
+│   │   └── library.tsx      # Filtered article list (by tag, favorites, or all)
 │   ├── search.tsx         # Full-screen search with filtering across all articles
 │   ├── share.tsx          # Share deep-link route (redirects to onboarding/auth/tabs)
 │   ├── auth.tsx           # Authentication screen (login/signup/forgot password)
@@ -98,6 +101,8 @@ mobile_app/
 │   ├── model-manager.ts  # TTS model lifecycle (check, install from bundle, get paths, delete)
 │   ├── sherpa-tts-engine.ts # Singleton wrapper around react-native-sherpa-onnx-offline-tts
 │   └── tts-extract.ts    # Extracts TtsSegments from tokenized markdown (maps token index → text)
+├── contexts/
+│   └── tts-context.tsx   # Global TTS context (TtsProvider, useTtsContext) — persists TTS across navigation
 ├── hooks/                # Custom React hooks
 │   ├── use-article-actions.ts  # Article management hook (delete, tags, favorites)
 │   ├── use-tts.ts              # TTS hook: engine state, playback loop, speed, voice, engine switching
@@ -139,7 +144,7 @@ First-time user onboarding experience:
 - Completion state saved to AsyncStorage (`@poche_onboarding_complete`)
 - Beautiful iconography and typography matching app theme
 
-### app/(tabs)/index.tsx
+### app/(tabs)/(home)/library.tsx
 Home tab that:
 - Displays "Continue Reading" section with in-progress articles (1-99% progress)
 - Renders Continue Reading as a horizontal rail with peek + snap behavior
@@ -149,7 +154,7 @@ Home tab that:
 - Uses `useFocusEffect` to reload data when tab comes into focus
 - Handles article deletion and tag updates
 
-### app/(tabs)/library.tsx
+### app/(tabs)/(library)/library.tsx
 Library tab that:
 - Displays tile grid with All Articles, Favorites, and tag-based filters
 - Shows article counts for each tile
@@ -157,7 +162,7 @@ Library tab that:
 - Navigates to filtered article list on tile press
 - Uses `useFocusEffect` to reload data when tab comes into focus
 
-### app/articles/index.tsx
+### app/articles/library.tsx
 Filtered article list screen:
 - Receives filter type and value via URL params (all, favorites, tag)
 - Displays filtered articles in a scrollable list
@@ -182,9 +187,10 @@ Authentication screen:
 
 ### app/(tabs)/_layout.tsx
 Tab layout with account and reading settings:
-- Home and Library tabs via `NativeTabs` from `expo-router/unstable-native-tabs`
+- Home and Library tabs via standard `Tabs` from `expo-router`
 - **Header**: Poche logo and two icon buttons — paint palette (opens `ReadingSettingsDrawer`), person (opens account settings drawer)
-- **SyncProgressBar**: Absolutely positioned 2px bar rendered below the header; uses React Native's built-in `Animated` API (not Reanimated) to avoid conflicts with the native `NativeTabs` component; pulses opacity at full width during 'fetching', fills as a progress bar during 'processing', fades out on 'done'; `pointerEvents="none"` ensures it never intercepts touches
+- **SyncProgressBar**: Absolutely positioned 2px bar rendered below the header; uses React Native's built-in `Animated` API (not Reanimated); pulses opacity at full width during 'fetching', fills as a progress bar during 'processing', fades out on 'done'; `pointerEvents="none"` ensures it never intercepts touches
+- **TTS overlay**: When `tts.isActive`, an absolute-positioned bar appears above the standard tab bar (`bottom: insets.bottom + 49`) with `TtsPlayerBar` controls; `TtsVoicePicker` and `showVoicePicker` state live in the layout (not inside the overlay) to avoid duplication
 - **Reading settings drawer**: `ReadingSettingsDrawer` (font size + theme); triggered by paint palette icon
 - **Account settings drawer**: `BottomDrawer` triggered by person icon; signed-in user info with inline "Poche+" badge (if `poche_plus` entitlement active, styled with `Bitter_700Bold` `+`) or "Upgrade to Premium" button (iOS only), article usage progress bar (hidden for premium), Sign Out, Delete Account
 - **Upgrade flow**: "Upgrade to Premium" sets `paywallAfterDismiss` ref and closes drawer; `onFullyDismissed` presents `RevenueCatUI.presentPaywall()` after drawer animation; updates `isPremium` state on success
@@ -320,12 +326,12 @@ Custom hook for article management with optimistic updates:
 ### File-Based Routing
 Expo Router uses file-based routing similar to Next.js:
 
-- `app/_layout.tsx` - Root layout with Stack navigator, AuthContext (session, appTheme, appFontSize), registers background sync, Share Extension credentials (iOS), share "just saved" check on init and AppState foreground
-- `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs, account settings drawer
-- `app/(tabs)/index.tsx` - Home tab with Continue Reading and New Articles sections
-- `app/(tabs)/library.tsx` - Library tab with article filter tiles
-- `app/articles/index.tsx` - Filtered article list screen
-- `app/article/[id].tsx` - Article detail screen with reading progress tracking
+- `app/_layout.tsx` - Root layout with Stack navigator, AuthContext (session, appTheme, appFontSize), TtsProvider (global TTS state), registers background sync, Share Extension credentials (iOS), share "just saved" check on init and AppState foreground
+- `app/(tabs)/_layout.tsx` - Tab navigator with Home and Library tabs, account settings drawer, global TTS overlay above tab bar
+- `app/(tabs)/(home)/library.tsx` - Home tab with Continue Reading and New Articles sections
+- `app/(tabs)/(library)/library.tsx` - Library tab with article filter tiles
+- `app/article/[id].tsx` - Article detail screen with reading progress tracking and TTS (pushed onto root Stack — full-screen, tab bar hidden)
+- `app/articles/library.tsx` - Filtered article list screen
 - `app/search.tsx` - Full-screen search across all articles
 - `app/share.tsx` - Share deep-link route (redirects by auth state)
 - `app/auth.tsx` - Authentication screen
@@ -614,11 +620,13 @@ module.exports = config;
 - ✅ **Share intent (Save to Poche)**: iOS Share Extension with status UI ("Saving to Poche…", "Saved!", "Opening Poche…", "No link found"); extension saves via API using token/API URL from App Group; native `PendingShareModule` (getShareExtensionJustSaved, setShareCredentials, clearShareCredentials); `share.tsx` route; "just saved" check on cold start and when app comes to foreground (AppState). Android: share target opens app with `poche://share?url=...` (in-app save not yet implemented — see SHARE_FEATURE_REVIEW.md).
 - ✅ **RevenueCat monetization (iOS)**: `react-native-purchases` + `react-native-purchases-ui`; `Purchases.configure({ apiKey })` in `_layout.tsx` init; `Purchases.logIn(userId)` on auth, `Purchases.logOut()` on sign-out; `RevenueCatUI.presentPaywall()` for native paywall; entitlement ID `poche_plus`; paywall triggered on 403 "Article limit reached" error and from account settings Upgrade button; `paywallAfterDismiss` ref + `onFullyDismissed` callback pattern prevents view controller hierarchy conflicts
 - ✅ **BottomDrawer `onFullyDismissed`**: New prop forwarded to `Modal.onDismiss` (fires on iOS after modal animation fully completes); enables safe native VC presentation after drawer is fully dismissed
-- ✅ **Native tabs**: Migrated tab bar to `NativeTabs` from `expo-router/unstable-native-tabs` for native iOS tab controller
+- ✅ **Standard Tabs**: Tab bar uses `Tabs` from `expo-router`; previous `NativeTabs` (unstable-native-tabs) removed due to missing `minimizeBehavior` support in react-native-screens
+- ✅ **Global TTS context**: `TtsProvider` wraps root layout so TTS state (`useTtsContext()`) persists across navigation; `setContent()` synchronously updates `segmentsRef.current` for race-free immediate playback; `setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true })` for background audio; `UIBackgroundModes: ['audio']` in app.config.js
+- ✅ **Global TTS player bar**: `TtsPlayerBar` rendered as absolute overlay in `(tabs)/_layout.tsx` above standard tab bar (visible on Home/Library while TTS is playing in background); article screen shows its own inline `TtsPlayerBar` during reading
 - ✅ **Instant article display**: `syncArticles()` now shows articles immediately after API response; background IIFE handles per-article favicon/image/link-preview processing with granular progress; `onProcessingComplete` callback patches only enriched fields into UI state to avoid overwriting concurrent edits
 - ✅ **Sync progress bar**: `SyncProgressBar` component in tab `_layout.tsx`; 2px bar below header; opacity pulse during 'fetching', fill progress during 'processing', fade-out on done; built with React Native built-in `Animated` (not Reanimated) to avoid native tab conflicts; `useSyncProgress()` hook in `article-sync.ts` uses module-level pub/sub (no prop drilling)
 - ✅ **`processSingleArticleFavicon` / `processSingleArticleLinkPreview`**: New per-article functions in `lib/image-cache.ts` enabling per-article progress tracking during background sync (replaces batch-only approach)
-- ✅ **Neural TTS engine**: `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium) bundled as `assets/sherpa-model.zip`; auto-installs on first "Listen" tap with spinner UI; `use-tts.ts` hook manages dual-engine playback loop (Sherpa via expo-audio + system via expo-speech); generation token pattern cancels stale async ops; `tts-player-bar.tsx` + `tts-voice-picker.tsx` UI; TTS highlight overlay and auto-scroll in article detail; iOS deployment target bumped to 16.0; metro config updated to bundle `.zip` assets
+- ✅ **Neural TTS engine**: `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium) bundled as `assets/sherpa-model.zip`; auto-installs on first "Listen" tap with spinner UI; `use-tts.ts` hook manages dual-engine playback loop (Sherpa via expo-audio + system via expo-speech); generation token pattern cancels stale async ops; `tts-player-bar.tsx` + `tts-voice-picker.tsx` UI; TTS highlight overlay and auto-scroll in article detail; iOS deployment target bumped to 16.0; metro config updated to bundle `.zip` assets; TTS state lives in global `TtsProvider` (persists across navigation)
 
 ## Technical Notes
 
@@ -647,7 +655,7 @@ The article detail view uses a custom `Markdown` component (`components/markdown
 - Content images are stored in `${FileSystem.cacheDirectory}poche_images/{userId}/{articleId}/`
 - Favicons are stored in `${FileSystem.documentDirectory}poche_favicons/{userId}/{articleId}/` and colorized placeholders are derived from generated thumbhash averages
 - Link preview images are stored in `${FileSystem.documentDirectory}poche_link_previews/{userId}/{articleId}/`
-- Both `index.tsx` and `background-sync.ts` use centralized `syncArticles()` function
+- Both `library.tsx` and `background-sync.ts` use centralized `syncArticles()` function
 
 ### React Native iOS Text Rendering Patch
 A patch is applied to React Native to fix a text cut-off issue on iOS with the new architecture (Fabric).

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Platform } from 'react-native'
 import * as Speech from 'expo-speech'
 import * as FileSystem from 'expo-file-system/legacy'
-import { createAudioPlayer, AudioPlayer } from 'expo-audio'
+import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { tokenize } from '@poche/shared'
 import { extractTtsSegments, TtsSegment } from '../lib/tts-extract'
 import { isModelInstalled, installModel, getModelPaths } from '../lib/model-manager'
@@ -49,12 +49,14 @@ export interface TtsActions {
   setVoice: (id: string | null) => void
   setEngine: (engine: TtsEngine) => void
   close: () => void
+  setContent: (content: string) => void
 }
 
-export function useTTS(markdownContent: string): TtsState & TtsActions {
+export function useTTS(): TtsState & TtsActions {
+  const [content, setContentState] = useState('')
   const segments = useMemo(
-    () => extractTtsSegments(tokenize(markdownContent)),
-    [markdownContent]
+    () => extractTtsSegments(tokenize(content)),
+    [content]
   )
 
   const [isActive, setIsActive] = useState(false)
@@ -95,6 +97,11 @@ export function useTTS(markdownContent: string): TtsState & TtsActions {
   useEffect(() => { currentIndexRef.current = currentIndex }, [currentIndex])
   useEffect(() => { speedRef.current = speed }, [speed])
   useEffect(() => { segmentsRef.current = segments }, [segments])
+
+  // Configure audio session for background playback
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true }).catch(() => {})
+  }, [])
   useEffect(() => { selectedVoiceIdRef.current = selectedVoiceId }, [selectedVoiceId])
   useEffect(() => { engineRef.current = engine }, [engine])
   useEffect(() => { modelStateRef.current = modelState }, [modelState])
@@ -345,6 +352,12 @@ export function useTTS(markdownContent: string): TtsState & TtsActions {
     }
   }, [stopSherpa, playSegment])
 
+  const setContent = useCallback((newContent: string) => {
+    const newSegments = extractTtsSegments(tokenize(newContent))
+    segmentsRef.current = newSegments   // sync — playback uses this immediately
+    setContentState(newContent)         // async — triggers re-render
+  }, [])
+
   const close = useCallback(() => {
     stopSherpa()
     Speech.stop()
@@ -390,6 +403,6 @@ export function useTTS(markdownContent: string): TtsState & TtsActions {
     isActive, isPlaying, currentIndex, segments, speed,
     voices, selectedVoiceId, engine, modelState,
     startFrom, pause, resume, skipBack, skipForward,
-    cycleSpeed, setVoice, setEngine, close,
+    cycleSpeed, setVoice, setEngine, close, setContent,
   }
 }

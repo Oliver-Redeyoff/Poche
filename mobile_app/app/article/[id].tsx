@@ -1,23 +1,23 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { StyleSheet, ScrollView, Text, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut, FadeInDown, FadeOutDown } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Article } from '@poche/shared'
-import { getCachedImagePath } from '../../lib/image-cache'
+import { getCachedImagePath } from '@/lib/image-cache'
 import { useTheme } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth, BASE_FONT_SIZE, type PocheTheme } from '../_layout'
-import { 
-  updateReadingProgressLocal, 
+import {
+  updateReadingProgressLocal,
   syncReadingProgressToBackend,
   updateArticleWithSync,
   deleteArticleWithSync,
   updateArticleTagsWithSync
-} from '../../lib/article-sync'
+} from '@/lib/article-sync'
 import { Header } from '@/components/header'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { TagList } from '@/components/tag-list'
@@ -25,7 +25,7 @@ import { DropdownMenu, DropdownMenuItem } from '@/components/dropdown-menu'
 import { Pressable, Linking } from 'react-native'
 import { ReadingSettingsDrawer } from '@/components/reading-settings-drawer'
 import { Button, ContextMenu, Divider, Host, Menu } from '@expo/ui/swift-ui'
-import { useTTS } from '@/hooks/use-tts'
+import { useTtsContext } from '@/contexts/tts-context'
 import { TtsPlayerBar } from '@/components/tts-player-bar'
 
 export default function ArticleScreen() {
@@ -47,6 +47,7 @@ export default function ArticleScreen() {
   // Reading progress tracking
   const [readingProgress, setReadingProgress] = useState(0)
   const readingProgressRef = useRef(0) // Ref copy for cleanup function
+  const currentScrollYRef = useRef(0)  // Actual scroll position (not clamped like readingProgress)
   const articleRef = useRef<Article | null>(null) // Ref copy for cleanup function
   const lastSyncedProgress = useRef(0)
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -221,6 +222,9 @@ export default function ArticleScreen() {
     // Track content dimensions for "return to progress" button
     contentHeightRef.current = contentSize.height
     layoutHeightRef.current = layoutMeasurement.height
+
+    // Track actual scroll position for TTS start-from-here
+    currentScrollYRef.current = contentOffset.y
 
     // Detect scroll direction for collapsible header
     const currentY = contentOffset.y
@@ -655,8 +659,15 @@ export default function ArticleScreen() {
     return <ArticleImage key={nodeKey} src={src} nodeKey={nodeKey} />
   }, [ArticleImage])
 
-  // TTS hook - must come before conditional returns
-  const tts = useTTS(article?.content ?? '')
+  // TTS context - must come before conditional returns
+  const tts = useTtsContext()
+
+  // Register article content with global TTS context when article loads (only if TTS not active)
+  useEffect(() => {
+    if (article?.content && !tts.isActive) {
+      tts.setContent(article.content)
+    }
+  }, [article?.content])
 
   // Update highlight overlay when current TTS segment changes
   useEffect(() => {
@@ -694,7 +705,7 @@ export default function ArticleScreen() {
   // Start TTS from closest segment to current scroll position
   function startSegmentFromProgress(): number {
     if (tts.segments.length === 0) return 0
-    const scrollY = (readingProgressRef.current / 100) * Math.max(0, contentHeightRef.current - screenHeight)
+    const scrollY = currentScrollYRef.current
     let best = 0
     let bestDist = Infinity
     for (const seg of tts.segments) {
@@ -794,22 +805,49 @@ export default function ArticleScreen() {
         </View>
       </View>
 
-      {/* TTS player bar */}
-      {tts.isActive && (
+      {/* Listen FAB — visible when TTS is inactive */}
+      {!tts.isActive && tts.segments.length > 0 && (
         <Animated.View
-          entering={FadeInDown.duration(250)}
-          exiting={FadeOutDown.duration(200)}
-          style={styles.ttsBarContainer}
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(150)}
+          style={[styles.fab, { bottom: insets.bottom + 24 }]}
+        >
+          <Pressable
+            onPress={() => {
+              tts.setArticle(markdownContent, article.title ?? '')
+              tts.startFrom(startSegmentFromProgress())
+            }}
+            style={[styles.fabButton, { backgroundColor: colors.accent }]}
+          >
+            <IconSymbol name="waveform" size={22} color="#FFFFFF" />
+          </Pressable>
+        </Animated.View>
+      )}
+
+      {/* TTS player bar — visible when TTS is active */}
+      {tts.isActive && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            paddingBottom: insets.bottom,
+            backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: isDark ? '#38383A' : '#D1D1D6',
+            zIndex: 15,
+          }}
         >
           <TtsPlayerBar
             isPlaying={tts.isPlaying}
             currentIndex={tts.currentIndex}
             totalSegments={tts.segments.length}
             speed={tts.speed}
-            voices={tts.voices}
-            selectedVoiceId={tts.selectedVoiceId}
             engine={tts.engine}
             modelState={tts.modelState}
+            voices={tts.voices}
+            selectedVoiceId={tts.selectedVoiceId}
             onPlay={tts.resume}
             onPause={tts.pause}
             onSkipBack={tts.skipBack}
@@ -819,7 +857,7 @@ export default function ArticleScreen() {
             onSetEngine={tts.setEngine}
             onClose={tts.close}
           />
-        </Animated.View>
+        </View>
       )}
 
       {/* Return to progress button */}
@@ -842,7 +880,7 @@ export default function ArticleScreen() {
       <ScrollView
         ref={scrollViewRef}
         style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0, backgroundColor: colors.background }]}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight, paddingBottom: tts.isActive ? 68 + insets.bottom : 0 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight, paddingBottom: tts.isActive ? 100 + insets.bottom : 0 }]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
@@ -870,15 +908,6 @@ export default function ArticleScreen() {
                 {article.siteName || article.author}
                 {readingTime && ` • ${readingTime} min read`}
               </ThemedText>
-            )}
-            {tts.segments.length > 0 && (
-              <Pressable
-                onPress={() => tts.startFrom(startSegmentFromProgress())}
-                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, flexDirection: 'row', alignItems: 'center', gap: 4 })}
-              >
-                <IconSymbol name="waveform" size={16} color={colors.accent} />
-                <Text style={{ color: colors.accent, fontSize: 15, fontFamily: 'SourceSans3_500Medium' }}>Listen</Text>
-              </Pressable>
             )}
           </View>
           
@@ -1032,11 +1061,21 @@ const styles = StyleSheet.create({
     marginTop: 12,
     opacity: 0.6,
   },
-  ttsBarContainer: {
+  fab: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    right: 20,
     zIndex: 15,
+  },
+  fabButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
 })

@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "backgroundModes": [
         "fetch",
-        "processing"
+        "processing",
+        "audio"
       ],
       "bundleIdentifier": "org.name.Poche",
       "infoPlist": {

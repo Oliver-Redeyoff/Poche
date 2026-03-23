@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { View, Pressable, StyleSheet, Text, ActivityIndicator } from 'react-native'
-import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '@react-navigation/native'
 import { Voice } from 'expo-speech'
@@ -25,6 +24,7 @@ interface TtsPlayerBarProps {
   onSetVoice: (id: string | null) => void
   onSetEngine: (engine: TtsEngine) => void
   onClose: () => void
+  onOpenVoicePicker?: () => void
 }
 
 export function TtsPlayerBar({
@@ -44,6 +44,7 @@ export function TtsPlayerBar({
   onSetVoice,
   onSetEngine,
   onClose,
+  onOpenVoicePicker,
 }: TtsPlayerBarProps) {
   const insets = useSafeAreaInsets()
   const theme = useTheme()
@@ -56,12 +57,6 @@ export function TtsPlayerBar({
 
   const [showVoicePicker, setShowVoicePicker] = useState(false)
 
-  const progress = totalSegments > 0 ? currentIndex / totalSegments : 0
-
-  const progressStyle = useAnimatedStyle(() => ({
-    width: `${withTiming(progress * 100, { duration: 300 })}%` as any,
-  }))
-
   const atStart = currentIndex === 0
   const atEnd = currentIndex >= totalSegments - 1
 
@@ -70,7 +65,7 @@ export function TtsPlayerBar({
 
   return (
     <>
-      <View style={[styles.container, { backgroundColor: bg, borderTopColor: border, paddingBottom: insets.bottom }]}>
+      <View style={[styles.container]}>
         {isInstalling ? (
           /* Installing state — auto-installs from bundle, just show a spinner */
           <View style={styles.installingRow}>
@@ -122,50 +117,47 @@ export function TtsPlayerBar({
               </Pressable>
             </View>
 
-            <View style={[styles.progressTrack, { backgroundColor: border }]}>
-              <Animated.View style={[styles.progressFill, { backgroundColor: accent }, progressStyle]} />
-            </View>
-
-            <Pressable
-              onPress={() => setShowVoicePicker(true)}
-              style={({ pressed }) => [styles.voiceRow, { opacity: pressed ? 0.6 : 1 }]}
-              hitSlop={4}
-            >
-              <Text style={[styles.voiceLabel, { color: muted }]}>Voice  </Text>
-              <Text style={[styles.voiceName, { color: text }]} numberOfLines={1}>
-                {engine === 'sherpa' ? 'Neural (Sherpa)' : selectedVoiceName}
-              </Text>
-              <IconSymbol name="chevron.right" size={14} color={muted} style={{ marginLeft: 2 }} />
-            </Pressable>
+            {/*<Pressable*/}
+            {/*  onPress={() => onOpenVoicePicker ? onOpenVoicePicker() : setShowVoicePicker(true)}*/}
+            {/*  style={({ pressed }) => [styles.voiceRow, { opacity: pressed ? 0.6 : 1 }]}*/}
+            {/*  hitSlop={4}*/}
+            {/*>*/}
+            {/*  <Text style={[styles.voiceLabel, { color: muted }]}>Voice  </Text>*/}
+            {/*  <Text style={[styles.voiceName, { color: text }]} numberOfLines={1}>*/}
+            {/*    {engine === 'sherpa' ? 'Neural (Sherpa)' : selectedVoiceName}*/}
+            {/*  </Text>*/}
+            {/*  <IconSymbol name="chevron.right" size={14} color={muted} style={{ marginLeft: 2 }} />*/}
+            {/*</Pressable>*/}
           </>
         )}
       </View>
 
-      <TtsVoicePicker
-        visible={showVoicePicker}
-        onDismiss={() => setShowVoicePicker(false)}
-        voices={voices}
-        selectedVoiceId={selectedVoiceId}
-        engine={engine}
-        modelState={modelState}
-        onSelect={onSetVoice}
-        onSetEngine={onSetEngine}
-      />
+      {!onOpenVoicePicker && (
+        <TtsVoicePicker
+          visible={showVoicePicker}
+          onDismiss={() => setShowVoicePicker(false)}
+          voices={voices}
+          selectedVoiceId={selectedVoiceId}
+          engine={engine}
+          modelState={modelState}
+          onSelect={onSetVoice}
+          onSetEngine={onSetEngine}
+        />
+      )}
     </>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
+    height: '100%',
+    justifyContent: "center",
     paddingHorizontal: 16,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 12,
   },
   btn: {
     padding: 6,
@@ -173,8 +165,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   playBtn: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: 22,
   },
   disabled: {
@@ -185,15 +177,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     minWidth: 36,
     textAlign: 'center',
-  },
-  progressTrack: {
-    height: 3,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
   },
   voiceRow: {
     flexDirection: 'row',

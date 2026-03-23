@@ -1,6 +1,5 @@
 import { StyleSheet, View, Platform, Pressable, Alert, Animated } from 'react-native'
-import { router } from 'expo-router'
-import { NativeTabs } from 'expo-router/unstable-native-tabs'
+import { router, Tabs } from 'expo-router'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { Header } from '@/components/header'
@@ -17,6 +16,9 @@ import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import Purchases from 'react-native-purchases'
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTtsContext } from '@/contexts/tts-context'
+import { TtsPlayerBar } from '@/components/tts-player-bar'
+import { TtsVoicePicker } from '@/components/tts-voice-picker'
 
 // Height of the custom Header component (56px content + 1px border + status bar inset)
 // This matches the dimensions defined in components/header.tsx.
@@ -103,6 +105,8 @@ function SyncProgressBar() {
 
 export default function TabLayout() {
   const { session, setSession, isPremium, setIsPremium } = useAuth()
+  const tts = useTtsContext()
+  const insets = useSafeAreaInsets()
 
   const tintColor = useThemeColor({}, 'tint')
   const borderColor = useThemeColor({}, 'border')
@@ -111,6 +115,7 @@ export default function TabLayout() {
   const colors = Colors[resolvedScheme]
 
   const [showAccountSettings, setShowAccountSettings] = useState(false)
+  const [showVoicePicker, setShowVoicePicker] = useState(false)
   const [showReadingSettings, setShowReadingSettings] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const paywallAfterDismiss = useRef(false)
@@ -330,16 +335,78 @@ export default function TabLayout() {
         onDismiss={() => setShowReadingSettings(false)}
       />
 
-      <NativeTabs tintColor={tintColor}>
-        <NativeTabs.Trigger name="index">
-          <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
-          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="library">
-          <NativeTabs.Trigger.Icon sf={{ default: 'books.vertical', selected: 'books.vertical.fill' }} md="menu_book" />
-          <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-      </NativeTabs>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: tintColor,
+          headerShown: false,
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ focused, color }) => (
+              <IconSymbol name={focused ? 'house.fill' : 'house'} size={24} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="library"
+          options={{
+            title: 'Library',
+            tabBarIcon: ({ focused, color }) => (
+              <IconSymbol name={focused ? 'books.vertical.fill' : 'books.vertical'} size={24} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+
+      {tts.isActive && (
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            bottom: insets.bottom + 49,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            backgroundColor: resolvedScheme === 'dark' ? '#1C1C1E' : '#F2F2F7',
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: resolvedScheme === 'dark' ? '#38383A' : '#D1D1D6',
+          }}
+        >
+          <TtsPlayerBar
+            isPlaying={tts.isPlaying}
+            currentIndex={tts.currentIndex}
+            totalSegments={tts.segments.length}
+            speed={tts.speed}
+            engine={tts.engine}
+            modelState={tts.modelState}
+            voices={tts.voices}
+            selectedVoiceId={tts.selectedVoiceId}
+            onPlay={tts.resume}
+            onPause={tts.pause}
+            onSkipBack={tts.skipBack}
+            onSkipForward={tts.skipForward}
+            onCycleSpeed={tts.cycleSpeed}
+            onSetVoice={tts.setVoice}
+            onSetEngine={tts.setEngine}
+            onClose={tts.close}
+            onOpenVoicePicker={() => setShowVoicePicker(true)}
+          />
+        </View>
+      )}
+
+      <TtsVoicePicker
+        visible={showVoicePicker}
+        onDismiss={() => setShowVoicePicker(false)}
+        voices={tts.voices}
+        selectedVoiceId={tts.selectedVoiceId}
+        engine={tts.engine}
+        modelState={tts.modelState}
+        onSelect={tts.setVoice}
+        onSetEngine={tts.setEngine}
+      />
     </View>
   )
 }

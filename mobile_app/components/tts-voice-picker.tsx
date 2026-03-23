@@ -60,12 +60,10 @@ export function TtsVoicePicker({
 
   function handleSelect(id: string | null) {
     onSelect(id)
-    onDismiss()
   }
 
   function handleSetEngine(e: TtsEngine) {
     onSetEngine(e)
-    onDismiss()
   }
 
   function sherpaStatusLabel(): string {

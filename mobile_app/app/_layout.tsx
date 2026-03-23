@@ -32,6 +32,7 @@ import { registerBackgroundSync, unregisterBackgroundSync } from '@/lib/backgrou
 import { syncArticles } from '@/lib/article-sync'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { Colors, ResolvedColorScheme } from '@/constants/theme'
+import { TtsProvider } from '@/contexts/tts-context'
 
 const ONBOARDING_COMPLETE_KEY = '@poche_onboarding_complete'
 const APP_THEME_KEY = '@poche_app_theme'
@@ -359,8 +360,10 @@ export default function RootLayout() {
   return (
     <AuthContext.Provider value={{ session, setSession, isNewLogin, clearNewLogin, isLoading, hasCompletedOnboarding, completeOnboarding, appTheme, setAppTheme, appFontSizeMultiplier, setAppFontSizeMultiplier, isPremium, setIsPremium }}>
       <ThemeProvider value={themeWithMultiplier}>
-        <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
-        <StatusBar style={statusBarStyle} />
+        <TtsProvider>
+          <RootStack session={session} isLoading={isLoading} hasCompletedOnboarding={hasCompletedOnboarding} />
+          <StatusBar style={statusBarStyle} />
+        </TtsProvider>
       </ThemeProvider>
     </AuthContext.Provider>
   )
