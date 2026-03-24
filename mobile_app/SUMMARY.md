@@ -41,7 +41,7 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Clear Data on Logout**: Locally stored articles are cleared when user signs out
 - **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
 - **Share intent (Save to Poche)**: Share a web page from Safari (iOS) or system share sheet (Android) to Poche. **iOS**: Share Extension "Save to Poche" reads token and API URL from App Group, POSTs URL to backend, sets "just saved" flag, opens app; app checks flag on cold start and when returning to foreground (AppState), syncs and shows "Saved to Poche". **Android**: App receives share and opens with `poche://share?url=...` (in-app save from share route not yet implemented). Root layout writes/clears share credentials (iOS) and registers `share` route.
-- **Neural TTS (Listen)**: On-device text-to-speech via Sherpa-ONNX (Piper VITS model, en_US-ryan-medium, ~65 MB). Model bundled in app as `assets/sherpa-model.zip`, extracted on first use. Headphones FAB in article opens a dropdown with three options: **Listen from start**, **Listen from here** (current scroll position), and **Continue listening** (from stored reading progress, shown only when partially read). FAB hidden when header is collapsed or TTS is active. Player bar shows article thumbnail, title, and author; tapping the left side navigates to the article (no-op if already viewing it). Progress bar animates continuously within each segment using character-count duration estimates (linear easing). Engine selector in voice picker allows switching to iOS system voices. TTS highlight overlay shows current paragraph. Auto-scrolls to active segment. **"Continue reading" button hidden while TTS is active.**
+- **Neural TTS (Listen)**: On-device text-to-speech via Sherpa-ONNX using the Kokoro model (`kokoro-int8-multi-lang-v1_1`, ~140 MB zipped). Model bundled as `assets/kokoro-int8-multi-lang-v1_1.zip`, extracted on first use to `documentDirectory/sherpa-tts/kokoro/`. Uses `react-native-sherpa-onnx@^0.3.7` with CoreML provider for Apple Neural Engine acceleration and `numThreads: 4`. Headphones FAB in article opens a dropdown with three options: **Listen from start**, **Listen from here** (current scroll position), and **Continue listening** (from stored reading progress, shown only when partially read). FAB hidden when header is collapsed or TTS is active. Player bar shows article thumbnail, title, and author; tapping the left side navigates to the article (no-op if already viewing it). Progress bar animates continuously within each segment using character-count duration estimates (linear easing). Engine selector in voice picker allows switching to iOS system voices. TTS highlight overlay shows current paragraph. Auto-scrolls to active segment. **"Continue reading" button hidden while TTS is active.** 3-ahead lookahead pregeneration pipelines WAV generation to minimise inter-segment gaps.
 
 ## Architecture
 
@@ -99,7 +99,7 @@ mobile_app/
 │   ├── article-sync.ts   # Centralized article sync logic with reading progress updates
 │   ├── image-cache.ts    # Image extraction, downloading, and caching utilities
 │   ├── model-manager.ts  # TTS model lifecycle (check, install from bundle, get paths, delete)
-│   ├── sherpa-tts-engine.ts # Singleton wrapper around react-native-sherpa-onnx-offline-tts
+│   ├── sherpa-tts-engine.ts # Singleton wrapper around react-native-sherpa-onnx (Kokoro, CoreML)
 │   └── tts-extract.ts    # Extracts TtsSegments from tokenized markdown (maps token index → text)
 ├── contexts/
 │   └── tts-context.tsx   # Global TTS context (TtsProvider, useTtsContext) — all TTS logic lives here; persists across navigation
@@ -111,7 +111,7 @@ mobile_app/
 ├── constants/
 │   └── theme.ts          # Colors (light/dark/sepia palettes), ResolvedColorScheme type, Fonts
 ├── patches/              # React Native patches (applied via patch-package)
-│   └── react-native+0.81.5.patch  # iOS text rendering fix
+│   └── react-native+0.83.2.patch  # iOS text rendering fix (epsilon rounding for usedRectForTextContainer)
 ├── ios/
 │   ├── Poche/            # Main app target
 │   │   ├── PendingShareModule.swift  # Native module: getShareExtensionJustSaved, setShareCredentials, clearShareCredentials (App Group)

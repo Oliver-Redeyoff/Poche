@@ -3,7 +3,7 @@ import { Asset } from 'expo-asset'
 import { unzip } from 'react-native-zip-archive'
 
 // file:// URI — used for expo-file-system operations (makeDirectory, getInfo, delete)
-const MODEL_URI = FileSystem.documentDirectory + 'sherpa-tts/model/'
+const MODEL_URI = FileSystem.documentDirectory + 'sherpa-tts/kokoro/'
 
 // Raw path — strips file:// scheme for native C++ code (fopen, sherpa-onnx)
 function toNativePath(uri: string): string {
@@ -11,9 +11,11 @@ function toNativePath(uri: string): string {
 }
 const MODEL_PATH = toNativePath(MODEL_URI)
 
+const MODEL_ONNX = 'model.int8.onnx'
+
 export async function isModelInstalled(): Promise<boolean> {
   try {
-    const info = await FileSystem.getInfoAsync(MODEL_URI + 'en_US-ryan-medium.onnx')
+    const info = await FileSystem.getInfoAsync(MODEL_URI + MODEL_ONNX)
     return info.exists
   } catch {
     return false
@@ -24,7 +26,7 @@ export async function installModel(): Promise<void> {
   await FileSystem.makeDirectoryAsync(MODEL_URI, { intermediates: true })
 
   // expo-asset copies bundled zip to a local file:// URI
-  const [asset] = await Asset.loadAsync(require('../assets/sherpa-model.zip'))
+  const [asset] = await Asset.loadAsync(require('../assets/kokoro-int8-multi-lang-v1_1.zip'))
   const zipUri = asset.localUri
   if (!zipUri) throw new Error('Could not resolve bundled model asset')
 
@@ -35,23 +37,18 @@ export async function installModel(): Promise<void> {
     throw new Error(`Failed to extract TTS model: ${e}`)
   }
 
-  const modelExists = await FileSystem.getInfoAsync(MODEL_URI + 'en_US-ryan-medium.onnx')
+  const modelExists = await FileSystem.getInfoAsync(MODEL_URI + MODEL_ONNX)
   if (!modelExists.exists) {
-    throw new Error('en_US-ryan-medium.onnx not found after extraction')
+    throw new Error(`${MODEL_ONNX} not found after extraction`)
   }
 }
 
-export function getModelPaths(): {
-  modelPath: string
-  tokensPath: string
-  dataDir: string
-} {
-  // All paths are raw (no file:// scheme) for the sherpa-onnx C++ library
-  return {
-    modelPath: MODEL_PATH + 'en_US-ryan-medium.onnx',
-    tokensPath: MODEL_PATH + 'tokens.txt',
-    dataDir: MODEL_PATH + 'espeak-ng-data',
-  }
+/**
+ * Returns the raw directory path (no file:// scheme) where the model is extracted.
+ * Used by react-native-sherpa-onnx's createTTS({ modelPath: { type: 'file', path } }).
+ */
+export function getModelDir(): string {
+  return MODEL_PATH
 }
 
 export async function deleteModel(): Promise<void> {

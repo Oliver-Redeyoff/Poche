@@ -5,7 +5,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { tokenize, Article } from '@poche/shared'
 import { extractTtsSegments, TtsSegment } from '../lib/tts-extract'
-import { isModelInstalled, installModel, getModelPaths } from '../lib/model-manager'
+import { isModelInstalled, installModel, getModelDir } from '../lib/model-manager'
 import { sherpaTtsEngine } from '../lib/sherpa-tts-engine'
 import { useAuth } from '../app/_layout'
 import { updateReadingProgressLocal, syncReadingProgressToBackend } from '../lib/article-sync'
@@ -24,9 +24,6 @@ function tempWavUri(index: number): string {
   return FileSystem.cacheDirectory + `tts-sherpa-${index}.wav`
 }
 
-function toNativePath(uri: string): string {
-  return uri.replace(/^file:\/\//, '')
-}
 
 interface TtsContextValue {
   article: Article | null
@@ -98,6 +95,9 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const sherpaTokenRef = useRef(0)
   const sherpaPlayerRef = useRef<AudioPlayer | null>(null)
+  // Tracks in-flight and completed WAV generation promises by segment index.
+  // Avoids re-generating a segment that was already pregened during prior playback.
+  const segmentWavRef = useRef<Map<number, Promise<boolean>>>(new Map())
 
   useEffect(() => { isActiveRef.current = isActive }, [isActive])
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
@@ -136,50 +136,60 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     currentIndexRef.current = index
 
     const wavUri = tempWavUri(index)
-    const wavPath = toNativePath(wavUri)
 
-    const nextIndex = index + 1
-    let nextPregen: Promise<void> | null = null
-    if (nextIndex < segs.length) {
-      nextPregen = sherpaTtsEngine
-        .generateWav(segs[nextIndex].text, toNativePath(tempWavUri(nextIndex)))
-        .catch(() => {})
+    // Re-use an existing pregen if available, otherwise queue current generation first
+    // (current must be queued before lookahead so the serial TTS engine prioritises it)
+    const existingPregen = segmentWavRef.current.get(index)
+    const currentGen: Promise<boolean> = existingPregen ?? (() => {
+      const p = sherpaTtsEngine.generateWav(segs[index].text, wavUri)
+        .then(() => true).catch(() => false)
+      segmentWavRef.current.set(index, p)
+      return p
+    })()
+
+    // Kick off lookahead pregeneration (runs after current in the serial engine queue)
+    for (let ahead = 1; ahead <= 3; ahead++) {
+      const ni = index + ahead
+      if (ni < segs.length && !segmentWavRef.current.has(ni)) {
+        const p = sherpaTtsEngine
+          .generateWav(segs[ni].text, tempWavUri(ni))
+          .then(() => true).catch(() => false)
+        segmentWavRef.current.set(ni, p)
+      }
     }
 
-    sherpaTtsEngine
-      .generateWav(segs[index].text, wavPath)
-      .then(() => {
-        if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) {
-          FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
-          return
-        }
+    currentGen.then((success) => {
+      segmentWavRef.current.delete(index)
 
-        const player = createAudioPlayer({ uri: wavUri })
-        player.setPlaybackRate(speedRef.current)
-        sherpaPlayerRef.current = player
-
-        const sub = player.addListener('playbackStatusUpdate', status => {
-          if (!status.didJustFinish) return
-          sub.remove()
-          sherpaPlayerRef.current = null
-          player.remove()
-          FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
-
-          if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) return
-
-          ;(nextPregen ?? Promise.resolve()).then(() => {
-            if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) return
-            sherpaPlaySegmentRef.current(index + 1, token)
-          })
-        })
-
-        player.play()
-      })
-      .catch(() => {
+      if (!success) {
         if (token === sherpaTokenRef.current && isActiveRef.current && isPlayingRef.current) {
           sherpaPlaySegmentRef.current(index + 1, token)
         }
+        return
+      }
+
+      if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) {
+        FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
+        return
+      }
+
+      const player = createAudioPlayer({ uri: wavUri })
+      player.setPlaybackRate(speedRef.current)
+      sherpaPlayerRef.current = player
+
+      const sub = player.addListener('playbackStatusUpdate', status => {
+        if (!status.didJustFinish) return
+        sub.remove()
+        sherpaPlayerRef.current = null
+        player.remove()
+        FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
+
+        if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) return
+        sherpaPlaySegmentRef.current(index + 1, token)
       })
+
+      player.play()
+    })
   }
 
   // --- System (expo-speech) playback ---
@@ -217,6 +227,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const stopSherpa = useCallback(() => {
     sherpaTokenRef.current += 1
+    segmentWavRef.current.clear()
     releaseSherpaPlayer()
   }, [releaseSherpaPlayer])
 
@@ -225,7 +236,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     modelStateRef.current = 'installing'
     try {
       await installModel()
-      await sherpaTtsEngine.initialize(getModelPaths())
+      await sherpaTtsEngine.initialize(getModelDir())
       setModelState('ready')
       modelStateRef.current = 'ready'
       setIsPlaying(true)
@@ -394,7 +405,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     isModelInstalled().then(async installed => {
       if (installed) {
-        await sherpaTtsEngine.initialize(getModelPaths()).catch(() => {})
+        await sherpaTtsEngine.initialize(getModelDir()).catch(() => {})
       }
     })
   }, [])
