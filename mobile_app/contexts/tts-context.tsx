@@ -24,7 +24,6 @@ function tempWavUri(index: number): string {
   return FileSystem.cacheDirectory + `tts-sherpa-${index}.wav`
 }
 
-
 interface TtsContextValue {
   article: Article | null
   isActive: boolean
@@ -95,9 +94,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const sherpaTokenRef = useRef(0)
   const sherpaPlayerRef = useRef<AudioPlayer | null>(null)
-  // Tracks in-flight and completed WAV generation promises by segment index.
-  // Avoids re-generating a segment that was already pregened during prior playback.
-  const segmentWavRef = useRef<Map<number, Promise<boolean>>>(new Map())
 
   useEffect(() => { isActiveRef.current = isActive }, [isActive])
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
@@ -127,7 +123,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   sherpaPlaySegmentRef.current = (index: number, token: number) => {
     const segs = segmentsRef.current
-    if (!isActiveRef.current || !isPlayingRef.current || index < 0 || index >= segs.length) {
+    if (!isActiveRef.current || !isPlayingRef.current || index < 0 || segs.length === 0) {
       setIsPlaying(false)
       return
     }
@@ -135,61 +131,18 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     setCurrentIndex(index)
     currentIndexRef.current = index
 
-    const wavUri = tempWavUri(index)
+    // Join all segments from the start index into one string
+    const fullText = segs.slice(index).map(s => s.text).join(' ')
 
-    // Re-use an existing pregen if available, otherwise queue current generation first
-    // (current must be queued before lookahead so the serial TTS engine prioritises it)
-    const existingPregen = segmentWavRef.current.get(index)
-    const currentGen: Promise<boolean> = existingPregen ?? (() => {
-      const p = sherpaTtsEngine.generateWav(segs[index].text, wavUri)
-        .then(() => true).catch(() => false)
-      segmentWavRef.current.set(index, p)
-      return p
-    })()
-
-    // Kick off lookahead pregeneration (runs after current in the serial engine queue)
-    for (let ahead = 1; ahead <= 3; ahead++) {
-      const ni = index + ahead
-      if (ni < segs.length && !segmentWavRef.current.has(ni)) {
-        const p = sherpaTtsEngine
-          .generateWav(segs[ni].text, tempWavUri(ni))
-          .then(() => true).catch(() => false)
-        segmentWavRef.current.set(ni, p)
-      }
-    }
-
-    currentGen.then((success) => {
-      segmentWavRef.current.delete(index)
-
-      if (!success) {
-        if (token === sherpaTokenRef.current && isActiveRef.current && isPlayingRef.current) {
-          sherpaPlaySegmentRef.current(index + 1, token)
-        }
-        return
-      }
-
-      if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) {
-        FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
-        return
-      }
-
-      const player = createAudioPlayer({ uri: wavUri })
-      player.setPlaybackRate(speedRef.current)
-      sherpaPlayerRef.current = player
-
-      const sub = player.addListener('playbackStatusUpdate', status => {
-        if (!status.didJustFinish) return
-        sub.remove()
-        sherpaPlayerRef.current = null
-        player.remove()
-        FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
-
+    sherpaTtsEngine.generateStream(
+      fullText,
+      speedRef.current,
+      (_msg) => {
         if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) return
-        sherpaPlaySegmentRef.current(index + 1, token)
-      })
-
-      player.play()
-    })
+        setIsPlaying(false)
+        isPlayingRef.current = false
+      }
+    )
   }
 
   // --- System (expo-speech) playback ---
@@ -227,7 +180,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const stopSherpa = useCallback(() => {
     sherpaTokenRef.current += 1
-    segmentWavRef.current.clear()
+    sherpaTtsEngine.stopStream()
     releaseSherpaPlayer()
   }, [releaseSherpaPlayer])
 
@@ -293,6 +246,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     setIsPlaying(false)
     isPlayingRef.current = false
     if (engineRef.current === 'sherpa') {
+      sherpaTtsEngine.stopStream()
       sherpaPlayerRef.current?.pause()
     } else {
       Speech.stop()

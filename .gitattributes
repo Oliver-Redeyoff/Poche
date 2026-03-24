@@ -1,3 +1,4 @@
+*.zip filter=lfs diff=lfs merge=lfs -text
 *.DS_Store filter=lfs diff=lfs merge=lfs -text
 *.md filter=lfs diff=lfs merge=lfs -text
 *.gitignore filter=lfs diff=lfs merge=lfs -text
@@ -29,7 +30,6 @@
 *.bat filter=lfs diff=lfs merge=lfs -text
 *.js filter=lfs diff=lfs merge=lfs -text
 *.ttf filter=lfs diff=lfs merge=lfs -text
-*.zip filter=lfs diff=lfs merge=lfs -text
 *.env filter=lfs diff=lfs merge=lfs -text
 *.pbxproj filter=lfs diff=lfs merge=lfs -text
 *.xcscheme filter=lfs diff=lfs merge=lfs -text
