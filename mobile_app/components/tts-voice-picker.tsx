@@ -5,7 +5,7 @@ import { BottomDrawer } from './bottom-drawer'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { useResolvedColorScheme } from '@/hooks/use-color-scheme'
 import { IconSymbol } from './ui/icon-symbol'
-import type { TtsEngine, ModelState } from '../hooks/use-tts'
+import type { TtsEngine, ModelState } from '../contexts/tts-context'
 
 interface TtsVoicePickerProps {
   visible: boolean

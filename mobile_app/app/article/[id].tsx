@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { StyleSheet, ScrollView, Text, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
+import { StyleSheet, ScrollView, Text, View, ActivityIndicator, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import Animated, { useSharedValue, withTiming, FadeIn, FadeOut } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { ThemedText } from '@/components/themed-text'
 import { Markdown, MarkdownStyles } from '@/components/markdown'
@@ -54,13 +54,6 @@ export default function ArticleScreen() {
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasReachedEnd = useRef(false)
   
-  // Animated progress bar
-  const progressBarWidth = useSharedValue(0) // 0-1 fraction
-  const progressTrackWidth = useSharedValue(0)
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: progressBarWidth.value * progressTrackWidth.value,
-  }))
-
   // Scroll restoration
   const scrollViewRef = useRef<ScrollView>(null)
   const initialProgressRef = useRef<number | null>(null) // Store initial progress for scroll restoration
@@ -171,7 +164,6 @@ export default function ArticleScreen() {
         setReadingProgress(initialProgress)
         readingProgressRef.current = initialProgress
         lastSyncedProgress.current = initialProgress
-        progressBarWidth.value = initialProgress / 100
         // Store initial progress for scroll restoration (only if in progress)
         if (initialProgress > 0 && initialProgress < 100) {
           initialProgressRef.current = initialProgress
@@ -260,8 +252,7 @@ export default function ArticleScreen() {
     if (progress > readingProgress) {
       setReadingProgress(progress)
       readingProgressRef.current = progress
-      progressBarWidth.value = withTiming(progress / 100, { duration: 300 })
-      
+
       // Only save to local storage when progress changes by threshold amount (or reaches 100)
       const shouldSaveLocally = progress === 100 || 
         (progress - lastLocalSaveProgress.current >= PROGRESS_SAVE_THRESHOLD)
@@ -360,7 +351,6 @@ export default function ArticleScreen() {
       setReadingProgress(0)
       readingProgressRef.current = 0
       lastSyncedProgress.current = 0
-      progressBarWidth.value = withTiming(0, { duration: 300 })
       lastLocalSaveProgress.current = 0
       hasReachedEnd.current = false
     } catch (error) {
@@ -376,7 +366,6 @@ export default function ArticleScreen() {
       setReadingProgress(100)
       readingProgressRef.current = 100
       lastSyncedProgress.current = 100
-      progressBarWidth.value = withTiming(1, { duration: 300 })
       lastLocalSaveProgress.current = 100
       hasReachedEnd.current = true
       setShowReturnButton(false)
@@ -734,8 +723,7 @@ export default function ArticleScreen() {
 
   const startListening = useCallback((segmentIndex: number) => {
     if (!article) return
-    const content = article.content || '*No content available*'
-    tts.setArticle(content, article.title ?? '', article.siteName || article.author || null, article.previewImageUrl || null, article.id)
+    tts.setArticle(article)
     tts.startFrom(segmentIndex)
   }, [article, tts])
 
@@ -786,7 +774,7 @@ export default function ArticleScreen() {
   const readingTime = article.wordCount 
     ? Math.max(1, Math.ceil(article.wordCount / 200))
     : null
-  const overlayHeight = insets.top + 56 + 3
+  const overlayHeight = insets.top + 56
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -832,19 +820,6 @@ export default function ArticleScreen() {
           }
         />
 
-        {/* Reading progress bar */}
-        <View 
-          style={styles.progressBarTrack} 
-          onLayout={(e: LayoutChangeEvent) => { progressTrackWidth.value = e.nativeEvent.layout.width }}
-        >
-          <Animated.View 
-            style={[
-              styles.progressBarFill, 
-              { backgroundColor: colors.accent },
-              progressBarStyle,
-            ]} 
-          />
-        </View>
       </View>
 
       {/* Listen FAB — visible when TTS is inactive */}
@@ -867,24 +842,22 @@ export default function ArticleScreen() {
         </Animated.View>
       )}
 
-      {/* TTS player bar — visible when TTS is active */}
-      {tts.isActive && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            paddingBottom: insets.bottom,
-            backgroundColor: colors.background,
-            borderTopWidth: 2,
-            borderTopColor: colors.divider,
-            zIndex: 15,
-          }}
-        >
-          <TtsPlayerBar />
-        </View>
-      )}
+      {/* TTS player bar — always visible; shows reading progress when TTS inactive */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingBottom: tts.isActive ? insets.bottom : 0,
+          backgroundColor: colors.background,
+          borderTopWidth: tts.isActive ? 2 : 0,
+          borderTopColor: colors.divider,
+          zIndex: 15,
+        }}
+      >
+        <TtsPlayerBar readingProgress={readingProgress} />
+      </View>
 
       {/* Return to progress button */}
       {showReturnButton && !tts.isActive && (
@@ -906,7 +879,7 @@ export default function ArticleScreen() {
       <ScrollView
         ref={scrollViewRef}
         style={[styles.scrollView, { opacity: isScrollReady ? 1 : 0, backgroundColor: colors.background }]}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight, paddingBottom: tts.isActive ? 100 + insets.bottom : 0 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: overlayHeight, paddingBottom: tts.isActive ? 100 + insets.bottom : 3 + insets.bottom }]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={250}
@@ -1001,19 +974,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  progressBarTrack: {
-    height: 3,
-    backgroundColor: 'transparent',
-  },
   topOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 20,
-  },
-  progressBarFill: {
-    height: '100%',
   },
   returnButtonContainer: {
     position: 'absolute',

@@ -8,7 +8,7 @@ import { IconSymbol } from './ui/icon-symbol'
 import { TtsVoicePicker } from './tts-voice-picker'
 import { useTtsContext } from '@/contexts/tts-context'
 
-export function TtsPlayerBar() {
+export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) {
   const tts = useTtsContext()
   const accent = useThemeColor({}, 'accent')
   const text = useThemeColor({}, 'text')
@@ -19,7 +19,11 @@ export function TtsPlayerBar() {
   const [showVoicePicker, setShowVoicePicker] = useState(false)
   const pathname = usePathname()
 
-  const { currentIndex, segments, isPlaying, speed, engine, modelState, voices, selectedVoiceId, articleId, articleTitle, articleAuthor, articleThumb } = tts
+  const { currentIndex, segments, isPlaying, speed, engine, modelState, voices, selectedVoiceId, article } = tts
+  const articleId = article?.id ?? null
+  const articleTitle = article?.title ?? null
+  const articleAuthor = article?.siteName || article?.author || null
+  const articleThumb = article?.previewImageUrl || null
   const totalSegments = segments.length
   const atStart = currentIndex === 0
   const atEnd = currentIndex >= totalSegments - 1
@@ -53,6 +57,14 @@ export function TtsPlayerBar() {
   }, [currentIndex, isPlaying, totalSegments, speed])
 
   const isInstalling = engine === 'sherpa' && modelState === 'installing'
+
+  if (!tts.isActive) {
+    return (
+      <View style={[styles.progressTrack, { backgroundColor: border }]}>
+        <View style={[styles.progressFill, { backgroundColor: accent, width: `${readingProgress ?? 0}%` }]} />
+      </View>
+    )
+  }
 
   return (
     <>
