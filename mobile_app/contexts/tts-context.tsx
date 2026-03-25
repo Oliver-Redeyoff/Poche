@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Platform } from 'react-native'
-import * as Speech from 'expo-speech'
 import * as FileSystem from 'expo-file-system/legacy'
 import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { tokenize, Article } from '@poche/shared'
@@ -13,14 +11,9 @@ import { updateReadingProgressLocal, syncReadingProgressToBackend } from '../lib
 export type TtsSpeed = 0.75 | 1 | 1.25 | 1.5 | 2
 const TTS_SPEEDS: TtsSpeed[] = [0.75, 1, 1.25, 1.5, 2]
 
-export type TtsEngine = 'sherpa' | 'system'
 export type ModelState = 'checking' | 'not-installed' | 'installing' | 'ready'
 
 const INITIAL_CHUNK_SIZE = 3
-
-function toSpeechRate(s: TtsSpeed): number {
-  return Platform.OS === 'android' ? s : Math.min(1.0, 0.5 * s)
-}
 
 function tempWavUri(index: number): string {
   return FileSystem.cacheDirectory + `tts-sherpa-${index}.wav`
@@ -35,9 +28,6 @@ interface TtsContextValue {
   currentIndex: number
   segments: TtsSegment[]
   speed: TtsSpeed
-  voices: Speech.Voice[]
-  selectedVoiceId: string | null
-  engine: TtsEngine
   modelState: ModelState
   setArticle: (article: Article) => void
   startFrom: (index: number) => void
@@ -46,8 +36,6 @@ interface TtsContextValue {
   skipBack: () => void
   skipForward: () => void
   cycleSpeed: () => void
-  setVoice: (id: string | null) => void
-  setEngine: (engine: TtsEngine) => void
   close: () => void
   setContent: (content: string) => void
 }
@@ -73,14 +61,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   const [generationProgress, setGenerationProgress] = useState(0)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [speed, setSpeed] = useState<TtsSpeed>(1)
-  const [voices, setVoices] = useState<Speech.Voice[]>([])
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | null>(null)
-  const [engine, setEngineState] = useState<TtsEngine>('sherpa')
   const [modelState, setModelState] = useState<ModelState>('checking')
-
-  useEffect(() => {
-    Speech.getAvailableVoicesAsync().then(v => setVoices(v)).catch(() => {})
-  }, [])
 
   useEffect(() => {
     isModelInstalled().then(installed => {
@@ -95,8 +76,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   const currentIndexRef = useRef(0)
   const speedRef = useRef<TtsSpeed>(1)
   const segmentsRef = useRef<TtsSegment[]>([])
-  const selectedVoiceIdRef = useRef<string | null>(null)
-  const engineRef = useRef<TtsEngine>('sherpa')
   const modelStateRef = useRef<ModelState>('checking')
 
   const sherpaTokenRef = useRef(0)
@@ -113,8 +92,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { currentIndexRef.current = currentIndex }, [currentIndex])
   useEffect(() => { speedRef.current = speed }, [speed])
   useEffect(() => { segmentsRef.current = segments }, [segments])
-  useEffect(() => { selectedVoiceIdRef.current = selectedVoiceId }, [selectedVoiceId])
-  useEffect(() => { engineRef.current = engine }, [engine])
   useEffect(() => { modelStateRef.current = modelState }, [modelState])
 
   useEffect(() => {
@@ -308,39 +285,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // --- System (expo-speech) playback ---
-
-  const speakSegmentRef = useRef<(index: number) => void>(() => {})
-
-  speakSegmentRef.current = (index: number) => {
-    const segs = segmentsRef.current
-    if (!isActiveRef.current || index < 0 || index >= segs.length) {
-      setIsPlaying(false)
-      return
-    }
-
-    setCurrentIndex(index)
-    currentIndexRef.current = index
-
-    Speech.speak(segs[index].text, {
-      rate: toSpeechRate(speedRef.current),
-      voice: selectedVoiceIdRef.current ?? undefined,
-      onDone: () => { if (isActiveRef.current && isPlayingRef.current) speakSegmentRef.current(index + 1) },
-      onStopped: () => {},
-      onError: () => { if (isActiveRef.current) speakSegmentRef.current(index + 1) },
-    })
-  }
-
-  // --- Unified dispatch ---
-
-  const playSegment = useCallback((index: number) => {
-    if (engineRef.current === 'sherpa' && modelStateRef.current === 'ready') {
-      sherpaPlaySegmentRef.current(index, sherpaTokenRef.current)
-    } else {
-      speakSegmentRef.current(index)
-    }
-  }, [])
-
   const stopSherpa = useCallback(() => {
     sherpaTokenRef.current += 1
     sherpaTtsEngine.stopStream()
@@ -392,14 +336,13 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const startFrom = useCallback((index: number) => {
     stopSherpa()
-    Speech.stop()
 
     setIsActive(true)
     isActiveRef.current = true
     setCurrentIndex(index)
     currentIndexRef.current = index
 
-    if (engineRef.current === 'sherpa' && modelStateRef.current !== 'ready') {
+    if (modelStateRef.current !== 'ready') {
       setIsPlaying(false)
       isPlayingRef.current = false
       installAndPlay(index)
@@ -408,32 +351,24 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
     setIsPlaying(true)
     isPlayingRef.current = true
-    playSegment(index)
-  }, [stopSherpa, playSegment, installAndPlay])
+    sherpaPlaySegmentRef.current(index, sherpaTokenRef.current)
+  }, [stopSherpa, installAndPlay])
 
   const pause = useCallback(() => {
     setIsPlaying(false)
     isPlayingRef.current = false
-    if (engineRef.current === 'sherpa') {
-      sherpaTtsEngine.stopStream()
-      sherpaPlayerRef.current?.pause()
-    } else {
-      Speech.stop()
-    }
+    sherpaTtsEngine.stopStream()
+    sherpaPlayerRef.current?.pause()
   }, [])
 
   const resume = useCallback(() => {
     if (!isActiveRef.current) return
     setIsPlaying(true)
     isPlayingRef.current = true
-    if (engineRef.current === 'sherpa') {
-      if (sherpaPlayerRef.current) {
-        sherpaPlayerRef.current.play()
-      } else {
-        sherpaPlaySegmentRef.current(currentIndexRef.current, sherpaTokenRef.current)
-      }
+    if (sherpaPlayerRef.current) {
+      sherpaPlayerRef.current.play()
     } else {
-      speakSegmentRef.current(currentIndexRef.current)
+      sherpaPlaySegmentRef.current(currentIndexRef.current, sherpaTokenRef.current)
     }
   }, [])
 
@@ -442,28 +377,26 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     const wasPlaying = isPlayingRef.current
     isPlayingRef.current = false
     stopSherpa()
-    Speech.stop()
     setCurrentIndex(newIndex)
     currentIndexRef.current = newIndex
     if (wasPlaying) {
       isPlayingRef.current = true
-      playSegment(newIndex)
+      sherpaPlaySegmentRef.current(newIndex, sherpaTokenRef.current)
     }
-  }, [stopSherpa, playSegment])
+  }, [stopSherpa])
 
   const skipForward = useCallback(() => {
     const newIndex = Math.min(segmentsRef.current.length - 1, currentIndexRef.current + 1)
     const wasPlaying = isPlayingRef.current
     isPlayingRef.current = false
     stopSherpa()
-    Speech.stop()
     setCurrentIndex(newIndex)
     currentIndexRef.current = newIndex
     if (wasPlaying) {
       isPlayingRef.current = true
-      playSegment(newIndex)
+      sherpaPlaySegmentRef.current(newIndex, sherpaTokenRef.current)
     }
-  }, [stopSherpa, playSegment])
+  }, [stopSherpa])
 
   const cycleSpeed = useCallback(() => {
     setSpeed(prev => {
@@ -471,30 +404,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       return TTS_SPEEDS[(idx + 1) % TTS_SPEEDS.length]
     })
   }, [])
-
-  const setVoice = useCallback((id: string | null) => {
-    setSelectedVoiceId(id)
-    selectedVoiceIdRef.current = id
-    if (isPlayingRef.current && isActiveRef.current && engineRef.current === 'system') {
-      isPlayingRef.current = false
-      Speech.stop()
-      isPlayingRef.current = true
-      speakSegmentRef.current(currentIndexRef.current)
-    }
-  }, [])
-
-  const setEngine = useCallback((newEngine: TtsEngine) => {
-    const wasPlaying = isPlayingRef.current
-    isPlayingRef.current = false
-    stopSherpa()
-    Speech.stop()
-    setEngineState(newEngine)
-    engineRef.current = newEngine
-    if (wasPlaying && isActiveRef.current) {
-      isPlayingRef.current = true
-      playSegment(currentIndexRef.current)
-    }
-  }, [stopSherpa, playSegment])
 
   const close = useCallback(() => {
     const id = articleRef.current?.id
@@ -505,7 +414,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       syncReadingProgressToBackend(id, progress)
     }
     stopSherpa()
-    Speech.stop()
     isActiveRef.current = false
     setIsActive(false)
     setIsPlaying(false)
@@ -513,15 +421,10 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     currentIndexRef.current = 0
   }, [stopSherpa])
 
-  // Speed change: update active player rate (Sherpa) or restart segment (system)
+  // Speed change: update active player rate
   useEffect(() => {
     if (!isPlayingRef.current || !isActiveRef.current) return
-    if (engineRef.current === 'sherpa') {
-      try { sherpaPlayerRef.current?.setPlaybackRate(speed) } catch {}
-    } else {
-      Speech.stop()
-      speakSegmentRef.current(currentIndexRef.current)
-    }
+    try { sherpaPlayerRef.current?.setPlaybackRate(speed) } catch {}
   }, [speed])
 
   // Initialize engine on mount if model already installed
@@ -540,17 +443,15 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       sherpaTokenRef.current += 1
       releaseSherpaPlayer()
       sherpaTtsEngine.dispose()
-      Speech.stop()
     }
   }, [])
 
   return (
     <TtsContext.Provider value={{
       article, isActive, isPlaying, isGenerating, generationProgress,
-      currentIndex, segments, speed,
-      voices, selectedVoiceId, engine, modelState,
+      currentIndex, segments, speed, modelState,
       setArticle, startFrom, pause, resume, skipBack, skipForward,
-      cycleSpeed, setVoice, setEngine, close, setContent,
+      cycleSpeed, close, setContent,
     }}>
       {children}
     </TtsContext.Provider>

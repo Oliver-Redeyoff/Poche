@@ -5,7 +5,6 @@ import { Image } from 'expo-image'
 import { router, usePathname } from 'expo-router'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from './ui/icon-symbol'
-import { TtsVoicePicker } from './tts-voice-picker'
 import { useTtsContext } from '@/contexts/tts-context'
 
 export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) {
@@ -16,10 +15,9 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
   const surface = useThemeColor({}, 'surface')
   const muted = '#8E8E93'
 
-  const [showVoicePicker, setShowVoicePicker] = useState(false)
   const pathname = usePathname()
 
-  const { currentIndex, segments, isPlaying, isGenerating, generationProgress, speed, engine, modelState, voices, selectedVoiceId, article } = tts
+  const { currentIndex, segments, isPlaying, isGenerating, generationProgress, speed, modelState, article } = tts
   const articleId = article?.id ?? null
   const articleTitle = article?.title ?? null
   const articleAuthor = article?.siteName || article?.author || null
@@ -85,7 +83,7 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
     return () => cancelAnimation(progressAnim)
   }, [currentIndex, isPlaying, totalSegments, speed])
 
-  const isInstalling = engine === 'sherpa' && modelState === 'installing'
+  const isInstalling = modelState === 'installing'
 
   const navigateToArticle = () => {
     if (articleId != null && pathname !== `/article/${articleId}`) {
@@ -223,16 +221,6 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
         )}
       </View>
 
-      <TtsVoicePicker
-        visible={showVoicePicker}
-        onDismiss={() => setShowVoicePicker(false)}
-        voices={voices}
-        selectedVoiceId={selectedVoiceId}
-        engine={engine}
-        modelState={modelState}
-        onSelect={tts.setVoice}
-        onSetEngine={tts.setEngine}
-      />
     </>
   )
 }

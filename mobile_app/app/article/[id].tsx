@@ -76,11 +76,6 @@ export default function ArticleScreen() {
     returnBtnTop.value = withTiming(headerHidden ? collapsedTop : fullTop, { duration: 250 })
   }, [headerHidden, insets.top])
 
-  // TTS block layout tracking
-  const blockLayoutsRef = useRef<Map<number, { y: number; height: number }>>(new Map())
-  const contentContainerOffsetRef = useRef(0)
-  const [activeBlockLayout, setActiveBlockLayout] = useState<{ y: number; height: number } | null>(null)
-
   // Reading settings
   const [showSettings, setShowSettings] = useState(false)
 
@@ -664,89 +659,11 @@ export default function ArticleScreen() {
     }
   }, [article?.content])
 
-  // Update highlight overlay when current TTS segment changes
-  useEffect(() => {
-    if (!tts.isActive) {
-      setActiveBlockLayout(null)
-      return
-    }
-    const segment = tts.segments[tts.currentIndex]
-    if (!segment) { setActiveBlockLayout(null); return }
-    const layout = blockLayoutsRef.current.get(segment.tokenIndex)
-    setActiveBlockLayout(layout ?? null)
-  }, [tts.currentIndex, tts.isActive, tts.segments])
-
-  // Auto-scroll to current TTS segment
-  useEffect(() => {
-    if (!tts.isActive || tts.currentIndex < 0) return
-    const segment = tts.segments[tts.currentIndex]
-    if (!segment) return
-    const layout = blockLayoutsRef.current.get(segment.tokenIndex)
-    if (!layout) return
-    const y = contentContainerOffsetRef.current + layout.y - 100
-    scrollViewRef.current?.scrollTo({ y: Math.max(0, y), animated: true })
-  }, [tts.currentIndex, tts.isActive, tts.segments])
-
-  // Clear stale block layouts when article content changes
-  useEffect(() => {
-    blockLayoutsRef.current.clear()
-  }, [article?.content])
-
-  // Block layout callback for Markdown
-  const handleBlockLayout = useCallback((tokenIndex: number, y: number, height: number) => {
-    blockLayoutsRef.current.set(tokenIndex, { y, height })
-  }, [])
-
-  // Start TTS from closest segment to a given scroll Y
-  function segmentNearScrollY(scrollY: number): number {
-    if (tts.segments.length === 0) return 0
-    let best = 0
-    let bestDist = Infinity
-    for (const seg of tts.segments) {
-      const layout = blockLayoutsRef.current.get(seg.tokenIndex)
-      if (!layout) continue
-      const blockY = contentContainerOffsetRef.current + layout.y
-      const dist = Math.abs(blockY - scrollY)
-      if (dist < bestDist) { bestDist = dist; best = seg.index }
-    }
-    return best
-  }
-
-  function startSegmentFromProgress(): number {
-    return segmentNearScrollY(currentScrollYRef.current)
-  }
-
-  function startSegmentFromReadingProgress(): number {
-    const scrollY = (readingProgressRef.current / 100) * (contentHeightRef.current - layoutHeightRef.current)
-    return segmentNearScrollY(scrollY)
-  }
-
-  const startListening = useCallback((segmentIndex: number) => {
+  const startListening = useCallback(() => {
     if (!article) return
     tts.setArticle(article)
-    tts.startFrom(segmentIndex)
+    tts.startFrom(0)
   }, [article, tts])
-
-  const listenMenuItems = useMemo((): DropdownMenuItem[] => [
-    {
-      key: 'listen-start',
-      label: 'Listen from start',
-      icon: 'arrow.counterclockwise' as const,
-      onPress: () => startListening(0),
-    },
-    {
-      key: 'listen-here',
-      label: 'Listen from here',
-      icon: 'arrow.forward' as const,
-      onPress: () => startListening(startSegmentFromProgress()),
-    },
-    ...(readingProgress > 0 && readingProgress < 100 ? [{
-      key: 'listen-progress',
-      label: 'Continue listening',
-      icon: 'play.fill' as const,
-      onPress: () => startListening(startSegmentFromReadingProgress()),
-    }] : []),
-  ], [article, readingProgress, startListening])
 
   // Conditional returns - must come after all hooks
   if (loading) {
@@ -829,16 +746,12 @@ export default function ArticleScreen() {
           exiting={FadeOut.duration(150)}
           style={[styles.fab, { bottom: insets.bottom + 20 }]}
         >
-          <DropdownMenu
+          <Pressable
+            onPress={startListening}
             style={[styles.fabButton, { backgroundColor: colors.accent }]}
-            triggerType="press"
-            trigger={
-              <View style={styles.fabInner}>
-                <IconSymbol name="headphones" size={22} color="#FFFFFF" />
-              </View>
-            }
-            items={listenMenuItems}
-          />
+          >
+            <IconSymbol name="headphones" size={22} color="#FFFFFF" />
+          </Pressable>
         </Animated.View>
       )}
 
@@ -920,23 +833,7 @@ export default function ArticleScreen() {
         {/* Article Content */}
         <View
           style={[styles.contentContainer, { maxWidth: contentWidth }]}
-          onLayout={e => { contentContainerOffsetRef.current = e.nativeEvent.layout.y }}
         >
-          {/* TTS highlight overlay */}
-          {tts.isActive && activeBlockLayout && (
-            <View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                top: activeBlockLayout.y,
-                left: -4,
-                right: -4,
-                height: activeBlockLayout.height,
-                backgroundColor: 'rgba(255, 200, 0, 0.15)',
-                borderRadius: 4,
-              }}
-            />
-          )}
           <Markdown
             style={markdownStyles}
             baseUrl={article.url || undefined}
@@ -944,7 +841,6 @@ export default function ArticleScreen() {
             minImageWidth={MIN_IMAGE_WIDTH}
             minImageHeight={MIN_IMAGE_HEIGHT}
             showAds={!isPremium}
-            onBlockLayout={handleBlockLayout}
           >
             {markdownContent}
           </Markdown>
@@ -1067,11 +963,6 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    overflow: 'hidden',
-  },
-  fabInner: {
-    width: 52,
-    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
   },
