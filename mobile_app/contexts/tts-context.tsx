@@ -33,8 +33,6 @@ interface TtsContextValue {
   startFrom: (index: number) => void
   pause: () => void
   resume: () => void
-  skipBack: () => void
-  skipForward: () => void
   cycleSpeed: () => void
   close: () => void
   setContent: (content: string) => void
@@ -184,6 +182,9 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
             currentIndexRef.current = segs.length - 1
             setIsPlaying(false)
             isPlayingRef.current = false
+            const _id = articleRef.current?.id
+            const _uid = sessionRef.current?.user?.id
+            if (_id != null && _uid) { updateReadingProgressLocal(_uid, _id, 100); syncReadingProgressToBackend(_id, 100) }
           } else if (secondChunkReadyRef.current && isPlayingRef.current) {
             // Second chunk ready and still playing — start it
             setCurrentIndex(cEnd)
@@ -203,6 +204,9 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
               currentIndexRef.current = segs.length - 1
               setIsPlaying(false)
               isPlayingRef.current = false
+              const _id = articleRef.current?.id
+              const _uid = sessionRef.current?.user?.id
+              if (_id != null && _uid) { updateReadingProgressLocal(_uid, _id, 100); syncReadingProgressToBackend(_id, 100) }
             })
             player2.play()
           } else if (!secondChunkReadyRef.current && cEnd < segs.length) {
@@ -255,6 +259,9 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
                   currentIndexRef.current = segs.length - 1
                   setIsPlaying(false)
                   isPlayingRef.current = false
+                  const _id = articleRef.current?.id
+                  const _uid = sessionRef.current?.user?.id
+                  if (_id != null && _uid) { updateReadingProgressLocal(_uid, _id, 100); syncReadingProgressToBackend(_id, 100) }
                 })
                 player2.play()
               }
@@ -372,32 +379,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const skipBack = useCallback(() => {
-    const newIndex = Math.max(0, currentIndexRef.current - 1)
-    const wasPlaying = isPlayingRef.current
-    isPlayingRef.current = false
-    stopSherpa()
-    setCurrentIndex(newIndex)
-    currentIndexRef.current = newIndex
-    if (wasPlaying) {
-      isPlayingRef.current = true
-      sherpaPlaySegmentRef.current(newIndex, sherpaTokenRef.current)
-    }
-  }, [stopSherpa])
-
-  const skipForward = useCallback(() => {
-    const newIndex = Math.min(segmentsRef.current.length - 1, currentIndexRef.current + 1)
-    const wasPlaying = isPlayingRef.current
-    isPlayingRef.current = false
-    stopSherpa()
-    setCurrentIndex(newIndex)
-    currentIndexRef.current = newIndex
-    if (wasPlaying) {
-      isPlayingRef.current = true
-      sherpaPlaySegmentRef.current(newIndex, sherpaTokenRef.current)
-    }
-  }, [stopSherpa])
-
   const cycleSpeed = useCallback(() => {
     setSpeed(prev => {
       const idx = TTS_SPEEDS.indexOf(prev)
@@ -406,13 +387,6 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const close = useCallback(() => {
-    const id = articleRef.current?.id
-    const userId = sessionRef.current?.user?.id
-    if (id != null && userId && isActiveRef.current && segmentsRef.current.length > 0) {
-      const progress = Math.min(100, Math.round((currentIndexRef.current + 1) / segmentsRef.current.length * 100))
-      updateReadingProgressLocal(userId, id, progress)
-      syncReadingProgressToBackend(id, progress)
-    }
     stopSherpa()
     isActiveRef.current = false
     setIsActive(false)
@@ -450,7 +424,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     <TtsContext.Provider value={{
       article, isActive, isPlaying, isGenerating, generationProgress,
       currentIndex, segments, speed, modelState,
-      setArticle, startFrom, pause, resume, skipBack, skipForward,
+      setArticle, startFrom, pause, resume,
       cycleSpeed, close, setContent,
     }}>
       {children}
