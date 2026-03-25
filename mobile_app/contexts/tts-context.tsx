@@ -16,6 +16,8 @@ const TTS_SPEEDS: TtsSpeed[] = [0.75, 1, 1.25, 1.5, 2]
 export type TtsEngine = 'sherpa' | 'system'
 export type ModelState = 'checking' | 'not-installed' | 'installing' | 'ready'
 
+const INITIAL_CHUNK_SIZE = 3
+
 function toSpeechRate(s: TtsSpeed): number {
   return Platform.OS === 'android' ? s : Math.min(1.0, 0.5 * s)
 }
@@ -28,6 +30,8 @@ interface TtsContextValue {
   article: Article | null
   isActive: boolean
   isPlaying: boolean
+  isGenerating: boolean
+  generationProgress: number
   currentIndex: number
   segments: TtsSegment[]
   speed: TtsSpeed
@@ -65,6 +69,8 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const [isActive, setIsActive] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generationProgress, setGenerationProgress] = useState(0)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [speed, setSpeed] = useState<TtsSpeed>(1)
   const [voices, setVoices] = useState<Speech.Voice[]>([])
@@ -85,6 +91,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   // Refs
   const isActiveRef = useRef(false)
   const isPlayingRef = useRef(false)
+  const isGeneratingRef = useRef(false)
   const currentIndexRef = useRef(0)
   const speedRef = useRef<TtsSpeed>(1)
   const segmentsRef = useRef<TtsSegment[]>([])
@@ -95,8 +102,14 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   const sherpaTokenRef = useRef(0)
   const sherpaPlayerRef = useRef<AudioPlayer | null>(null)
 
+  // Two-phase chunked generation state
+  const secondChunkReadyRef = useRef(false)
+  const firstChunkDoneRef = useRef(false)
+  const chunkEndRef = useRef(0)
+
   useEffect(() => { isActiveRef.current = isActive }, [isActive])
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
+  useEffect(() => { isGeneratingRef.current = isGenerating }, [isGenerating])
   useEffect(() => { currentIndexRef.current = currentIndex }, [currentIndex])
   useEffect(() => { speedRef.current = speed }, [speed])
   useEffect(() => { segmentsRef.current = segments }, [segments])
@@ -105,7 +118,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { modelStateRef.current = modelState }, [modelState])
 
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true }).catch(() => {})
+    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true }).catch(() => {})
   }, [])
 
   // --- Sherpa playback ---
@@ -121,27 +134,177 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   const sherpaPlaySegmentRef = useRef<(index: number, token: number) => void>(() => {})
 
-  sherpaPlaySegmentRef.current = (index: number, token: number) => {
+  sherpaPlaySegmentRef.current = (startIndex: number, token: number) => {
     const segs = segmentsRef.current
-    if (!isActiveRef.current || !isPlayingRef.current || index < 0 || segs.length === 0) {
+    if (!isActiveRef.current || !isPlayingRef.current || startIndex < 0 || segs.length === 0) {
       setIsPlaying(false)
       return
     }
 
-    setCurrentIndex(index)
-    currentIndexRef.current = index
+    setCurrentIndex(startIndex)
+    currentIndexRef.current = startIndex
 
-    // Join all segments from the start index into one string
-    const fullText = segs.slice(index).map(s => s.text).join(' ')
+    const chunkEnd = Math.min(startIndex + INITIAL_CHUNK_SIZE, segs.length)
+    const chunkText = segs.slice(startIndex, chunkEnd).map(s => s.text).join(' ')
+    const wavUri0 = tempWavUri(0)
+
+    setIsGenerating(true)
+    isGeneratingRef.current = true
+    setGenerationProgress(0)
+    secondChunkReadyRef.current = false
+    firstChunkDoneRef.current = false
+    chunkEndRef.current = chunkEnd
 
     sherpaTtsEngine.generateStream(
-      fullText,
+      chunkText,
       speedRef.current,
+      wavUri0,
+      () => {
+        // Phase 1 WAV ready — check token
+        if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) {
+          FileSystem.deleteAsync(wavUri0, { idempotent: true }).catch(() => {})
+          return
+        }
+
+        setIsGenerating(false)
+        isGeneratingRef.current = false
+
+        const player = createAudioPlayer({ uri: wavUri0 })
+        sherpaPlayerRef.current = player
+
+        const sub = player.addListener('playbackStatusUpdate', status => {
+          // Track current segment within this chunk using time estimation
+          if (status.currentTime != null && status.duration > 0) {
+            const chunkSegs = segs.slice(startIndex, chunkEnd)
+            const totalChars = chunkSegs.reduce((s, seg) => s + seg.text.length, 0)
+            if (totalChars > 0) {
+              let elapsed = 0
+              for (let i = 0; i < chunkSegs.length; i++) {
+                elapsed += (chunkSegs[i].text.length / totalChars) * status.duration
+                if (status.currentTime < elapsed) {
+                  setCurrentIndex(startIndex + i)
+                  currentIndexRef.current = startIndex + i
+                  break
+                }
+              }
+            }
+          }
+
+          if (!status.didJustFinish) return
+          sub.remove()
+          sherpaPlayerRef.current = null
+          player.remove()
+          FileSystem.deleteAsync(wavUri0, { idempotent: true }).catch(() => {})
+
+          if (token !== sherpaTokenRef.current || !isActiveRef.current) return
+
+          firstChunkDoneRef.current = true
+          const cEnd = chunkEndRef.current
+
+          if (cEnd >= segs.length) {
+            // Short article — no second chunk
+            setCurrentIndex(segs.length - 1)
+            currentIndexRef.current = segs.length - 1
+            setIsPlaying(false)
+            isPlayingRef.current = false
+          } else if (secondChunkReadyRef.current && isPlayingRef.current) {
+            // Second chunk ready and still playing — start it
+            setCurrentIndex(cEnd)
+            currentIndexRef.current = cEnd
+            const wavUri1 = tempWavUri(1)
+            const player2 = createAudioPlayer({ uri: wavUri1 })
+            sherpaPlayerRef.current = player2
+
+            const sub2 = player2.addListener('playbackStatusUpdate', status2 => {
+              if (!status2.didJustFinish) return
+              sub2.remove()
+              sherpaPlayerRef.current = null
+              player2.remove()
+              FileSystem.deleteAsync(wavUri1, { idempotent: true }).catch(() => {})
+              if (token !== sherpaTokenRef.current || !isActiveRef.current) return
+              setCurrentIndex(segs.length - 1)
+              currentIndexRef.current = segs.length - 1
+              setIsPlaying(false)
+              isPlayingRef.current = false
+            })
+            player2.play()
+          } else if (!secondChunkReadyRef.current && cEnd < segs.length) {
+            // Gap: Phase 2 still generating (or was cancelled). Restart from cEnd.
+            setCurrentIndex(cEnd)
+            currentIndexRef.current = cEnd
+            if (isPlayingRef.current) {
+              // Restart generation — sherpaPlaySegmentRef handles isGenerating state
+              sherpaPlaySegmentRef.current(cEnd, token)
+            }
+            // If paused, resume() will pick up from currentIndex = cEnd
+          }
+        })
+
+        player.play()
+
+        // Kick off Phase 2 if there's more content
+        if (chunkEnd < segs.length) {
+          const remainText = segs.slice(chunkEnd, segs.length).map(s => s.text).join(' ')
+          const wavUri1 = tempWavUri(1)
+
+          sherpaTtsEngine.generateStream(
+            remainText,
+            speedRef.current,
+            wavUri1,
+            () => {
+              // Phase 2 WAV ready
+              if (token !== sherpaTokenRef.current || !isActiveRef.current) {
+                FileSystem.deleteAsync(wavUri1, { idempotent: true }).catch(() => {})
+                return
+              }
+
+              secondChunkReadyRef.current = true
+
+              if (firstChunkDoneRef.current && isPlayingRef.current) {
+                // Phase 1 already done and we're playing — start Phase 2 now
+                setCurrentIndex(chunkEndRef.current)
+                currentIndexRef.current = chunkEndRef.current
+                const player2 = createAudioPlayer({ uri: wavUri1 })
+                sherpaPlayerRef.current = player2
+
+                const sub2 = player2.addListener('playbackStatusUpdate', status2 => {
+                  if (!status2.didJustFinish) return
+                  sub2.remove()
+                  sherpaPlayerRef.current = null
+                  player2.remove()
+                  FileSystem.deleteAsync(wavUri1, { idempotent: true }).catch(() => {})
+                  if (token !== sherpaTokenRef.current || !isActiveRef.current) return
+                  setCurrentIndex(segs.length - 1)
+                  currentIndexRef.current = segs.length - 1
+                  setIsPlaying(false)
+                  isPlayingRef.current = false
+                })
+                player2.play()
+              }
+              // If Phase 1 not done yet: Phase 1's didJustFinish will handle starting Phase 2
+            },
+            () => {
+              // Phase 2 cancelled — nothing to do
+            },
+            (_msg) => {
+              console.log('Phase 2 TTS error:', _msg)
+            }
+            // No onProgress for Phase 2 (already playing)
+          )
+        }
+      },
+      () => {
+        // Phase 1 cancelled — nothing to do
+      },
       (_msg) => {
+        console.log(_msg)
         if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) return
+        setIsGenerating(false)
+        isGeneratingRef.current = false
         setIsPlaying(false)
         isPlayingRef.current = false
-      }
+      },
+      (p) => setGenerationProgress(p)
     )
   }
 
@@ -182,6 +345,11 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     sherpaTokenRef.current += 1
     sherpaTtsEngine.stopStream()
     releaseSherpaPlayer()
+    setIsGenerating(false)
+    isGeneratingRef.current = false
+    setGenerationProgress(0)
+    secondChunkReadyRef.current = false
+    firstChunkDoneRef.current = false
   }, [releaseSherpaPlayer])
 
   const installAndPlay = useCallback(async (startIndex: number) => {
@@ -195,7 +363,8 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       setIsPlaying(true)
       isPlayingRef.current = true
       sherpaPlaySegmentRef.current(startIndex, sherpaTokenRef.current)
-    } catch {
+    } catch (e) {
+      console.log(e)
       setModelState('not-installed')
       modelStateRef.current = 'not-installed'
       setIsActive(false)
@@ -377,7 +546,8 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <TtsContext.Provider value={{
-      article, isActive, isPlaying, currentIndex, segments, speed,
+      article, isActive, isPlaying, isGenerating, generationProgress,
+      currentIndex, segments, speed,
       voices, selectedVoiceId, engine, modelState,
       setArticle, startFrom, pause, resume, skipBack, skipForward,
       cycleSpeed, setVoice, setEngine, close, setContent,

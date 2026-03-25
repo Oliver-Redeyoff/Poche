@@ -1,5 +1,4 @@
-import { createStreamingTTS } from 'react-native-sherpa-onnx/tts'
-import { getCoreMlSupport } from 'react-native-sherpa-onnx'
+import { createStreamingTTS, saveAudioToFile } from 'react-native-sherpa-onnx/tts'
 import type { StreamingTtsEngine, TtsStreamController } from 'react-native-sherpa-onnx/tts'
 
 class SherpaTtsEngine {
@@ -9,10 +8,9 @@ class SherpaTtsEngine {
 
   async initialize(modelDir: string): Promise<void> {
     if (this.engine) return
-
     this.engine = await createStreamingTTS({
       modelPath: { type: 'file', path: modelDir },
-      modelType: 'kokoro',
+      modelType: 'vits',
       numThreads: 4,
     })
   }
@@ -22,23 +20,22 @@ class SherpaTtsEngine {
   }
 
   /**
-   * Generate speech using streaming, accumulate PCM samples from chunks,
-   * then write to a WAV file and call onWavReady when the file is ready to play.
+   * Generate speech via streaming, accumulate all PCM chunks, save as WAV, then call onWavReady.
    */
   async generateStream(
     text: string,
     speed: number,
-    onError: (msg: string) => void
+    wavUri: string,
+    onWavReady: () => void,
+    onCancelled: () => void,
+    onError: (msg: string) => void,
+    onProgress?: (progress: number) => void
   ): Promise<void> {
-    if (!this.engine) {
-      onError('SherpaTtsEngine not initialized');
-      return;
-    }
+    if (!this.engine) { onError('SherpaTtsEngine not initialized'); return }
 
-    console.log(await getCoreMlSupport());
-
-    const sampleRate = await this.engine.getSampleRate();
-    await this.engine.startPcmPlayer(sampleRate, 1);
+    const chunks: number[][] = []
+    let totalSamples = 0
+    let sampleRate = 0
 
     try {
       const controller = await this.engine.generateSpeechStream(
@@ -47,12 +44,31 @@ class SherpaTtsEngine {
         {
           onChunk: (chunk) => {
             if (chunk.samples.length > 0) {
-              console.log("Generated chunk")
-              this.engine?.writePcmChunk(chunk.samples)
+              if (sampleRate === 0) sampleRate = chunk.sampleRate
+              chunks.push(chunk.samples)
+              totalSamples += chunk.samples.length
+              onProgress?.(chunk.progress)
             }
           },
           onEnd: async (event) => {
-            console.log("FINISheEd Generated chunk")
+            this.activeController = null
+            if (event.cancelled) { onCancelled(); return }
+            if (totalSamples === 0) { onError('no audio generated'); return }
+            // Flatten chunk arrays without using spread/apply (avoids stack overflow)
+            const allSamples: number[] = new Array(totalSamples)
+            let offset = 0
+            for (const c of chunks) {
+              for (let i = 0; i < c.length; i++) allSamples[offset++] = c[i]
+            }
+            try {
+              await saveAudioToFile(
+                { samples: allSamples, sampleRate },
+                wavUri.replace(/^file:\/\//, '')
+              )
+              onWavReady()
+            } catch (e: any) {
+              onError(e?.message ?? 'Failed to save audio')
+            }
           },
           onError: (event) => {
             this.activeController = null

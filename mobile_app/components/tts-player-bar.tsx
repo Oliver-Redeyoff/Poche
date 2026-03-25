@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { View, Pressable, StyleSheet, Text, ActivityIndicator } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, cancelAnimation, Easing } from 'react-native-reanimated'
 import { Image } from 'expo-image'
@@ -19,7 +19,7 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
   const [showVoicePicker, setShowVoicePicker] = useState(false)
   const pathname = usePathname()
 
-  const { currentIndex, segments, isPlaying, speed, engine, modelState, voices, selectedVoiceId, article } = tts
+  const { currentIndex, segments, isPlaying, isGenerating, generationProgress, speed, engine, modelState, voices, selectedVoiceId, article } = tts
   const articleId = article?.id ?? null
   const articleTitle = article?.title ?? null
   const articleAuthor = article?.siteName || article?.author || null
@@ -32,6 +32,35 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
 
   // Chars per second at 1× speed — used to estimate each segment's duration
   const CHARS_PER_SECOND = 14
+
+  // Generation elapsed time + estimate
+  const [elapsedSec, setElapsedSec] = useState(0)
+  const genStartRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!isGenerating) {
+      genStartRef.current = null
+      setElapsedSec(0)
+      return
+    }
+    genStartRef.current = Date.now()
+    const id = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - genStartRef.current!) / 1000))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [isGenerating])
+
+  const estimatedTotal = generationProgress > 0.05 ? Math.round(elapsedSec / generationProgress) : null
+  const remaining = estimatedTotal != null ? Math.max(0, estimatedTotal - elapsedSec) : null
+  const remainingLabel = remaining == null ? 'Generating audio…'
+    : remaining <= 3 ? 'Almost ready…'
+    : `~${remaining}s remaining`
+
+  // Animate progress bar during generation
+  useEffect(() => {
+    if (!isGenerating) return
+    progressAnim.value = withTiming(generationProgress, { duration: 300, easing: Easing.out(Easing.quad) })
+  }, [isGenerating, generationProgress])
 
   useEffect(() => {
     if (!isPlaying || totalSegments <= 1) {
@@ -58,6 +87,12 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
 
   const isInstalling = engine === 'sherpa' && modelState === 'installing'
 
+  const navigateToArticle = () => {
+    if (articleId != null && pathname !== `/article/${articleId}`) {
+      router.push(`/article/${articleId}`)
+    }
+  }
+
   if (!tts.isActive) {
     return (
       <View style={[styles.progressTrack, { backgroundColor: border }]}>
@@ -82,6 +117,43 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
               <IconSymbol name="xmark" size={16} color={muted} />
             </Pressable>
           </View>
+        ) : isGenerating ? (
+          <View style={styles.row}>
+            {/* Close */}
+            <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
+              <IconSymbol name="xmark" size={16} color={muted} />
+            </Pressable>
+
+            {/* Article info — tappable */}
+            <Pressable
+              style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
+              onPress={navigateToArticle}
+            >
+              {articleThumb ? (
+                <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
+              ) : (
+                <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
+                  <IconSymbol name="doc.text" size={18} color={muted} />
+                </View>
+              )}
+              <View style={styles.info}>
+                <Text style={[styles.title, { color: text }]} numberOfLines={1}>
+                  {articleTitle ?? 'Article'}
+                </Text>
+                {articleAuthor ? (
+                  <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
+                    {articleAuthor}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+
+            {/* Generating status */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <ActivityIndicator size="small" color={accent} />
+              <Text style={[styles.author, { color: muted }]}>{remainingLabel}</Text>
+            </View>
+          </View>
         ) : (
           <View style={styles.row}>
             {/* Close */}
@@ -92,7 +164,7 @@ export function TtsPlayerBar({ readingProgress }: { readingProgress?: number }) 
             {/* Thumbnail + info — tappable, navigates to article */}
             <Pressable
               style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
-              onPress={() => articleId != null && pathname !== `/article/${articleId}` && router.push(`/article/${articleId}`)}
+              onPress={navigateToArticle}
             >
               {articleThumb ? (
                 <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
