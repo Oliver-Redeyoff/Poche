@@ -182,7 +182,7 @@ Poche/
 - **Native tabs**: Tab bar uses `NativeTabs` from `expo-router/unstable-native-tabs` for a native iOS tab controller
 - **Instant article display**: Articles shown immediately after the API call returns; per-article favicon/image/preview processing runs in a background IIFE with granular progress reporting
 - **Sync progress bar**: 2px animated bar below the header in the tab layout; pulses during API fetch, fills as a progress bar during per-article processing, fades out on completion; built with React Native's built-in `Animated` API
-- **Neural TTS (Listen)**: On-device text-to-speech via `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium, ~65 MB model bundled in app). "Listen" button in article header starts playback from scroll position. Player bar with play/pause, skip, speed (0.75×–2×), and voice picker. Engine selector allows switching to iOS system voices. TTS highlight overlay and auto-scroll to active segment. iOS only; requires iOS 16.0.
+- **Neural TTS (Listen)**: On-device text-to-speech via `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium, ~65 MB model bundled in app). "Listen" button in article header starts playback from scroll position. Player bar with play/pause, skip, speed (0.75×–2×), and voice picker. Engine selector allows switching to iOS system voices. TTS highlight overlay and auto-scroll to active segment. iOS only; requires iOS 16.0. Two-phase chunked generation: first 3 segments play within ~1–3s, rest generates in background. "Generating audio…" UI with progress bar and time estimate during generation. Audio continues when app is backgrounded.
 
 ### Browser Extension Features
 - User authentication within extension popup
@@ -416,7 +416,11 @@ The shared package provides common functionality across all projects:
 - ✅ **Natural image sizing**: Article images sized by actual dimensions (from `onLoad` event), max 500px tall, `contentFit="cover"`, centered
 - ✅ **Native tabs**: Tab bar migrated to `NativeTabs` from `expo-router/unstable-native-tabs`
 - ✅ **Instant article display + sync progress bar**: Articles shown immediately after API response; background per-article processing (favicons, images, previews) reports progress via module-level pub/sub; `SyncProgressBar` component in tab layout shows pulse during fetch and fill-progress during processing using React Native built-in `Animated`
-- ✅ **Neural TTS**: `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium) bundled as zip asset; `use-tts.ts` hook with dual-engine playback (Sherpa + expo-audio / system + expo-speech); generation token pattern for async cancellation; `tts-player-bar.tsx` + `tts-voice-picker.tsx`; TTS highlight overlay and auto-scroll in article detail; iOS 16.0+ required
+- ✅ **Neural TTS**: `react-native-sherpa-onnx-offline-tts` (Piper VITS, en_US-ryan-medium) bundled as zip asset; `tts-context.tsx` with dual-engine playback (Sherpa + expo-audio / system + expo-speech); generation token pattern for async cancellation; `tts-player-bar.tsx` + `tts-voice-picker.tsx`; TTS highlight overlay and auto-scroll in article detail; iOS 16.0+ required
+- ✅ **TTS fast start + background generation**: Two-phase chunked generation — Phase 1 generates first 3 segments (~1–3s to first audio), Phase 2 generates remaining article in background while Phase 1 plays, seamless transition between chunks; `isGenerating`/`generationProgress` state exposed via context
+- ✅ **TTS generating UI**: Player bar shows "Generating audio… ~Xs remaining" with `ActivityIndicator` and animated progress bar during generation; time estimate computed from elapsed time and `chunk.progress` (0.0–1.0 from native layer)
+- ✅ **TTS background audio**: Fixed `setAudioModeAsync` to use correct params (`playsInSilentMode`, `shouldPlayInBackground`) for audio to continue when app is backgrounded
+- ✅ **TTS segment tracking within WAV**: `playbackStatusUpdate` uses `currentTime/duration` proportional to segment char counts to advance highlighted paragraph as audio plays
 
 ### Browser Extension
 - ✅ Migrated from Supabase to self-hosted backend

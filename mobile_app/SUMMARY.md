@@ -41,7 +41,11 @@ The Poche mobile app is a React Native application built with Expo that allows u
 - **Clear Data on Logout**: Locally stored articles are cleared when user signs out
 - **Shared Types**: Uses `@poche/shared` npm package for common types, utilities, API helpers, and markdown parsing
 - **Share intent (Save to Poche)**: Share a web page from Safari (iOS) or system share sheet (Android) to Poche. **iOS**: Share Extension "Save to Poche" reads token and API URL from App Group, POSTs URL to backend, sets "just saved" flag, opens app; app checks flag on cold start and when returning to foreground (AppState), syncs and shows "Saved to Poche". **Android**: App receives share and opens with `poche://share?url=...` (in-app save from share route not yet implemented). Root layout writes/clears share credentials (iOS) and registers `share` route.
-- **Neural TTS (Listen)**: On-device text-to-speech via Sherpa-ONNX using the Kokoro model (`kokoro-int8-multi-lang-v1_1`, ~140 MB zipped). Model bundled as `assets/kokoro-int8-multi-lang-v1_1.zip`, extracted on first use to `documentDirectory/sherpa-tts/kokoro/`. Uses `react-native-sherpa-onnx@^0.3.7` with CoreML provider for Apple Neural Engine acceleration and `numThreads: 4`. Headphones FAB in article opens a dropdown with three options: **Listen from start**, **Listen from here** (current scroll position), and **Continue listening** (from stored reading progress, shown only when partially read). FAB hidden when header is collapsed or TTS is active. Player bar shows article thumbnail, title, and author; tapping the left side navigates to the article (no-op if already viewing it). Progress bar animates continuously within each segment using character-count duration estimates (linear easing). Engine selector in voice picker allows switching to iOS system voices. TTS highlight overlay shows current paragraph. Auto-scrolls to active segment. **"Continue reading" button hidden while TTS is active.** 3-ahead lookahead pregeneration pipelines WAV generation to minimise inter-segment gaps.
+- **Neural TTS (Listen)**: On-device text-to-speech via Sherpa-ONNX using the Kokoro model (`kokoro-int8-multi-lang-v1_1`, ~140 MB zipped). Model bundled as `assets/kokoro-int8-multi-lang-v1_1.zip`, extracted on first use to `documentDirectory/sherpa-tts/kokoro/`. Uses `react-native-sherpa-onnx@^0.3.7` with CoreML provider for Apple Neural Engine acceleration and `numThreads: 4`. Headphones FAB in article opens a dropdown with three options: **Listen from start**, **Listen from here** (current scroll position), and **Continue listening** (from stored reading progress, shown only when partially read). FAB hidden when header is collapsed or TTS is active. Player bar shows article thumbnail, title, and author; tapping the left side navigates to the article (no-op if already viewing it). Progress bar animates continuously within each segment using character-count duration estimates (linear easing). Engine selector in voice picker allows switching to iOS system voices. TTS highlight overlay shows current paragraph. Auto-scrolls to active segment. **"Continue reading" button hidden while TTS is active.**
+- **TTS fast start**: Two-phase chunked generation — Phase 1 generates the first 3 segments (~1–3s to first audio) and starts playback immediately; Phase 2 generates the remaining article in the background while Phase 1 plays; seamless transition between chunks when Phase 1 finishes. Gap handling: if Phase 2 isn't ready when Phase 1 ends (and user is still playing), generation restarts from the chunk boundary.
+- **TTS generating UI**: Player bar shows a dedicated "generating" branch (`isGenerating` state) with `ActivityIndicator`, article info (tappable), and a time estimate label ("Generating audio…" → "~Xs remaining" → "Almost ready…") computed from elapsed time and `chunk.progress` (0.0–1.0 from native layer). The shared progress bar animates with generation progress, then transitions to playback progress when audio starts.
+- **TTS background audio**: Fixed `setAudioModeAsync` params (`playsInSilentMode: true, shouldPlayInBackground: true`) so audio continues when the app is backgrounded mid-playback.
+- **TTS segment tracking within WAV**: `playbackStatusUpdate` uses `status.currentTime / status.duration` proportional to segment character counts to advance the highlighted paragraph smoothly as audio plays (replaces "stuck on first segment" behaviour).
 
 ## Architecture
 
@@ -88,7 +92,7 @@ mobile_app/
 │   ├── dropdown-menu.tsx  # Reusable native context menu wrapper
 │   ├── header.tsx         # Custom header component with logo, back button, and collapsible animation
 │   ├── markdown.tsx       # Custom markdown-to-React-Native renderer (uses @poche/shared)
-│   ├── tts-player-bar.tsx # TTS playback controls bar — uses useTtsContext() directly; shows thumbnail, title, author; tapping left section navigates to article; animated progress bar
+│   ├── tts-player-bar.tsx # TTS playback controls bar — uses useTtsContext() directly; shows thumbnail, title, author; tapping left section navigates to article; animated progress bar; generating branch with ActivityIndicator + time estimate
 │   ├── tts-voice-picker.tsx # Engine selector (Neural/System) + system voice list bottom drawer
 │   ├── themed-text.tsx    # Themed text component
 │   ├── themed-view.tsx    # Themed view component
@@ -99,10 +103,10 @@ mobile_app/
 │   ├── article-sync.ts   # Centralized article sync logic with reading progress updates
 │   ├── image-cache.ts    # Image extraction, downloading, and caching utilities
 │   ├── model-manager.ts  # TTS model lifecycle (check, install from bundle, get paths, delete)
-│   ├── sherpa-tts-engine.ts # Singleton wrapper around react-native-sherpa-onnx (Kokoro, CoreML)
+│   ├── sherpa-tts-engine.ts # Singleton wrapper around react-native-sherpa-onnx (Kokoro, CoreML); optional onProgress callback (0.0–1.0 from chunk.progress)
 │   └── tts-extract.ts    # Extracts TtsSegments from tokenized markdown (maps token index → text)
 ├── contexts/
-│   └── tts-context.tsx   # Global TTS context (TtsProvider, useTtsContext) — all TTS logic lives here; persists across navigation
+│   └── tts-context.tsx   # Global TTS context (TtsProvider, useTtsContext) — all TTS logic lives here; persists across navigation; two-phase chunked generation; exposes isGenerating/generationProgress
 ├── hooks/                # Custom React hooks
 │   ├── use-article-actions.ts  # Article management hook (delete, tags, favorites)
 │   ├── use-color-scheme.ts     # Re-exports useColorScheme + useResolvedColorScheme() hook
