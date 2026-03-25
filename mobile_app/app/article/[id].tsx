@@ -696,7 +696,7 @@ export default function ArticleScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.topOverlay}>
-        <Header 
+        <Header
           showLogo
           showBack
           hidden={headerHidden}
@@ -737,6 +737,10 @@ export default function ArticleScreen() {
           }
         />
 
+        {/* Reading progress bar */}
+        <View style={[styles.progressTrack, { backgroundColor: colorBorder }]}>
+          <View style={[styles.progressFill, { backgroundColor: colorAccent, width: `${readingProgress}%` }]} />
+        </View>
       </View>
 
       {/* Listen FAB — visible when TTS is inactive */}
@@ -755,29 +759,31 @@ export default function ArticleScreen() {
         </Animated.View>
       )}
 
-      {/* TTS player bar — always visible; shows reading progress when TTS inactive */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          paddingBottom: tts.isActive ? insets.bottom : 0,
-          backgroundColor: colors.background,
-          borderTopWidth: tts.isActive ? 2 : 0,
-          borderTopColor: colors.divider,
-          zIndex: 15,
-        }}
-      >
-        <TtsPlayerBar readingProgress={readingProgress} />
-      </View>
+      {/* TTS player bar */}
+      {tts.isActive && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            paddingBottom: insets.bottom,
+            backgroundColor: colors.background,
+            borderTopWidth: 2,
+            borderTopColor: colors.divider,
+            zIndex: 15,
+          }}
+        >
+          <TtsPlayerBar />
+        </View>
+      )}
 
       {/* Return to progress button */}
       {showReturnButton && !tts.isActive && (
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={[styles.returnButtonContainer, {bottom: insets.bottom + (tts.isActive ? 100 : 20)}]}
+          style={[styles.returnButtonContainer, { bottom: insets.bottom + 20 }]}
         >
           <Pressable 
             onPress={returnToProgress}
@@ -876,6 +882,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 20,
+  },
+  progressTrack: {
+    height: 3,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
   },
   returnButtonContainer: {
     position: 'absolute',
