@@ -191,9 +191,11 @@ export function TtsPlayerBar() {
     <View style={styles.container}>
       {isInstalling ? (
         <View style={styles.row}>
-          <ActivityIndicator size="small" color={accent} />
-          <Text style={[styles.title, { color: text }]}>Preparing neural voice…</Text>
-          <Pressable onPress={tts.close} hitSlop={8}>
+          <View style={styles.articleInfo}>
+            <ActivityIndicator size="small" color={accent} />
+            <Text style={[styles.title, { color: text }]}>Preparing neural voice…</Text>
+          </View>
+          <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
             <IconSymbol name="xmark" size={16} color={muted} />
           </Pressable>
         </View>
