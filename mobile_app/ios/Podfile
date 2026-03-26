@@ -61,5 +61,12 @@ target 'Poche' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+    installer.pods_project.targets.each do |target|
+      if target.name == 'fmt'
+        target.build_configurations.each do |build_config|
+          build_config.build_settings['OTHER_CPLUSPLUSFLAGS'] = ['$(inherited)', '-DFMT_USE_CONSTEVAL=0']
+        end
+      end
+    end
   end
 end
