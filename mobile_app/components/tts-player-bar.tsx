@@ -151,6 +151,15 @@ export function TtsPlayerBar() {
     }
   }, [articleId, pathname])
 
+  const generatingAnim = useRef(new Animated.Value(isGenerating ? 1 : 0))
+  useEffect(() => {
+    Animated.timing(generatingAnim.current, {
+      toValue: isGenerating ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start()
+  }, [isGenerating])
+
   const articleInfo = (
     <Pressable
       style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
@@ -188,39 +197,48 @@ export function TtsPlayerBar() {
             <IconSymbol name="xmark" size={16} color={muted} />
           </Pressable>
         </View>
-      ) : isGenerating ? (
-        <View style={styles.row}>
-          <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
-            <IconSymbol name="xmark" size={16} color={muted} />
-          </Pressable>
-          {articleInfo}
-          <CircularProgress
-            progress={generationProgress + 1/4}
-            animationDuration={1500}
-            color={accent}
-            trackColor={surface}
-            holeColor={background}
-          />
-        </View>
       ) : (
         <View style={styles.row}>
+          {articleInfo}
+          <View style={styles.playBtnSlot}>
+            <Animated.View
+              style={{ opacity: generatingAnim.current }}
+              pointerEvents={isGenerating ? 'auto' : 'none'}
+            >
+              <CircularProgress
+                progress={generationProgress + 1/4}
+                animationDuration={1500}
+                color={accent}
+                trackColor={surface}
+                holeColor={background}
+              />
+            </Animated.View>
+            <Animated.View
+              style={[StyleSheet.absoluteFill, {
+                opacity: generatingAnim.current.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+                alignItems: 'center',
+                justifyContent: 'center',
+              }]}
+              pointerEvents={isGenerating ? 'none' : 'auto'}
+            >
+              <Pressable
+                onPress={isPlaying ? tts.pause : tts.resume}
+                style={[styles.playBtn, { backgroundColor: accent }]}
+                hitSlop={4}
+              >
+                <IconSymbol
+                  name={isPlaying ? 'pause.fill' : 'play.fill'}
+                  size={20}
+                  color="#FFFFFF"
+                />
+              </Pressable>
+            </Animated.View>
+          </View>
+          <Pressable onPress={tts.cycleSpeed} style={styles.sideBtn} hitSlop={8}>
+            <Text style={[styles.speedText, { color: muted, backgroundColor: surface }]}>{speed}×</Text>
+          </Pressable>
           <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
             <IconSymbol name="xmark" size={16} color={muted} />
-          </Pressable>
-          {articleInfo}
-          <Pressable
-            onPress={isPlaying ? tts.pause : tts.resume}
-            style={[styles.playBtn, { backgroundColor: accent }]}
-            hitSlop={4}
-          >
-            <IconSymbol
-              name={isPlaying ? 'pause.fill' : 'play.fill'}
-              size={20}
-              color="#FFFFFF"
-            />
-          </Pressable>
-          <Pressable onPress={tts.cycleSpeed} style={styles.sideBtn} hitSlop={8}>
-            <Text style={[styles.speedText, { color: muted }]}>{speed}×</Text>
           </Pressable>
         </View>
       )}
@@ -275,6 +293,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  playBtnSlot: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   playBtn: {
     width: 34,
     height: 34,
@@ -283,9 +307,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   speedText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    minWidth: 30,
+    width: 36,
     textAlign: 'center',
+    paddingVertical: 6,
+    borderRadius: 5,
   },
 })
