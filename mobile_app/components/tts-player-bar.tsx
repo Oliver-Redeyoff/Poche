@@ -1,16 +1,137 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { View, Pressable, StyleSheet, Text, ActivityIndicator } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { View, Pressable, StyleSheet, Text, ActivityIndicator, Animated } from 'react-native'
 import { Image } from 'expo-image'
 import { router, usePathname } from 'expo-router'
 import { useThemeColor } from '@/hooks/use-theme-color'
 import { IconSymbol } from './ui/icon-symbol'
 import { useTtsContext } from '@/contexts/tts-context'
 
+// Two-semicircle circular progress bar (no SVG required).
+//
+// Each half uses a solid D-shaped fill inside a rotating Animated.View whose
+// center coincides with the full circle's center.  A clip container (overflow
+// hidden) limits visibility to one half.  A center hole drawn on top creates
+// the ring (donut) appearance.
+//
+// Right half: Animated.View left=-half → center at x=0 in the right clip
+//   container (= circle center).  At -180° the D is on the left (hidden);
+//   at 0° it occupies the full right clip → 50% filled.
+// Left half:  Animated.View left=0  → center at x=half in the left clip
+//   container (= circle center).  Same rotation range, independent phase.
+//
+// Fill direction: clockwise from 12 o'clock.
+function CircularProgress({
+  progress,
+  animationDuration,
+  size = 26,
+  strokeWidth = 3,
+  color,
+  trackColor,
+  holeColor,
+}: {
+  progress: number
+  animationDuration: number
+  size?: number
+  strokeWidth?: number
+  color: string
+  trackColor: string
+  holeColor: string
+}) {
+  const animatedProgressRef = useRef(new Animated.Value(0))
+
+  useEffect(() => {
+    Animated.timing(animatedProgressRef.current, {
+      toValue: progress,
+      duration: animationDuration,
+      useNativeDriver: false,
+    }).start()
+  }, [progress, animationDuration])
+
+  const half = size / 2
+  const holeSize = size - strokeWidth * 2
+
+  const rightRotation = animatedProgressRef.current.interpolate({
+    inputRange: [0, 0.5],
+    outputRange: ['-180deg', '0deg'],
+    extrapolate: 'clamp',
+  })
+
+  const leftRotation = animatedProgressRef.current.interpolate({
+    inputRange: [0.5, 1],
+    outputRange: ['-180deg', '0deg'],
+    extrapolate: 'clamp',
+  })
+
+  return (
+    <View style={{ width: size, height: size }}>
+      {/* Track: solid circle in track color (unfilled ring background) */}
+      <View style={{
+        position: 'absolute', width: size, height: size,
+        borderRadius: half, backgroundColor: trackColor,
+      }} />
+
+      {/* Right half fill — progress 0→50%
+          Clip to right half. AV is full-size with left=-half so its center
+          sits at x=0 (right-clip origin) = the full circle's center. */}
+      <View style={{
+        position: 'absolute', top: 0, left: half,
+        width: half, height: size, overflow: 'hidden',
+      }}>
+        <Animated.View style={{
+          position: 'absolute', top: 0, left: -half,
+          width: size, height: size,
+          transform: [{ rotate: rightRotation }],
+        }}>
+          {/* Right D-shape: solid accent semicircle filling the right half of the AV */}
+          <View style={{
+            position: 'absolute', top: 0, left: half,
+            width: half, height: size,
+            borderTopRightRadius: half, borderBottomRightRadius: half,
+            backgroundColor: color,
+          }} />
+        </Animated.View>
+      </View>
+
+      {/* Left half fill — progress 50→100%
+          Clip to left half. AV is full-size with left=0 so its center sits
+          at x=half (right edge of left-clip) = the full circle's center. */}
+      <View style={{
+        position: 'absolute', top: 0, left: 0,
+        width: half, height: size, overflow: 'hidden',
+      }}>
+        <Animated.View style={{
+          position: 'absolute', top: 0, left: 0,
+          width: size, height: size,
+          transform: [{ rotate: leftRotation }],
+        }}>
+          {/* Left D-shape: solid accent semicircle filling the left half of the AV */}
+          <View style={{
+            position: 'absolute', top: 0, left: 0,
+            width: half, height: size,
+            borderTopLeftRadius: half, borderBottomLeftRadius: half,
+            backgroundColor: color,
+          }} />
+        </Animated.View>
+      </View>
+
+      {/* Center hole — creates the ring (donut) appearance */}
+      <View style={{
+        position: 'absolute',
+        top: strokeWidth, left: strokeWidth,
+        width: holeSize, height: holeSize,
+        borderRadius: holeSize / 2,
+        backgroundColor: holeColor,
+      }} />
+    </View>
+  )
+}
+
 export function TtsPlayerBar() {
   const tts = useTtsContext()
   const accent = useThemeColor({}, 'accent')
   const text = useThemeColor({}, 'text')
   const surface = useThemeColor({}, 'surface')
+  const background = useThemeColor({}, 'background')
   const muted = '#8E8E93'
 
   const pathname = usePathname()
@@ -20,29 +141,6 @@ export function TtsPlayerBar() {
   const articleTitle = article?.title ?? null
   const articleAuthor = article?.siteName || article?.author || null
   const articleThumb = article?.previewImageUrl || null
-
-  // Generation elapsed time + estimate
-  const [elapsedSec, setElapsedSec] = useState(0)
-  const genStartRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (!isGenerating) {
-      genStartRef.current = null
-      setElapsedSec(0)
-      return
-    }
-    genStartRef.current = Date.now()
-    const id = setInterval(() => {
-      setElapsedSec(Math.floor((Date.now() - genStartRef.current!) / 1000))
-    }, 1000)
-    return () => clearInterval(id)
-  }, [isGenerating])
-
-  const estimatedTotal = generationProgress > 0.05 ? Math.round(elapsedSec / generationProgress) : null
-  const remaining = estimatedTotal != null ? Math.max(0, estimatedTotal - elapsedSec) : null
-  const remainingLabel = remaining == null ? 'Generating audio…'
-    : remaining <= 3 ? 'Almost ready…'
-    : `~${remaining}s remaining`
 
   const isInstalling = modelState === 'installing'
 
@@ -96,10 +194,13 @@ export function TtsPlayerBar() {
           </Pressable>
 
           {/* Generating status */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <ActivityIndicator size="small" color={accent} />
-            <Text style={[styles.author, { color: muted }]}>{remainingLabel}</Text>
-          </View>
+          <CircularProgress
+            progress={generationProgress + 1/4}
+            animationDuration={1500}
+            color={accent}
+            trackColor={surface}
+            holeColor={background}
+          />
         </View>
       ) : (
         <View style={styles.row}>

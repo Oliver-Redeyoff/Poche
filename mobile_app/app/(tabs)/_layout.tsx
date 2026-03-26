@@ -110,8 +110,9 @@ export default function TabLayout() {
   const tintColor = useThemeColor({}, 'tint')
   const borderColor = useThemeColor({}, 'border')
   const textColor = useThemeColor({}, 'text')
-  const resolvedScheme = useResolvedColorScheme()
-  const colors = Colors[resolvedScheme]
+  const textSecondaryColor = useThemeColor({}, 'textSecondary')
+  const backgroundColor = useThemeColor({}, 'background')
+  const surfaceColor = useThemeColor({}, 'surface')
 
   const [showAccountSettings, setShowAccountSettings] = useState(false)
   const [showReadingSettings, setShowReadingSettings] = useState(false)
@@ -251,8 +252,8 @@ export default function TabLayout() {
         <View style={styles.section}>
           {/* User identity */}
           <View style={styles.userRow}>
-            <View style={[styles.avatar, { backgroundColor: colors.accentLight }]}>
-              <ThemedText fontSize={19} style={[styles.avatarInitial, { color: colors.accent }]}>
+            <View style={[styles.avatar, { backgroundColor: tintColor }]}>
+              <ThemedText fontSize={19} style={[styles.avatarInitial, { color: textColor }]}>
                 {(session?.user?.name || session?.user?.email || '?')[0].toUpperCase()}
               </ThemedText>
             </View>
@@ -260,7 +261,7 @@ export default function TabLayout() {
               {session?.user?.name ? (
                 <>
                   <ThemedText fontSize={15} style={styles.userName}>{session.user.name}</ThemedText>
-                  <ThemedText fontSize={13} style={{ color: colors.textSecondary }}>{session.user.email}</ThemedText>
+                  <ThemedText fontSize={13} style={{ color: textSecondaryColor }}>{session.user.email}</ThemedText>
                 </>
               ) : (
                 <ThemedText fontSize={15} style={styles.userName}>{session?.user?.email}</ThemedText>
@@ -268,10 +269,10 @@ export default function TabLayout() {
             </View>
             {isPremium && (
               <View style={[styles.premiumBadge, { backgroundColor: borderColor }]}>
-                <ThemedText fontSize={16} style={[styles.premiumBadgeText, { color: colors.text }]}>
+                <ThemedText fontSize={16} style={[styles.premiumBadgeText, { color: textColor }]}>
                   Poche
                 </ThemedText>
-                <ThemedText fontSize={16} style={[styles.premiumBadgePlus, { color: colors.accent }]}>
+                <ThemedText fontSize={16} style={[styles.premiumBadgePlus, { color: tintColor }]}>
                   +
                 </ThemedText>
               </View>
@@ -293,23 +294,22 @@ export default function TabLayout() {
           {/* Usage */}
           {usage !== null && !isPremium && (() => {
             const pct = Math.min(1, usage.count / usage.limit)
-            const fillColor = pct >= 1 ? colors.error : pct >= 0.8 ? colors.warning : colors.tint
             return (
-              <View style={[styles.usageCard, { backgroundColor: colors.surface }]}>
+              <View style={[styles.usageCard, { backgroundColor: surfaceColor }]}>
                 <View style={styles.usageLabelRow}>
-                  <ThemedText fontSize={13} style={{ color: colors.textSecondary }}>Articles saved</ThemedText>
-                  <ThemedText fontSize={13} style={[styles.usageCount, { color: fillColor }]}>
+                  <ThemedText fontSize={13} style={{ color: textSecondaryColor }}>Articles saved</ThemedText>
+                  <ThemedText fontSize={13} style={[styles.usageCount, { color: tintColor }]}>
                     {usage.count} / {usage.limit}
                   </ThemedText>
                 </View>
-                <View style={[styles.usageBar, { backgroundColor: colors.border }]}>
-                  <View style={[styles.usageFill, { width: `${pct * 100}%`, backgroundColor: fillColor }]} />
+                <View style={[styles.usageBar, { backgroundColor: borderColor }]}>
+                  <View style={[styles.usageFill, { width: `${pct * 100}%`, backgroundColor: surfaceColor }]} />
                 </View>
               </View>
             )
           })()}
 
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={[styles.divider, { backgroundColor: borderColor }]} />
 
           <Button
             title="Sign Out"
@@ -338,7 +338,7 @@ export default function TabLayout() {
           tabBarActiveTintColor: tintColor,
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: colors.background,
+            backgroundColor: backgroundColor,
             borderTopWidth: 1,
             borderTopColor: borderColor,
           },
@@ -373,9 +373,9 @@ export default function TabLayout() {
             left: 0,
             right: 0,
             zIndex: 50,
-            backgroundColor: resolvedScheme === 'dark' ? '#1C1C1E' : '#F2F2F7',
+            backgroundColor: backgroundColor,
             borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: resolvedScheme === 'dark' ? '#38383A' : '#D1D1D6',
+            borderTopColor: borderColor,
           }}
         >
           <TtsPlayerBar />
