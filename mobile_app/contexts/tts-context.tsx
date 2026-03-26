@@ -120,8 +120,13 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
 
     const chunkEnd = Math.min(nextStart + CHUNK_SIZE, segs.length)
     const chunkText = segs.slice(nextStart, chunkEnd).map(s => s.text).join(' ')
-    const wavSlot = nextChunkNum % 2
-    const wavUri = tempWavUri(wavSlot)
+    const wavUri = tempWavUri(nextChunkNum % 2)
+
+    const resumeIfGap = () => {
+      if (!sherpaPlayerRef.current && isPlayingRef.current && currentIndexRef.current === nextStart) {
+        sherpaPlayChunkRef.current(nextStart, nextChunkNum, token)
+      }
+    }
 
     sherpaTtsEngine.generateStream(
       chunkText,
@@ -133,23 +138,15 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
           FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
           return
         }
-
         nextChunkReadyRef.current = true
-
-        // Gap resolution: if current chunk finished before background gen completed
-        if (!sherpaPlayerRef.current && isPlayingRef.current && currentIndexRef.current === nextStart) {
-          sherpaPlayChunkRef.current(nextStart, nextChunkNum, token)
-        }
+        resumeIfGap()
       },
       () => {
         // Cancelled — nothing to do
       },
       (_msg) => {
         console.log('Background TTS chunk error:', _msg)
-        // Gap recovery: regenerate via sherpaPlayChunkRef (will show no spinner since chunkNum > 0)
-        if (!sherpaPlayerRef.current && isPlayingRef.current && currentIndexRef.current === nextStart) {
-          sherpaPlayChunkRef.current(nextStart, nextChunkNum, token)
-        }
+        resumeIfGap()
       }
     )
   }
@@ -237,14 +234,11 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    nextChunkReadyRef.current = false
-
     const showSpinner = chunkNum === 0
-    if (showSpinner) {
-      setIsGenerating(true)
-      isGeneratingRef.current = true
-      setGenerationProgress(0)
-    }
+    const startSpinner = () => { setIsGenerating(true); isGeneratingRef.current = true; setGenerationProgress(0) }
+    const stopSpinner = () => { setIsGenerating(false); isGeneratingRef.current = false }
+
+    if (showSpinner) startSpinner()
 
     const chunkText = segs.slice(startIndex, chunkEnd).map(s => s.text).join(' ')
 
@@ -256,20 +250,20 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
         // WAV ready — check token
         if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) {
           FileSystem.deleteAsync(wavUri, { idempotent: true }).catch(() => {})
-          if (showSpinner) { setIsGenerating(false); isGeneratingRef.current = false }
+          if (showSpinner) stopSpinner()
           return
         }
-        if (showSpinner) { setIsGenerating(false); isGeneratingRef.current = false }
+        if (showSpinner) stopSpinner()
         startPlayback()
       },
       () => {
         // Cancelled — nothing to do
-        if (showSpinner) { setIsGenerating(false); isGeneratingRef.current = false }
+        if (showSpinner) stopSpinner()
       },
       (_msg) => {
         console.log(_msg)
         if (token !== sherpaTokenRef.current || !isActiveRef.current || !isPlayingRef.current) return
-        if (showSpinner) { setIsGenerating(false); isGeneratingRef.current = false }
+        if (showSpinner) stopSpinner()
         setIsPlaying(false)
         isPlayingRef.current = false
       },
