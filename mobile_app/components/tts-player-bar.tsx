@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { View, Pressable, StyleSheet, Text, ActivityIndicator, Animated } from 'react-native'
 import { Image } from 'expo-image'
 import { router, usePathname } from 'expo-router'
@@ -40,6 +40,7 @@ function CircularProgress({
   const animatedProgressRef = useRef(new Animated.Value(0))
 
   useEffect(() => {
+    animatedProgressRef.current.stopAnimation()
     Animated.timing(animatedProgressRef.current, {
       toValue: progress,
       duration: animationDuration,
@@ -144,11 +145,36 @@ export function TtsPlayerBar() {
 
   const isInstalling = modelState === 'installing'
 
-  const navigateToArticle = () => {
+  const navigateToArticle = useCallback(() => {
     if (articleId != null && pathname !== `/article/${articleId}`) {
       router.push(`/article/${articleId}`)
     }
-  }
+  }, [articleId, pathname])
+
+  const articleInfo = (
+    <Pressable
+      style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
+      onPress={navigateToArticle}
+    >
+      {articleThumb ? (
+        <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
+      ) : (
+        <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
+          <IconSymbol name="doc.text" size={18} color={muted} />
+        </View>
+      )}
+      <View style={styles.info}>
+        <Text style={[styles.title, { color: text }]} numberOfLines={1}>
+          {articleTitle ?? 'Article'}
+        </Text>
+        {articleAuthor ? (
+          <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
+            {articleAuthor}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
+  )
 
   if (!tts.isActive) return null
 
@@ -164,36 +190,10 @@ export function TtsPlayerBar() {
         </View>
       ) : isGenerating ? (
         <View style={styles.row}>
-          {/* Close */}
           <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
             <IconSymbol name="xmark" size={16} color={muted} />
           </Pressable>
-
-          {/* Article info — tappable */}
-          <Pressable
-            style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
-            onPress={navigateToArticle}
-          >
-            {articleThumb ? (
-              <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
-            ) : (
-              <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
-                <IconSymbol name="doc.text" size={18} color={muted} />
-              </View>
-            )}
-            <View style={styles.info}>
-              <Text style={[styles.title, { color: text }]} numberOfLines={1}>
-                {articleTitle ?? 'Article'}
-              </Text>
-              {articleAuthor ? (
-                <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
-                  {articleAuthor}
-                </Text>
-              ) : null}
-            </View>
-          </Pressable>
-
-          {/* Generating status */}
+          {articleInfo}
           <CircularProgress
             progress={generationProgress + 1/4}
             animationDuration={1500}
@@ -204,36 +204,10 @@ export function TtsPlayerBar() {
         </View>
       ) : (
         <View style={styles.row}>
-          {/* Close */}
           <Pressable onPress={tts.close} style={styles.sideBtn} hitSlop={8}>
             <IconSymbol name="xmark" size={16} color={muted} />
           </Pressable>
-
-          {/* Thumbnail + info — tappable, navigates to article */}
-          <Pressable
-            style={[styles.articleInfo, ({ pressed }) => pressed && { opacity: 0.7 }]}
-            onPress={navigateToArticle}
-          >
-            {articleThumb ? (
-              <Image source={{ uri: articleThumb }} style={styles.thumbnail} contentFit="cover" />
-            ) : (
-              <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { backgroundColor: surface }]}>
-                <IconSymbol name="doc.text" size={18} color={muted} />
-              </View>
-            )}
-            <View style={styles.info}>
-              <Text style={[styles.title, { color: text }]} numberOfLines={1}>
-                {articleTitle ?? 'Article'}
-              </Text>
-              {articleAuthor ? (
-                <Text style={[styles.author, { color: muted }]} numberOfLines={1}>
-                  {articleAuthor}
-                </Text>
-              ) : null}
-            </View>
-          </Pressable>
-
-          {/* Playback controls */}
+          {articleInfo}
           <Pressable
             onPress={isPlaying ? tts.pause : tts.resume}
             style={[styles.playBtn, { backgroundColor: accent }]}
@@ -245,7 +219,6 @@ export function TtsPlayerBar() {
               color="#FFFFFF"
             />
           </Pressable>
-
           <Pressable onPress={tts.cycleSpeed} style={styles.sideBtn} hitSlop={8}>
             <Text style={[styles.speedText, { color: muted }]}>{speed}×</Text>
           </Pressable>
