@@ -71,6 +71,8 @@ PODS:
     - ExpoModulesCore
   - ExpoLogBox (55.0.7):
     - React-Core
+  - ExpoMediaControl (1.0.12):
+    - ExpoModulesCore
   - ExpoModulesCore (55.0.13):
     - boost
     - DoubleConversion
@@ -3210,6 +3212,7 @@ DEPENDENCIES:
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - "ExpoLogBox (from `../node_modules/@expo/log-box`)"
+  - ExpoMediaControl (from `../node_modules/expo-media-control/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoModulesJSI (from `../node_modules/expo-modules-core`)
   - ExpoRouter (from `../node_modules/expo-router/ios`)
@@ -3374,6 +3377,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-linking/ios"
   ExpoLogBox:
     :path: "../node_modules/@expo/log-box"
+  ExpoMediaControl:
+    :path: "../node_modules/expo-media-control/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   ExpoModulesJSI:
@@ -3597,6 +3602,7 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: 55711a70fe88a41e793bbe28543c93cb47ff265d
   ExpoLinking: 31827b9e0d27d058026a87a0e852f238c5834804
   ExpoLogBox: 35febda08748ff213ea133f51acf976ba8c44b2c
+  ExpoMediaControl: 85f005c9df22ea027c112f4b9dd963e9935e272e
   ExpoModulesCore: 5bfb1f65437111faee807649b5366778d2bd93bd
   ExpoModulesJSI: fdb82be16565ad49cdff2b68af8442b40ba9c259
   ExpoRouter: 05360ba37fc9a07dabedbf68ff8da520bcddd560

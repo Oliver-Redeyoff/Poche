@@ -38,6 +38,7 @@
     "expo-haptics": "~55.0.8",
     "expo-image": "~55.0.5",
     "expo-linking": "~55.0.7",
+    "expo-media-control": "^1.0.12",
     "expo-router": "~55.0.3",
     "expo-speech": "^55.0.9",
     "expo-splash-screen": "~55.0.10",

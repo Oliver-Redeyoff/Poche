@@ -37,6 +37,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-media-control",
+        {
+          "enableBackgroundAudio": false
+        }
+      ],
       "expo-apple-authentication",
       "expo-background-task",
       [

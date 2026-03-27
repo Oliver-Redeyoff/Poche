@@ -7,6 +7,7 @@ import { isModelInstalled, installModel, getModelDir } from '../lib/model-manage
 import { sherpaTtsEngine } from '../lib/sherpa-tts-engine'
 import { useAuth } from '../app/_layout'
 import { updateReadingProgressLocal, syncReadingProgressToBackend } from '../lib/article-sync'
+import { enableMediaControls, updateMetadata, updatePlaybackState, disableMediaControls, addListener, Command, PlaybackState } from 'expo-media-control'
 
 export type TtsSpeed = 0.75 | 1 | 1.25 | 1.5 | 2
 const TTS_SPEEDS: TtsSpeed[] = [0.75, 1, 1.25, 1.5, 2]
@@ -44,6 +45,21 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth()
   const sessionRef = useRef(session)
   sessionRef.current = session
+
+  // --- Now Playing (lock screen / Control Center) ---
+  const mediaControlUnsubRef = useRef<(() => void) | null>(null)
+
+  const nowPlayingUpdate = useCallback((isPlaying: boolean) => {
+    const article = articleRef.current
+    const duration = article?.wordCount ? article.wordCount / 2.5 : 0
+    updateMetadata({
+      title: article?.title ?? 'Poche',
+      artist: article?.siteName || article?.author || '',
+      duration,
+      artwork: article?.previewImageUrl ? { uri: article.previewImageUrl } : undefined,
+    }).catch(() => {})
+    updatePlaybackState(isPlaying ? PlaybackState.PLAYING : PlaybackState.PAUSED).catch(() => {})
+  }, [])
 
   // --- Article metadata ---
   const [article, setArticleState] = useState<Article | null>(null)
@@ -205,6 +221,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
           currentIndexRef.current = segs.length - 1
           setIsPlaying(false)
           isPlayingRef.current = false
+          nowPlayingUpdate(false)
           const _id = articleRef.current?.id
           const _uid = sessionRef.current?.user?.id
           if (_id != null && _uid) { updateReadingProgressLocal(_uid, _id, 100); syncReadingProgressToBackend(_id, 100) }
@@ -220,6 +237,7 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       })
 
       player.play()
+      nowPlayingUpdate(true)
 
       // Kick off background generation of the next chunk
       if (chunkEnd < segs.length) {
@@ -313,7 +331,8 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     segmentsRef.current = newSegments
     setArticleState(newArticle)
     articleRef.current = newArticle
-  }, [])
+    if (isActiveRef.current) nowPlayingUpdate(isPlayingRef.current)
+  }, [nowPlayingUpdate])
 
   const setContent = useCallback((newContent: string) => {
     const newSegments = extractTtsSegments(tokenize(newContent))
@@ -329,6 +348,35 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     setCurrentIndex(index)
     currentIndexRef.current = index
 
+    // Register remote commands and show lock screen entry
+    mediaControlUnsubRef.current?.()
+    enableMediaControls({ capabilities: [Command.PLAY, Command.PAUSE] }).catch(() => {})
+    nowPlayingUpdate(true)
+    mediaControlUnsubRef.current = addListener((event) => {
+      if (event.command === Command.PLAY) {
+        if (isPlayingRef.current) return
+        setIsPlaying(true)
+        isPlayingRef.current = true
+        if (sherpaPlayerRef.current) {
+          sherpaPlayerRef.current.play()
+          const cEnd = playingChunkEndRef.current
+          if (cEnd < segmentsRef.current.length && !nextChunkReadyRef.current) {
+            scheduleNextChunkGenerationRef.current(cEnd, playingChunkNumRef.current + 1, sherpaTokenRef.current)
+          }
+        } else {
+          sherpaPlayChunkRef.current(currentIndexRef.current, playingChunkNumRef.current, sherpaTokenRef.current)
+        }
+        nowPlayingUpdate(true)
+      } else if (event.command === Command.PAUSE) {
+        if (!isPlayingRef.current) return
+        setIsPlaying(false)
+        isPlayingRef.current = false
+        sherpaTtsEngine.stopStream()
+        sherpaPlayerRef.current?.pause()
+        nowPlayingUpdate(false)
+      }
+    })
+
     if (modelStateRef.current !== 'ready') {
       setIsPlaying(false)
       isPlayingRef.current = false
@@ -339,14 +387,15 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     setIsPlaying(true)
     isPlayingRef.current = true
     sherpaPlayChunkRef.current(index, 0, sherpaTokenRef.current)
-  }, [stopSherpa, installAndPlay])
+  }, [stopSherpa, installAndPlay, nowPlayingUpdate])
 
   const pause = useCallback(() => {
     setIsPlaying(false)
     isPlayingRef.current = false
     sherpaTtsEngine.stopStream()
     sherpaPlayerRef.current?.pause()
-  }, [])
+    nowPlayingUpdate(false)
+  }, [nowPlayingUpdate])
 
   const resume = useCallback(() => {
     if (!isActiveRef.current) return
@@ -362,7 +411,8 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     } else {
       sherpaPlayChunkRef.current(currentIndexRef.current, playingChunkNumRef.current, sherpaTokenRef.current)
     }
-  }, [])
+    nowPlayingUpdate(true)
+  }, [nowPlayingUpdate])
 
   const cycleSpeed = useCallback(() => {
     setSpeed(prev => {
@@ -378,6 +428,9 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
     setIsPlaying(false)
     setCurrentIndex(0)
     currentIndexRef.current = 0
+    disableMediaControls().catch(() => {})
+    mediaControlUnsubRef.current?.()
+    mediaControlUnsubRef.current = null
   }, [stopSherpa])
 
   // Speed change: update active player rate
@@ -402,6 +455,8 @@ export function TtsProvider({ children }: { children: React.ReactNode }) {
       sherpaTokenRef.current += 1
       releaseSherpaPlayer()
       sherpaTtsEngine.dispose()
+      disableMediaControls().catch(() => {})
+      mediaControlUnsubRef.current?.()
     }
   }, [])
 
