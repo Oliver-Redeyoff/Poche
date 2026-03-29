@@ -113,6 +113,7 @@ Each component has its own TypeScript file and corresponding CSS file with neste
 | `/` | `Home` | Marketing landing page |
 | `/reset-password` | `ResetPassword` | Password reset form |
 | `/privacy-policy` | `PrivacyPolicy` | Privacy policy for app store compliance |
+| `/terms` | `TermsOfService` | Terms of Service |
 | `/support` | `Support` | Contact support form (mailto) |
 | `/app/auth` | `AuthPage` | Sign in, sign up, forgot password |
 | `/app` | `ArticlesPage` | List of saved articles (protected) |
@@ -125,7 +126,7 @@ Each component has its own TypeScript file and corresponding CSS file with neste
 Marketing landing page with:
 - **Navigation**: Fixed header with blur effect, logo, and section links
 - **Hero Section**: Animated background shapes, headline, CTA buttons, phone mockup
-- **Features Section**: 6 feature cards with Font Awesome icons
+- **Features Section**: Feature cards with Font Awesome icons (Save from Anywhere, Read Offline, Distraction-Free, Organize with Tags, Cross-Platform, Listen to Articles)
 - **Download Section**: iOS App Store and Google Play download cards
 - **Extensions Section**: Chrome, Firefox, Safari extension cards
 - **How It Works**: 3-step guide (Install, Save, Read)
@@ -330,7 +331,10 @@ mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
 - ✅ Floating background shapes for depth
 - ✅ Password reset page with full flow
 - ✅ **Privacy policy page**: `/privacy-policy` for app store compliance
+- ✅ **Terms of Service page**: `/terms` reusing Privacy Policy layout and styles
 - ✅ **Support page**: `/support` with contact form (mailto to support@bloxd.io)
+- ✅ **TTS feature card**: "Listen to Articles" card in features section
+- ✅ **Removed self-hosted feature card** from features section
 - ✅ Token validation and error handling
 - ✅ Success and error states for password reset
 - ✅ Uses `@poche/shared` package for types and utilities
@@ -356,7 +360,6 @@ mediaQuery.addEventListener('change', (e) => applyColorScheme(e.matches))
 ## Future Enhancements
 
 Potential features:
-- Terms of Service page
 - Blog section
 - Documentation/Help pages
 - User testimonials

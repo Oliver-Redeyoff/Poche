@@ -448,7 +448,6 @@ const Home = () => {
               <a href="/privacy-policy">Privacy Policy</a>
               <a href="/terms">Terms of Service</a>
               <a href="/support">Support</a>
-              <a href="https://github.com/poche" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
           </div>
         </div>

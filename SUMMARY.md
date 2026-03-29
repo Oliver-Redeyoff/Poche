@@ -201,6 +201,7 @@ Poche/
 - Marketing landing page at `/` route
 - **Password reset page**: `/reset-password` handles password reset from email links
 - **Privacy policy page**: `/privacy-policy` for app store compliance
+- **Terms of Service page**: `/terms`
 - **Support page**: `/support` with contact form that opens mailto link
 - **SEO optimized**: Meta tags, Open Graph, Twitter Cards, JSON-LD structured data
 - **App download links**: iOS App Store, Google Play Store
@@ -455,13 +456,15 @@ The shared package provides common functionality across all projects:
 - ✅ Marketing landing page with hero section
 - ✅ **Password reset page**: Complete flow for resetting passwords from email link
 - ✅ **Privacy policy page**: `/privacy-policy` for app store compliance
+- ✅ **Terms of Service page**: `/terms`
 - ✅ **Support page**: `/support` with contact form (mailto to support@bloxd.io)
+- ✅ **TTS feature card**: "Listen to Articles" in features section
 - ✅ **Account popover**: User menu with sign out and account deletion options
 - ✅ **Account deletion**: Delete account with password confirmation modal
 - ✅ SEO optimization (meta tags, Open Graph, Twitter Cards, JSON-LD)
 - ✅ App Store and Google Play download links
 - ✅ Browser extension links (Chrome, Firefox, Safari)
-- ✅ Features section with 6 feature cards
+- ✅ Features section with feature cards (Save from Anywhere, Read Offline, Distraction-Free, Organize with Tags, Cross-Platform, Listen to Articles)
 - ✅ "How It Works" step-by-step guide
 - ✅ Call-to-action sections
 - ✅ Responsive design (mobile-first)

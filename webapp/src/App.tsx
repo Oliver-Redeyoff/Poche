@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Home from './pages/Home'
 import ResetPassword from './pages/ResetPassword'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import Support from './pages/Support'
 import Auth from './pages/app/Auth'
 import Articles from './pages/app/Articles'
@@ -35,6 +36,7 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
       <Route path="/support" element={<Support />} />
       
       {/* App pages */}
