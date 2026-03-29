@@ -269,7 +269,17 @@ const Home = () => {
               Seamlessly switch between your phone, tablet, and desktop. Your reading list stays perfectly in sync across all devices.
             </p>
           </article>
-          
+
+          <article className="feature-card">
+            <div className="feature-icon">
+              <i className="fa-solid fa-headphones"></i>
+            </div>
+            <h3 className="feature-title">Listen to Articles</h3>
+            <p className="feature-description">
+              Turn any article into audio with on-device neural text-to-speech. Listen hands-free during commutes, workouts, or whenever your eyes need a rest.
+            </p>
+          </article>
+
         </div>
       </section>
 
