@@ -4,7 +4,7 @@
 
 Poche is a "read it later" application that allows users to save articles from the web and read them later. The project consists of five main components:
 
-1. **Backend** - Self-hosted API server for authentication and article management
+1. **Backend** - API server for authentication and article management
 2. **Mobile App** - React Native mobile application (iOS/Android) built with Expo
 3. **Browser Extension** - Cross-browser extension (Chrome, Firefox, Safari) for saving articles
 4. **Web App** - Marketing website with app download links, SEO optimization, and password reset page
@@ -88,7 +88,7 @@ Poche/
 │   │   └── index.ts    # Re-exports
 │   ├── package.json    # npm package config
 │   └── tsconfig.json   # TypeScript config
-├── backend/             # Self-hosted API server
+├── backend/             # API server
 │   ├── src/            # Source files (TypeScript)
 │   │   ├── lib/        # Auth config, email service
 │   │   └── routes/     # API routes
@@ -341,7 +341,7 @@ The shared package provides common functionality across all projects:
 ### Backend
 - ✅ **RevenueCat webhook**: `POST /api/webhooks/revenuecat` — updates `activeSubscription` based on subscription events; mounted before authMiddleware
 - ✅ **Article limit enforcement**: Free users capped at 50 articles; 403 with `"Article limit reached"` on save attempts over limit
-- ✅ Self-hosted API server with Hono
+- ✅ API server with Hono
 - ✅ Better Auth integration with bearer plugin for token-based auth
 - ✅ Server-side article extraction with domain-specific configurations: CSS selector to narrow DOM, elements to remove, extraction library per domain (Readability, Defuddle, or raw DOM); BBC uses raw DOM with targeted element removal
 - ✅ **Password reset flow**: `POST /api/auth/request-password-reset`
@@ -362,7 +362,7 @@ The shared package provides common functionality across all projects:
 - ✅ Word count calculation improved with proper whitespace splitting
 
 ### Mobile App
-- ✅ Migrated from Supabase to self-hosted backend
+- ✅ Migrated from Supabase to custom backend
 - ✅ Bearer token authentication via `lib/api.ts`
 - ✅ AuthContext for session management and navigation guards
 - ✅ **Forgot password flow**: Request password reset from auth screen
@@ -425,7 +425,7 @@ The shared package provides common functionality across all projects:
 - ✅ **TTS lock screen / Control Center**: `expo-media-control` (plugin added to `app.json`) shows article title, author, and `previewImageUrl` thumbnail in the iOS Now Playing card; play/pause remote commands wired to TTS context; `enableMediaControls`/`updateMetadata`/`updatePlaybackState`/`disableMediaControls` called from `tts-context.tsx`; duration estimated from `wordCount / 2.5` seconds
 
 ### Browser Extension
-- ✅ Migrated from Supabase to self-hosted backend
+- ✅ Migrated from Supabase to custom backend
 - ✅ Token-based authentication (bearer tokens stored in browser storage)
 - ✅ Bearer token included in Authorization header for all API requests
 - ✅ **Forgot password flow**: Request password reset from login screen

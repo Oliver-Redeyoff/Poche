@@ -270,15 +270,6 @@ const Home = () => {
             </p>
           </article>
           
-          <article className="feature-card">
-            <div className="feature-icon">
-              <i className="fa-solid fa-shield-halved"></i>
-            </div>
-            <h3 className="feature-title">Self-Hosted Option</h3>
-            <p className="feature-description">
-              Own your data. Host Poche on your own server with our open-source backend. Complete privacy and control.
-            </p>
-          </article>
         </div>
       </section>
 
